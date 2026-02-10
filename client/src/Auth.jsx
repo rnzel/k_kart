@@ -29,7 +29,7 @@ function Auth() {
     // Handle login form submission
     const handleLogin = (e) => {
         e.preventDefault();
-        axios.post('/api/auth/login', {
+        axios.post(`${import.meta.env.VITE_API_URL}/api/auth/login`, {
             email: loginEmail,
             password: loginPassword 
         })        .then(response => {
@@ -59,14 +59,14 @@ function Auth() {
         }
 
         // Check if email is already in use
-        axios.post('/api/auth/check-email', { email })
+        axios.post(`${import.meta.env.VITE_API_URL}/api/auth/check-email`, { email })
             .then(response => {
                 if (response.data.exists) {
                     setError('Email is already in use');
                     return;
                 }
                 // Email is available, proceed with registration
-                axios.post('/api/auth/register', {
+                axios.post(`${import.meta.env.VITE_API_URL}/api/auth/register`, {
                     firstName,
                     lastName,
                     email,
