@@ -1,0 +1,74 @@
+/* Custom btn-primary override */
+.btn-primary {
+  background-color: #db4444 !important;
+  border-color: #db4444 !important;
+}
+
+.btn-primary:hover {
+  background-color: #c13a3a !important;
+  border-color: #b53737 !important;
+}
+
+/* Form control focus/active border */
+.form-control:focus,
+.form-control:active {
+  border-color: #db4444 !important;
+  box-shadow: none !important;
+}
+
+.form-control:focus:not(:checked) {
+  border-color: #db4444 !important;
+}
+
+.btn-outline-secondary:hover {
+  border-color: #db4444 !important;
+  background-color: #db4444 !important;
+  color: #ffff !important;
+}
+/* Buyer button active state */
+.btn-outline-secondary.active {
+  border-color: #db4444 !important;
+  background-color: #db4444 !important;
+  box-shadow: none !important;
+  color: white !important;
+}
+
+/* h1 font size */
+h1 {
+  font-size: 25px !important;
+  font-weight: bold !important;
+}
+
+/* Responsive adjustments */
+@media (max-width: 576px) {
+  .auth-container {
+    width: 90% !important;
+    padding: 1.5rem !important;
+  }
+  
+  h1 {
+    font-size: 22px !important;
+  }
+  
+  .p-4 {
+    font-size: 14px !important;
+    padding: 1.25rem !important;
+  }
+
+  /* Smaller inputs and buttons on mobile */
+  .form-control {
+    padding: 0.4rem 0.75rem !important;
+    font-size: 14px !important;
+  }
+
+  .btn {
+    padding: 0.4rem 1rem !important;
+    font-size: 14px !important;
+  }
+}
+
+/* dash border */
+.dashed-border {
+  border: 2px dashed #ccc !important;
+  padding: 10px !important;
+}
