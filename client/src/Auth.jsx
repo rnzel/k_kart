@@ -25,10 +25,13 @@ function Auth() {
     const [successMessage, setSuccessMessage] = useState('');
     const [error, setError] = useState('');
     
+    const [loading, setLoading] = useState(false);
     
     // Handle login form submission
     const handleLogin = (e) => {
         e.preventDefault();
+        setLoading(true);
+        setLoginError('');
         axios.post(`${import.meta.env.VITE_API_URL}/api/auth/login`, {
             email: loginEmail,
             password: loginPassword 
@@ -39,6 +42,9 @@ function Auth() {
         .catch(error => {
             console.error('Login error:', error.response ? error.response.data : error.message);
             setLoginError('Invalid email or password');
+        }) 
+        .finally(() => {
+            setLoading(false);
         });
     };
 
@@ -46,15 +52,24 @@ function Auth() {
     const handleRegister = (e) => {
         e.preventDefault();
         setError('');
+        setLoading(true);
         
         // Password validation
         if (password !== confirmPassword) {
             setError('Passwords do not match');
+            setLoading(false);
             return;
         }
         
         if (password.length < 6) {
             setError('Password must be at least 6 characters');
+            setLoading(false);
+            return;
+        }
+
+        if (accountType === 'seller' && !studentIdPicture) {
+            setError('Please upload your Student ID picture');
+            setLoading(false);
             return;
         }
 
@@ -63,6 +78,7 @@ function Auth() {
             .then(response => {
                 if (response.data.exists) {
                     setError('Email is already in use');
+                    setLoading(false);
                     return;
                 }
                 // Email is available, proceed with registration
@@ -82,7 +98,15 @@ function Auth() {
                 })
                 .catch(error => {
                     console.error('Registration error:', error.response ? error.response.data : error.message);
+                })
+                .finally(() => {
+                    setLoading(false);
                 });
+            })
+            .catch(error => {
+                console.error('Email check error:', error.response ? error.response.data : error.message);
+                setError('Something went wrong. Please try again.');
+                setLoading(false);
             });
     };
     
@@ -127,7 +151,7 @@ function Auth() {
                         </div>
                         {successMessage && <div className="alert alert-success py-2 mb-3 small">{successMessage}</div>}
                         {loginError && <div className="alert alert-danger py-2 mb-3 small">{loginError}</div>}
-                        <button type="submit" className="btn btn-primary w-100">Sign In</button>
+                        <button type="submit" className="btn btn-primary w-100" disabled={loading}>{loading ? "Logging in..." : "Log In"}</button>
                     </form>
                 )}
                 
@@ -170,13 +194,13 @@ function Auth() {
                                     <input type="text" className="form-control" id="studentIdNumber" placeholder="Student ID Number" value={studentIdNumber} onChange={(e) => setStudentIdNumber(e.target.value)} required/>
                                 </div>
                                 <div className="mb-3">
-                                    <input type="file" className="d-none" id="studentIdPicture" accept="image/*" onChange={handleFileChange} required/>
+                                    <input type="file" className="d-none" id="studentIdPicture" accept="image/*" onChange={handleFileChange}/>
                                     <label htmlFor="studentIdPicture" className="form-control dashed-border" style={{ cursor: 'pointer' }}>{ studentIdPhotoName }</label>
                                 </div>
                                 <p className="text-muted small text-center">Upload a clear photo of your Student ID to verify you're an Entrepreneurship student</p>
                             </div>
                         )}
-                        <button type="submit" className="btn btn-primary w-100">Create Account</button>
+                        <button type="submit" className="btn btn-primary w-100" disabled={loading}>{loading ? "Creating Account..." : "Create Account"}</button>
                     </form>
                 )}
                 
