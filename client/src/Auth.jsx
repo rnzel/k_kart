@@ -115,10 +115,15 @@ function Auth() {
         const file = e.target.files[0];
         if (file) {
             setStudentIdPhotoName(file.name);
-            setStudentIdPicture(file);
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                setStudentIdPicture(reader.result);
+            };
+            reader.readAsDataURL(file);
         }
         else {
             setStudentIdPhotoName('ID Picture');
+            setStudentIdPicture(null);
         }
     };
 
