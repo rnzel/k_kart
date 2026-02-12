@@ -23,10 +23,11 @@ router.post('/register', async (req, res) => {
     
     const user = await User.create(userData)
 
-    const { password: _, ...userWithoutPassword } = user.toObject()
+    const userResponse = user.toObject()
+    delete userResponse.password // Remove password from response
     res.status(201).json({ 
       message: 'User registered successfully',
-      user: userWithoutPassword
+      user: userResponse
     })
   } catch (err) {
     res.status(400).json({ error: err.message })

@@ -35,12 +35,11 @@ function Auth() {
         axios.post(`${import.meta.env.VITE_API_URL}/api/auth/login`, {
             email: loginEmail,
             password: loginPassword 
-        })        .then(response => {
-            console.log('Login successful:', response.data);
+        })
+        .then(response => {
             navigate('/dashboard');
         })
         .catch(error => {
-            console.error('Login error:', error.response ? error.response.data : error.message);
             setLoginError('Invalid email or password');
         }) 
         .finally(() => {
@@ -92,19 +91,16 @@ function Auth() {
                     studentIdPicture: accountType === 'seller' ? studentIdPicture : undefined
                 })
                 .then(response => {
-                    console.log('Registration successful:', response.data);
                     setSuccessMessage('Account created successfully! Please login.');
                     setActiveTab('login');
                 })
                 .catch(error => {
-                    console.error('Registration error:', error.response ? error.response.data : error.message);
                 })
                 .finally(() => {
                     setLoading(false);
                 });
             })
             .catch(error => {
-                console.error('Email check error:', error.response ? error.response.data : error.message);
                 setError('Something went wrong. Please try again.');
                 setLoading(false);
             });

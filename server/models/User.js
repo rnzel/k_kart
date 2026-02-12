@@ -9,7 +9,6 @@ const userSchema = new mongoose.Schema({
   role: { type: String, enum: ["buyer", "seller", "admin"], default: "buyer" },
   dateRegistered: { type: Date, default: Date.now },
   emailVerifiedAt: { type: Date, default: null },
-  // Seller-specific fields
   studentIdNumber: { type: String },
   studentIdPicture: { type: String },
   isVerified: { type: Boolean, default: false }
@@ -17,7 +16,10 @@ const userSchema = new mongoose.Schema({
 
 // Pre-save middleware to hash password
 userSchema.pre('save', async function(next) {
-  if (!this.isModified('password')) return next()
+  if (!this.isModified('password')) {
+    return next()
+  }
+  
   const salt = await bcrypt.genSalt(10)
   this.password = await bcrypt.hash(this.password, salt)
   next()
