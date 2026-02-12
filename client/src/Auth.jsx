@@ -39,7 +39,13 @@ function Auth() {
         .then(response => {
             localStorage.setItem('token', response.data.token);
             localStorage.setItem('user', JSON.stringify(response.data.user));
-            navigate('/dashboard');
+            
+            // Redirect based on user role
+            if (response.data.user.role === 'seller') {
+                navigate('/seller-dashboard');
+            } else {
+                navigate('/dashboard');
+            }
         })
         .catch(error => {
             setLoginError(error.response?.data?.error || 'Login failed. Please try again.');
