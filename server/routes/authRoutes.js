@@ -1,6 +1,7 @@
 const express = require('express')
 const router = express.Router()
 const User = require('../models/User')
+const bcrypt = require('bcryptjs')
 
 // Register
 router.post('/register', async (req, res) => {
@@ -21,7 +22,12 @@ router.post('/register', async (req, res) => {
     }
     
     const user = await User.create(userData)
-    res.status(201).json({ message: 'User created successfully', user })
+
+    const { password: _, ...userWithoutPassword } = user.toObject()
+    res.status(201).json({ 
+      message: 'User registered successfully',
+      user: userWithoutPassword
+    })
   } catch (err) {
     res.status(400).json({ error: err.message })
   }
@@ -48,7 +54,9 @@ router.post('/login', async (req, res) => {
       return res.status(401).json({ error: 'Invalid email or password' })
     }
     
-    if (user.password !== password) {
+    // Compare hashed password
+    const isMatch = await bcrypt.compare(password, user.password)
+    if (!isMatch) {
       return res.status(401).json({ error: 'Invalid email or password' })
     }
     
