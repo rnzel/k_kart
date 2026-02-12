@@ -49,15 +49,25 @@ function Navbar() {
                     
                     {/* Dropdown Menu */}
                     {dropdownOpen && (
-                        <div className="position-absolute end-0 mt-2 bg-white border rounded shadow py-2 p-2" style={{minWidth:'230px',zIndex:1000}}>
+                        <div className="position-absolute end-0 mt-2 bg-white border border-black rounded" style={{minWidth:'230px',zIndex:1000}}>
                             <div className="px-3 py-2 border-bottom">
                                 <strong>{user?.firstName} {user?.lastName}</strong>
                                 <div className="text-muted small">{user?.email}</div>
                             </div>
-                            <Link className="dropdown-item px-3 py-2" to="/profile">Profile</Link>
-                            <button className="dropdown-item px-3 py-2 text-danger w-100 text-start border-0 bg-transparent" onClick={handleLogout}>
-                                Logout
-                            </button>
+
+                            <div className='item d-flex align-items-center px-3'>
+                                <i className="bi bi-person me-2"></i>
+                                <Link to="/profile" className="dropdown-item px-3 py-2 w-100 text-start border-0 bg-transparent">
+                                    Profile
+                                </Link>
+                            </div>
+
+                            <div className='item d-flex align-items-center px-3'>
+                                <i className="bi bi-box-arrow-right me-2 text-danger"></i>
+                                <button className="dropdown-item px-3 py-2 text-danger w-100 text-start border-0 bg-transparent" onClick={handleLogout}>
+                                    Logout
+                                </button>
+                            </div>
                         </div>
                     )}
                 </div>

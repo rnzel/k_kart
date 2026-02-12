@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import 'bootstrap/dist/css/bootstrap.min.css'
+import 'bootstrap-icons/font/bootstrap-icons.css'
 import './custom-bootstrap.css'
 import Auth from './Auth.jsx'
 import Profile from './Profile.jsx'

@@ -77,7 +77,13 @@ h1 {
   padding: 10px !important;
 }
 
+/* nav */
 .navbar-brand {
   font-size: 24px !important;
   font-weight: bold !important;
 }
+
+.item:hover {
+  background-color: #f8f9fa !important;
+}
+

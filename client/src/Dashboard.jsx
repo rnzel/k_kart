@@ -9,7 +9,13 @@ function Dashboard() {
             
             <div className="container mt-4">
                 <h1>Welcome to the Dashboard</h1>
-                <p>This page is under construction.</p>
+
+                <div className="alert alert-info d-flex align-items-center" role="alert"  style={{ marginTop: "20px" }} >
+
+                    <i className="bi bi-info-circle me-2"></i>
+
+                    <p className="mb-0">This page is under construction.</p> 
+                </div>
             </div>
 
         </div>
