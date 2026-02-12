@@ -15,6 +15,11 @@ mongoose.connect(process.env.MONGO_URI)
     console.error('Error connecting to MongoDB:', err)
   })
 
+// MongoDB connection error handler
+mongoose.connection.on('error', (err) => {
+  console.error('MongoDB connection error:', err)
+})
+
 // Define Express app
 const app = express()
 

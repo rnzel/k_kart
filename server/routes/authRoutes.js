@@ -2,6 +2,7 @@ const express = require('express')
 const router = express.Router()
 const User = require('../models/User')
 const bcrypt = require('bcryptjs')
+const jwt = require('jsonwebtoken')
 
 // Register
 router.post('/register', async (req, res) => {
@@ -24,7 +25,7 @@ router.post('/register', async (req, res) => {
     const user = await User.create(userData)
 
     const userResponse = user.toObject()
-    delete userResponse.password // Remove password from response
+    delete userResponse.password
     res.status(201).json({ 
       message: 'User registered successfully',
       user: userResponse
@@ -61,8 +62,16 @@ router.post('/login', async (req, res) => {
       return res.status(401).json({ error: 'Invalid email or password' })
     }
     
+    // Generate JWT token
+    const token = jwt.sign(
+      { userId: user._id, role: user.role },
+      process.env.JWT_SECRET,
+      { expiresIn: '7d' }
+    )
+    
     res.json({ 
       message: 'Login successful',
+      token,
       user: {
         id: user._id,
         firstName: user.firstName,

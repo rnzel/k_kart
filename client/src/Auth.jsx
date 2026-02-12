@@ -37,10 +37,11 @@ function Auth() {
             password: loginPassword 
         })
         .then(response => {
+            localStorage.setItem('token', response.data.token);
             navigate('/dashboard');
         })
         .catch(error => {
-            setLoginError('Invalid email or password');
+            setLoginError(error.response?.data?.error || 'Login failed. Please try again.');
         }) 
         .finally(() => {
             setLoading(false);
@@ -95,6 +96,7 @@ function Auth() {
                     setActiveTab('login');
                 })
                 .catch(error => {
+                    setError(error.response?.data?.error || 'Registration failed. Please try again.');
                 })
                 .finally(() => {
                     setLoading(false);
