@@ -35,7 +35,7 @@ function Navbar() {
     return (
         <nav className="navbar navbar-expand-lg navbar-light border-bottom">
             <div className="container d-flex justify-content-between align-items-center">
-                <Link className="navbar-brand" to="/dashboard">KampusKart</Link> 
+                <Link className="navbar-brand">KampusKart</Link> 
                 
                 {/* User Avatar with Dropdown */}
                 <div className="position-relative">
