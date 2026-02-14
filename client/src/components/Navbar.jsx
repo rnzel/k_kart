@@ -1,5 +1,7 @@
 import { useState } from 'react'
 import { Link, useNavigate } from "react-router-dom";
+import { FiUser } from "react-icons/fi";
+import { FiLogOut } from "react-icons/fi";
 
 function Navbar() {
     const navigate = useNavigate();
@@ -56,14 +58,14 @@ function Navbar() {
                             </div>
 
                             <div className='item d-flex align-items-center px-3'>
-                                <i className="bi bi-person me-2"></i>
+                                <div className="me-2 d-flex align-items-center justify-content-center"><FiUser size={18} /></div>
                                 <Link to="/profile" className="dropdown-item px-3 py-2 w-100 text-start border-0 bg-transparent">
                                     Profile
                                 </Link>
                             </div>
 
                             <div className='item d-flex align-items-center px-3'>
-                                <i className="bi bi-box-arrow-right me-2 text-danger"></i>
+                                <div className="me-2 d-flex align-items-center justify-content-center text-danger"><FiLogOut size={18} /></div>
                                 <button className="dropdown-item px-3 py-2 text-danger w-100 text-start border-0 bg-transparent" onClick={handleLogout}>
                                     Logout
                                 </button>

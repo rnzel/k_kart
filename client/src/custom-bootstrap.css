@@ -2,6 +2,14 @@
   background-color: #db4444 !important;
 }
 
+.text-primary {
+  color: #db4444 !important;
+}
+
+.font-weight-semibold {
+  font-weight: 600 !important;
+}
+
 /* Custom btn-primary override */
 .btn-primary {
   background-color: #db4444 !important;
@@ -11,6 +19,18 @@
 .btn-primary:hover {
   background-color: #c13a3a !important;
   border-color: #b53737 !important;
+}
+
+.btn-secondary {
+  background-color: white !important;
+  border-color: black !important;
+  color: black !important;
+}
+
+.btn-secondary:hover {
+  background-color: #db4444 !important;
+  border-color: #db4444 !important;
+  color: white !important;
 }
 
 /* Form control focus/active border */
@@ -86,4 +106,3 @@ h1 {
 .item:hover {
   background-color: #f8f9fa !important;
 }
-
