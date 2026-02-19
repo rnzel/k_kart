@@ -82,7 +82,7 @@ function Auth() {
 
         // Check if email is already in use
         axios.post(`${import.meta.env.VITE_API_URL}/api/auth/check-email`, { email })
-            .then(response => {
+            .then((response) => {
                 if (response.data.exists) {
                     setError('Email is already in use');
                     setLoading(false);
@@ -98,18 +98,18 @@ function Auth() {
                     studentIdNumber: accountType === 'seller' ? studentIdNumber : undefined,
                     studentIdPicture: accountType === 'seller' ? studentIdPicture : undefined
                 })
-                .then(response => {
+                .then(() => {
                     setSuccessMessage('Account created successfully! Please login.');
                     setActiveTab('login');
                 })
-                .catch(error => {
-                    setError(error.response?.data?.error || 'Registration failed. Please try again.');
+                .catch((err) => {
+                    setError(err.response?.data?.error || 'Registration failed. Please try again.');
                 })
                 .finally(() => {
                     setLoading(false);
                 });
             })
-            .catch(error => {
+            .catch(() => {
                 setError('Something went wrong. Please try again.');
                 setLoading(false);
             });

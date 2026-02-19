@@ -91,10 +91,20 @@ h1 {
   }
 }
 
+/* border */
+.border-primary {
+  border: 1px solid #db4444 !important;  
+}
+
 /* dash border */
 .dashed-border {
   border: 2px dashed #ccc !important;
   padding: 10px !important;
+}
+
+.dashed-border:hover {
+  border-color: #db4444 !important;
+  background-color: #fff9f9 !important;
 }
 
 /* nav */

@@ -1,35 +1,43 @@
 const express = require('express')
-const multer = require('multer')
 const router = express.Router()
 const { createShop, getMyShop, updateShop, deleteShop } = require('../controllers/shopController')
 const authenticateToken = require('../middleware/auth')
 
-// Multer setup for handling multipart/form-data (for image uploads)
-const storage = multer.diskStorage({ 
-    destination: (req, file, cb) => { cb(null, 'uploads/') },
-    filename: (req, file, cb) => { cb(null, Date.now() + '-' + file.originalname) }
-})
-const fileFilter = (req, file, cb) => {
-    if (file.mimetype.startsWith('image/')) {
-        cb(null, true)
-    } else {
-        cb(new Error('Only image files are allowed'), false)
+// Wrapper to handle the upload and call the controller
+const handleShopUpload = (fieldName) => {
+    return (req, res, next) => {
+        try {
+            const upload = global.getShopUpload()
+            const uploadMiddleware = upload.single(fieldName)
+            
+            uploadMiddleware(req, res, (err) => {
+                if (err) {
+                    if (err.code === 'LIMIT_FILE_SIZE') {
+                        return res.status(400).json({ message: 'File size exceeds 5MB limit' })
+                    }
+                    if (err.message === 'Only image files are allowed!') {
+                        return res.status(400).json({ message: err.message })
+                    }
+                    return res.status(400).json({ message: err.message })
+                }
+                next()
+            })
+        } catch (err) {
+            return res.status(500).json({ message: 'Upload not initialized. Please try again.' })
+        }
     }
 }
 
-const upload = multer({ storage, fileFilter })
-
 // Route to create a new shop
-router.post('/', authenticateToken, upload.single('shopImage'), createShop)
+router.post('/', authenticateToken, handleShopUpload('shopLogo'), createShop)
 
 // Route to get current user's shop
 router.get('/my-shop', authenticateToken, getMyShop)
 
-// Route to update shop details (including optional image update)
-router.put('/update/:id', authenticateToken, upload.single('shopImage'), updateShop)
+// Route to update shop details
+router.put('/update-shop/:id', authenticateToken, handleShopUpload('shopLogo'), updateShop)
 
 // Route to delete current user's shop
-router.delete('/', authenticateToken, deleteShop)
+router.delete('/delete-shop', authenticateToken, deleteShop)
 
 module.exports = router;
-

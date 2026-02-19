@@ -1,11 +1,13 @@
 const Shop = require("../models/Shop");
+const { getGridFS } = require("../config/gridfs");
 
 // Update shop details 
 const updateShop = async (req, res) => {
     try {
         const { shopName, shopDescription } = req.body;
-        const shopImage = req.file ? req.file.path : null;
+        const shopLogo = req.file ? req.file.filename : null;
         const owner = req.user.userId;
+
         // Validate input
         if (!shopName || !shopName.trim()) {
             return res.status(400).json({ message: "Shop name is required" });
@@ -24,8 +26,18 @@ const updateShop = async (req, res) => {
         shop.shopDescription = shopDescription.trim();
         
         if (req.file) {
-            shop.shopImage = req.file.path; // Update image only if a new one is uploaded
+            // Delete old image from GridFS if exists
+            if (shop.shopLogo) {
+                try {
+                    const gfs = getGridFS();
+                    await gfs.files.deleteOne({ filename: shop.shopLogo });
+                } catch (err) {
+                    console.error('Error deleting old image from GridFS:', err);
+                }
+            }
+            shop.shopLogo = req.file.filename; // Store filename from GridFS
         }
+        
         await shop.save();
         res.status(200).json(shop);
     } catch (error) {
@@ -37,7 +49,7 @@ const updateShop = async (req, res) => {
 const createShop = async (req, res) => {
     try {
         const { shopName, shopDescription } = req.body;
-        const shopImage = req.file ? req.file.path : null;
+        const shopLogo = req.file ? req.file.filename : null;
         const owner = req.user.userId;
 
         // Validate input
@@ -57,7 +69,7 @@ const createShop = async (req, res) => {
         const newShop = new Shop({
             shopName: shopName.trim(),
             shopDescription: shopDescription.trim(),
-            shopImage,
+            shopLogo,
             owner
         });
 
@@ -87,8 +99,6 @@ const getMyShop = async (req, res) => {
 // Delete current user's shop
 const deleteShop = async (req, res) => {
     try {
-        const fs = require('fs');
-        const path = require('path');
         const owner = req.user.userId;
         
         const shop = await Shop.findOne({ owner });
@@ -96,11 +106,13 @@ const deleteShop = async (req, res) => {
             return res.status(404).json({ message: "Shop not found" });
         }
 
-        // Delete the shop image file if it exists
-        if (shop.shopImage) {
-            const imagePath = path.join(__dirname, '..', shop.shopImage);
-            if (fs.existsSync(imagePath)) {
-                fs.unlinkSync(imagePath);
+        // Delete the shop logo from GridFS if it exists
+        if (shop.shopLogo) {
+            try {
+                const gfs = getGridFS();
+                await gfs.files.deleteOne({ filename: shop.shopLogo });
+            } catch (err) {
+                console.error('Error deleting image from GridFS:', err);
             }
         }
 
