@@ -4,6 +4,18 @@ const express = require('express')
 const cors = require('cors')
 const mongoose = require('mongoose')
 
+// ============================================
+// Environment Variable Validation
+// ============================================
+if (!process.env.MONGO_URI) {
+  console.error('❌ ERROR: MONGO_URI environment variable is required')
+  process.exit(1)
+}
+if (!process.env.JWT_SECRET) {
+  console.error('❌ ERROR: JWT_SECRET environment variable is required')
+  process.exit(1)
+}
+
 // Import routes
 const authRoutes = require('./routes/authRoutes')
 const shopRoutes = require('./routes/shopRoutes')
@@ -21,17 +33,16 @@ const PORT = process.env.PORT || 3000
 const corsOptions = {
   origin: function (origin, callback) {
     const allowedOrigins = [
-      'http://localhost:5173',
-      'http://localhost:3000',
-      'https://k-kart-7wpp.onrender.com',
-      /\.vercel\.app$/
+      'http://localhost:5173',              // Local dev
+      'http://localhost:3000',              // Local test
+      'https://k-kart-mauve.vercel.app',    // Your actual frontend
+      'https://k-kart-7wpp.onrender.com'    // Your backend
     ]
     
-    if (!origin || allowedOrigins.some(allowed => 
-      allowed instanceof RegExp ? allowed.test(origin) : allowed === origin
-    )) {
+    if (!origin || allowedOrigins.includes(origin)) {
       callback(null, true)
     } else {
+      console.warn(`CORS blocked unauthorized origin: ${origin}`)
       callback(new Error('Not allowed by CORS'))
     }
   },
@@ -105,6 +116,13 @@ app.get('/api/health', (req, res) => {
     mongodb: mongoose.connection.readyState === 1 ? 'connected' : 'disconnected',
     gridfs: isGridFSReady() ? 'ready' : 'not ready'
   })
+})
+
+// ============================================
+// 404 Not Found Handler
+// ============================================
+app.use((req, res) => {
+  res.status(404).json({ message: 'Route not found' })
 })
 
 // ============================================

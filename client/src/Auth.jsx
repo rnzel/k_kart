@@ -1,6 +1,6 @@
 import { useState } from "react";
-import axios from "axios";
 import { useNavigate } from "react-router-dom";
+import api from "./utils/api";
 
 function Auth() {
     // General states
@@ -32,7 +32,7 @@ function Auth() {
         e.preventDefault();
         setLoading(true);
         setLoginError('');
-        axios.post(`${import.meta.env.VITE_API_URL}/api/auth/login`, {
+        api.post(`/api/auth/login`, {
             email: loginEmail,
             password: loginPassword 
         })
@@ -81,7 +81,7 @@ function Auth() {
         }
 
         // Check if email is already in use
-        axios.post(`${import.meta.env.VITE_API_URL}/api/auth/check-email`, { email })
+        api.post(`/api/auth/check-email`, { email })
             .then((response) => {
                 if (response.data.exists) {
                     setError('Email is already in use');
@@ -89,7 +89,7 @@ function Auth() {
                     return;
                 }
                 // Email is available, proceed with registration
-                axios.post(`${import.meta.env.VITE_API_URL}/api/auth/register`, {
+                api.post(`/api/auth/register`, {
                     firstName,
                     lastName,
                     email,

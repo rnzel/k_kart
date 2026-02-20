@@ -1,7 +1,7 @@
 import React from "react";
-import axios from "axios";
 import { FiBox } from "react-icons/fi";
 import { FaStar } from "react-icons/fa";
+import api from "../../utils/api";
 import DangerModal from "../../components/DangerModal.jsx";
 
 function ProductsSection() {
@@ -38,11 +38,7 @@ function ProductsSection() {
         const fetchProducts = async () => {
             if (!token) return;
             try {
-                const response = await axios.get("/api/products/my-products", {
-                    headers: {
-                        Authorization: `Bearer ${token}`,
-                    },
-                });
+                const response = await api.get("/api/products/my-products");
                 // Ensure response.data is an array
                 const productsData = Array.isArray(response.data) ? response.data : [];
                 setProducts(productsData);
@@ -168,9 +164,8 @@ function ProductsSection() {
                 formData.append("productImages", file);
             });
 
-            const response = await axios.post("/api/products", formData, {
+            const response = await api.post("/api/products", formData, {
                 headers: {
-                    Authorization: `Bearer ${token}`,
                     "Content-Type": "multipart/form-data",
                 },
             });
@@ -222,11 +217,7 @@ function ProductsSection() {
         setError("");
 
         try {
-            await axios.delete(`/api/products/delete-product/${deletingProductId}`, {
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                },
-            });
+            await api.delete(`/api/products/delete-product/${deletingProductId}`);
 
             setProducts(products.filter(p => p._id !== deletingProductId));
             setShowDeleteModal(false);
@@ -279,9 +270,8 @@ function ProductsSection() {
                 formData.append("productImages", file);
             });
 
-            const response = await axios.put(`/api/products/update-product/${editingProductId}`, formData, {
+            const response = await api.put(`/api/products/update-product/${editingProductId}`, formData, {
                 headers: {
-                    Authorization: `Bearer ${token}`,
                     "Content-Type": "multipart/form-data",
                 },
             });

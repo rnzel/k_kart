@@ -1,6 +1,6 @@
 import React from "react";
-import axios from "axios";
 import { FiHome, FiShoppingBag } from "react-icons/fi";
+import api from "../../utils/api";
 import DangerModal from "../../components/DangerModal.jsx";
 
 function MyShopSection() {
@@ -26,11 +26,7 @@ function MyShopSection() {
     React.useEffect(() => {
         const checkShopExists = async () => {
             try {
-                const response = await axios.get("/api/shops/my-shop", {
-                    headers: {
-                        Authorization: `Bearer ${token}`,
-                    },
-                });
+                const response = await api.get("/api/shops/my-shop");
                 // Ensure we're setting the shop data correctly
                 if (response.data && response.data._id) {
                     setShopData(response.data);
@@ -117,10 +113,9 @@ function MyShopSection() {
 
         if (isEditing && shopData && shopData._id) {
             // Update existing shop - use ID from shopData
-            axios
+            api
                 .put(`/api/shops/update-shop/${shopData._id}`, formData, {
                     headers: {
-                        Authorization: `Bearer ${token}`,
                         "Content-Type": "multipart/form-data",
                     },
                 })
@@ -140,20 +135,15 @@ function MyShopSection() {
                 });
         } else {
             // Create new shop
-            axios
+            api
                 .post("/api/shops", formData, {
                     headers: {
-                        Authorization: `Bearer ${token}`,
                         "Content-Type": "multipart/form-data",
                     },
                 })
                 .then(() => {
-                    axios
-                        .get("/api/shops/my-shop", {
-                            headers: {
-                                Authorization: `Bearer ${token}`,
-                            },
-                        })
+                    api
+                        .get("/api/shops/my-shop")
                         .then((res) => {
                             setShopData(res.data);
                         });
@@ -194,11 +184,7 @@ function MyShopSection() {
         setError("");
 
         try {
-            await axios.delete("/api/shops/delete-shop", {
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                },
-            });
+            await api.delete("/api/shops/delete-shop");
 
             // Reset UI/state after deletion
             setShowDeleteModal(false);
