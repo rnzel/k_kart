@@ -1,5 +1,23 @@
+const mongoose = require('mongoose');
 const Shop = require("../models/Shop");
-const { getGridFS } = require("../config/gridfs");
+const { getGridFSBucket } = require("../config/gridfsBucket");
+
+// Helper function to delete file from GridFS by filename
+const deleteFileFromGridFS = async (filename) => {
+  try {
+    const bucket = getGridFSBucket();
+    const db = mongoose.connection.db;
+    const filesCollection = db.collection('uploads.files');
+    
+    const file = await filesCollection.findOne({ filename });
+    if (file) {
+      await bucket.delete(file._id);
+      console.log(`Deleted file: ${filename}`);
+    }
+  } catch (err) {
+    console.error('Error deleting file from GridFS:', err);
+  }
+};
 
 // Update shop details 
 const updateShop = async (req, res) => {
@@ -8,7 +26,6 @@ const updateShop = async (req, res) => {
         const shopLogo = req.file ? req.file.filename : null;
         const owner = req.user.userId;
 
-        // Validate input
         if (!shopName || !shopName.trim()) {
             return res.status(400).json({ message: "Shop name is required" });
         }
@@ -21,21 +38,14 @@ const updateShop = async (req, res) => {
             return res.status(404).json({ message: "Shop not found" });
         }
 
-        // Only update fields that are provided
         shop.shopName = shopName.trim();
         shop.shopDescription = shopDescription.trim();
         
         if (req.file) {
-            // Delete old image from GridFS if exists
             if (shop.shopLogo) {
-                try {
-                    const gfs = getGridFS();
-                    await gfs.files.deleteOne({ filename: shop.shopLogo });
-                } catch (err) {
-                    console.error('Error deleting old image from GridFS:', err);
-                }
+                await deleteFileFromGridFS(shop.shopLogo);
             }
-            shop.shopLogo = req.file.filename; // Store filename from GridFS
+            shop.shopLogo = req.file.filename;
         }
         
         await shop.save();
@@ -52,7 +62,6 @@ const createShop = async (req, res) => {
         const shopLogo = req.file ? req.file.filename : null;
         const owner = req.user.userId;
 
-        // Validate input
         if (!shopName || !shopName.trim()) {
             return res.status(400).json({ message: "Shop name is required" });
         }
@@ -60,7 +69,6 @@ const createShop = async (req, res) => {
             return res.status(400).json({ message: "Shop description is required" });
         }
 
-        // Check if user already has a shop
         const existingShop = await Shop.findOne({ owner });
         if (existingShop) {
             return res.status(409).json({ message: "You already have a shop" });
@@ -106,14 +114,8 @@ const deleteShop = async (req, res) => {
             return res.status(404).json({ message: "Shop not found" });
         }
 
-        // Delete the shop logo from GridFS if it exists
         if (shop.shopLogo) {
-            try {
-                const gfs = getGridFS();
-                await gfs.files.deleteOne({ filename: shop.shopLogo });
-            } catch (err) {
-                console.error('Error deleting image from GridFS:', err);
-            }
+            await deleteFileFromGridFS(shop.shopLogo);
         }
 
         await Shop.findByIdAndDelete(shop._id);

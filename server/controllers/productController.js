@@ -1,6 +1,24 @@
+const mongoose = require('mongoose');
 const Product = require("../models/Product");
 const Shop = require("../models/Shop");
-const { getGridFS } = require("../config/gridfs");
+const { getGridFSBucket } = require("../config/gridfsBucket");
+
+// Helper function to delete file from GridFS by filename
+const deleteFileFromGridFS = async (filename) => {
+  try {
+    const bucket = getGridFSBucket();
+    const db = mongoose.connection.db;
+    const filesCollection = db.collection('uploads.files');
+    
+    const file = await filesCollection.findOne({ filename });
+    if (file) {
+      await bucket.delete(file._id);
+      console.log(`Deleted file: ${filename}`);
+    }
+  } catch (err) {
+    console.error('Error deleting file from GridFS:', err);
+  }
+};
 
 // Update product details
 const updateProduct = async (req, res) => {
@@ -12,26 +30,22 @@ const updateProduct = async (req, res) => {
       return res.status(401).json({ message: "Unauthorized" });
     }
 
-    // Find the seller's shop
     const shop = await Shop.findOne({ owner });
     if (!shop) {
       return res.status(404).json({ message: "Shop not found" });
     }
 
-    // Find the product
     const product = await Product.findById(id);
     if (!product) {
       return res.status(404).json({ message: "Product not found" });
     }
 
-    // Verify the product belongs to the seller's shop
     if (product.shop.toString() !== shop._id.toString()) {
       return res.status(403).json({ message: "Not authorized to update this product" });
     }
 
     const { productName, productDescription, productPrice, productStock, featuredImageIndex } = req.body;
 
-    // Update fields if provided
     if (productName !== undefined) {
       if (!productName.trim()) {
         return res.status(400).json({ message: "Product name cannot be empty" });
@@ -65,26 +79,17 @@ const updateProduct = async (req, res) => {
       }
     }
 
-    // Handle new image uploads
     const files = Array.isArray(req.files) ? req.files : [];
     if (files.length > 0) {
-      // Remove old images from GridFS
       if (product.productImages && product.productImages.length > 0) {
-        try {
-          const gfs = getGridFS();
-          for (const filename of product.productImages) {
-            await gfs.files.deleteOne({ filename });
-          }
-        } catch (err) {
-          console.error('Error deleting old images from GridFS:', err);
+        for (const filename of product.productImages) {
+          await deleteFileFromGridFS(filename);
         }
       }
 
-      // Add new images (replace all) - store filenames from GridFS
       const newImageFilenames = files.slice(0, 3).map((file) => file.filename);
       product.productImages = newImageFilenames;
 
-      // Reset featuredImageIndex if it exceeds new array length
       if (product.featuredImageIndex >= product.productImages.length) {
         product.featuredImageIndex = 0;
       }
@@ -107,38 +112,27 @@ const deleteProduct = async (req, res) => {
       return res.status(401).json({ message: "Unauthorized" });
     }
 
-    // Find the seller's shop
     const shop = await Shop.findOne({ owner });
     if (!shop) {
       return res.status(404).json({ message: "Shop not found" });
     }
 
-    // Find the product
     const product = await Product.findById(id);
     if (!product) {
       return res.status(404).json({ message: "Product not found" });
     }
 
-    // Verify the product belongs to the seller's shop
     if (product.shop.toString() !== shop._id.toString()) {
       return res.status(403).json({ message: "Not authorized to delete this product" });
     }
 
-    // Remove images from GridFS
     if (product.productImages && product.productImages.length > 0) {
-      try {
-        const gfs = getGridFS();
-        for (const filename of product.productImages) {
-          await gfs.files.deleteOne({ filename });
-        }
-      } catch (err) {
-        console.error('Error deleting images from GridFS:', err);
+      for (const filename of product.productImages) {
+        await deleteFileFromGridFS(filename);
       }
     }
 
-    // Delete the product
     await Product.findByIdAndDelete(id);
-
     res.status(200).json({ message: "Product deleted successfully" });
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -164,13 +158,11 @@ const addProduct = async (req, res) => {
       return res.status(400).json({ message: "Valid product price is required" });
     }
 
-    // Find the seller's shop
     const shop = await Shop.findOne({ owner });
     if (!shop) {
       return res.status(404).json({ message: "Shop not found" });
     }
 
-    // Collect up to 3 image filenames from GridFS (if configured with array upload)
     const files = Array.isArray(req.files) ? req.files : [];
     const imageFilenames = files.slice(0, 3).map((file) => file.filename);
 
