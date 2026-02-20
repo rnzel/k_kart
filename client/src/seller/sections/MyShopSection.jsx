@@ -1,6 +1,7 @@
 import React from "react";
 import { FiHome, FiShoppingBag } from "react-icons/fi";
 import api from "../../utils/api";
+import { getImageUrl } from "../../utils/imageUrl.js";
 import DangerModal from "../../components/DangerModal.jsx";
 
 function MyShopSection() {
@@ -53,7 +54,7 @@ function MyShopSection() {
             setShopName(shopData.shopName || "");
             setShopDescription(shopData.shopDescription || "");
             setShopImage("");
-            setImagePreview(shopData.shopLogo ? `/api/images/${shopData.shopLogo}` : null);
+            setImagePreview(shopData.shopLogo ? getImageUrl(shopData.shopLogo) : null);
             setImageName("");
             setIsEditing(true);
             setShowForm(true);
@@ -245,7 +246,7 @@ function MyShopSection() {
                         <div className="d-flex flex-column align-items-center mb-4">
                             {shopData?.shopLogo ? (
                                 <img
-                                    src={`/api/images/${shopData.shopLogo}`}
+                                    src={getImageUrl(shopData.shopLogo)}
                                     alt={shopData.shopName}
                                     style={{
                                         width: "150px",

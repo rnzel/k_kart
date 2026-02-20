@@ -2,6 +2,7 @@ import React from "react";
 import { FiBox } from "react-icons/fi";
 import { FaStar } from "react-icons/fa";
 import api from "../../utils/api";
+import { getImageUrl } from "../../utils/imageUrl.js";
 import DangerModal from "../../components/DangerModal.jsx";
 
 function ProductsSection() {
@@ -196,7 +197,7 @@ function ProductsSection() {
         
         // Ensure productImages is an array before mapping
         const imagesArray = Array.isArray(product.productImages) ? product.productImages : [];
-        setProductImagePreviews(imagesArray.map(img => `/api/images/${img}`));
+        setProductImagePreviews(imagesArray.map(img => getImageUrl(img)));
         setProductImageNames(imagesArray.map(() => ""));
         
         setFeaturedImageIndex(product.featuredImageIndex || 0);
@@ -333,7 +334,7 @@ function ProductsSection() {
                                 const productImages = Array.isArray(product.productImages) ? product.productImages : [];
                                 const displayImage =
                                     productImages.length > 0
-                                        ? `/api/images/${productImages[featuredIndex]}`
+                                        ? getImageUrl(productImages[featuredIndex])
                                         : null;
 
                                 return (
