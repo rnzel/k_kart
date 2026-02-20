@@ -31,8 +31,13 @@ function MyShopSection() {
                         Authorization: `Bearer ${token}`,
                     },
                 });
-                setShopData(response.data);
-                setShopExists(true);
+                // Ensure we're setting the shop data correctly
+                if (response.data && response.data._id) {
+                    setShopData(response.data);
+                    setShopExists(true);
+                } else {
+                    setShopExists(false);
+                }
             } catch (err) {
                 if (err.response && err.response.status === 404) {
                     setShopExists(false);
@@ -48,7 +53,7 @@ function MyShopSection() {
     }, [token]);
 
     const handleEditClick = () => {
-        if (shopData) {
+        if (shopData && shopData._id) {
             setShopName(shopData.shopName || "");
             setShopDescription(shopData.shopDescription || "");
             setShopImage("");
@@ -56,6 +61,8 @@ function MyShopSection() {
             setImageName("");
             setIsEditing(true);
             setShowForm(true);
+        } else {
+            setError("Shop data not loaded. Please refresh the page.");
         }
     };
 
@@ -108,8 +115,8 @@ function MyShopSection() {
             formData.append("shopLogo", shopImage);
         }
 
-        if (isEditing && shopData) {
-            // Update existing shop
+        if (isEditing && shopData && shopData._id) {
+            // Update existing shop - use ID from shopData
             axios
                 .put(`/api/shops/update-shop/${shopData._id}`, formData, {
                     headers: {

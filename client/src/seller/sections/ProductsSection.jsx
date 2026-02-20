@@ -43,11 +43,14 @@ function ProductsSection() {
                         Authorization: `Bearer ${token}`,
                     },
                 });
-                setProducts(response.data || []);
-                setProductExists(response.data && response.data.length > 0);
+                // Ensure response.data is an array
+                const productsData = Array.isArray(response.data) ? response.data : [];
+                setProducts(productsData);
+                setProductExists(productsData.length > 0);
             } catch (err) {
-                // Silently ignore for now; section will show "no products" state
                 console.error("Error fetching products", err);
+                setProducts([]);
+                setProductExists(false);
             }
         };
 
@@ -83,7 +86,6 @@ function ProductsSection() {
     const handleImageChange = (e) => {
         const files = Array.from(e.target.files || []);
         
-        // Calculate how many more images can be added
         const remainingSlots = 3 - productImages.length;
         
         if (remainingSlots <= 0) {
@@ -91,7 +93,6 @@ function ProductsSection() {
             return;
         }
         
-        // Only take the number of files that fit in remaining slots
         const newFiles = files.slice(0, remainingSlots);
         
         if (files.length > remainingSlots) {
@@ -100,21 +101,17 @@ function ProductsSection() {
             setError("");
         }
 
-        // Append new images to existing array
         const updatedImages = [...productImages, ...newFiles];
         setProductImages(updatedImages);
 
-        // Generate preview URLs for new files and append to existing previews
         const newPreviews = newFiles.map((file) => URL.createObjectURL(file));
         const updatedPreviews = [...productImagePreviews, ...newPreviews];
         setProductImagePreviews(updatedPreviews);
 
-        // Append new file names
         const newNames = newFiles.map((file) => file.name);
         const updatedNames = [...productImageNames, ...newNames];
         setProductImageNames(updatedNames);
         
-        // Clear the file input value so the same file can be selected again if needed
         e.target.value = "";
     };
 
@@ -126,7 +123,6 @@ function ProductsSection() {
         setProductImagePreviews(newPreviews);
         setProductImageNames(newNames);
         
-        // Adjust featuredImageIndex if needed
         if (index === featuredImageIndex) {
             setFeaturedImageIndex(0);
         } else if (index < featuredImageIndex) {
@@ -179,7 +175,6 @@ function ProductsSection() {
                 },
             });
 
-            // Prepend new product to the list
             setProducts((prev) => [response.data, ...prev]);
             setProductExists(true);
             setShowForm(false);
@@ -203,8 +198,12 @@ function ProductsSection() {
         setProductPrice(product.productPrice?.toString() || "");
         setProductStock(product.productStock?.toString() || "");
         setProductImages([]);
-        setProductImagePreviews(product.productImages?.map(img => `/api/images/${img}`) || []);
-        setProductImageNames(product.productImages?.map(() => "") || []);
+        
+        // Ensure productImages is an array before mapping
+        const imagesArray = Array.isArray(product.productImages) ? product.productImages : [];
+        setProductImagePreviews(imagesArray.map(img => `/api/images/${img}`));
+        setProductImageNames(imagesArray.map(() => ""));
+        
         setFeaturedImageIndex(product.featuredImageIndex || 0);
         setIsEditing(true);
         setEditingProductId(product._id);
@@ -229,12 +228,10 @@ function ProductsSection() {
                 },
             });
 
-            // Remove product from list
             setProducts(products.filter(p => p._id !== deletingProductId));
             setShowDeleteModal(false);
             setDeletingProductId(null);
             
-            // Check if we still have products
             const updatedProducts = products.filter(p => p._id !== deletingProductId);
             setProductExists(updatedProducts.length > 0);
         } catch (err) {
@@ -278,7 +275,6 @@ function ProductsSection() {
             formData.append("productStock", productStock);
             formData.append("featuredImageIndex", featuredImageIndex);
 
-            // Only append new images if there are any
             productImages.forEach((file) => {
                 formData.append("productImages", file);
             });
@@ -290,7 +286,6 @@ function ProductsSection() {
                 },
             });
 
-            // Update product in the list
             setProducts(products.map(p => p._id === editingProductId ? response.data : p));
             setShowForm(false);
             setIsEditing(false);
@@ -345,9 +340,10 @@ function ProductsSection() {
                         <div className="row g-3">
                             {products.map((product) => {
                                 const featuredIndex = product.featuredImageIndex || 0;
+                                const productImages = Array.isArray(product.productImages) ? product.productImages : [];
                                 const displayImage =
-                                    product.productImages && product.productImages.length > 0
-                                        ? `/api/images/${product.productImages[featuredIndex]}`
+                                    productImages.length > 0
+                                        ? `/api/images/${productImages[featuredIndex]}`
                                         : null;
 
                                 return (
