@@ -83,17 +83,19 @@ const updateProduct = async (req, res) => {
     // Parse removal/keep directives from form data
     let keepImages = null;
     let removeImages = null;
+    let keepImagesProvided = false;  // Track if keepImages was explicitly sent
 
-    if (req.body.keepImages) {
+    if (req.body.keepImages !== undefined) {
+      keepImagesProvided = true;
       try {
         keepImages = Array.isArray(req.body.keepImages)
           ? req.body.keepImages
           : JSON.parse(req.body.keepImages);
         if (!Array.isArray(keepImages)) {
-          keepImages = null;
+          keepImages = [];  // Default to empty array if not a valid array
         }
       } catch (err) {
-        keepImages = null;
+        keepImages = [];
       }
     }
 
@@ -116,11 +118,11 @@ const updateProduct = async (req, res) => {
     if (removeImages && removeImages.length > 0) {
       // If removeImages provided, keep all EXCEPT those in removeImages
       imagesToKeep = currentImages.filter((filename) => !removeImages.includes(filename));
-    } else if (keepImages && keepImages.length > 0) {
-      // If keepImages provided, keep only those in keepImages
+    } else if (keepImagesProvided) {
+      // If keepImages was explicitly sent (even if empty), keep only those in keepImages
       imagesToKeep = keepImages.filter((filename) => currentImages.includes(filename));
     }
-    // else: if neither is provided or both are empty, keep all current images (default behavior)
+    // else: if neither is provided, keep all current images (default behavior)
 
     // Calculate how many new images we can add (max 3 total)
     const availableSlots = Math.max(0, 3 - imagesToKeep.length);
