@@ -71,27 +71,85 @@ const updateProduct = async (req, res) => {
       product.productStock = Number(productStock);
     }
 
-    if (featuredImageIndex !== undefined) {
-      const maxIndex = product.productImages ? product.productImages.length - 1 : 0;
-      const newIndex = Number(featuredImageIndex);
-      if (newIndex >= 0 && newIndex <= maxIndex) {
-        product.featuredImageIndex = newIndex;
+    // ===== IMAGE HANDLING: Preserve existing images, add new ones, enforce 3-image limit =====
+    const files = Array.isArray(req.files) ? req.files : [];
+    const newImageFilenames = files.length > 0 ? files.map((file) => file.filename) : [];
+    
+    // Get current images or empty array
+    const currentImages = product.productImages && Array.isArray(product.productImages) 
+      ? [...product.productImages] 
+      : [];
+
+    // Parse removal/keep directives from form data
+    let keepImages = null;
+    let removeImages = null;
+
+    if (req.body.keepImages) {
+      try {
+        keepImages = Array.isArray(req.body.keepImages)
+          ? req.body.keepImages
+          : JSON.parse(req.body.keepImages);
+        if (!Array.isArray(keepImages)) {
+          keepImages = null;
+        }
+      } catch (err) {
+        keepImages = null;
       }
     }
 
-    const files = Array.isArray(req.files) ? req.files : [];
-    if (files.length > 0) {
-      if (product.productImages && product.productImages.length > 0) {
-        for (const filename of product.productImages) {
-          await deleteFileFromGridFS(filename);
+    if (req.body.removeImages) {
+      try {
+        removeImages = Array.isArray(req.body.removeImages)
+          ? req.body.removeImages
+          : JSON.parse(req.body.removeImages);
+        if (!Array.isArray(removeImages)) {
+          removeImages = null;
         }
+      } catch (err) {
+        removeImages = null;
       }
+    }
 
-      const newImageFilenames = files.slice(0, 3).map((file) => file.filename);
-      product.productImages = newImageFilenames;
+    // Determine which images to keep based on removal/keep directives
+    let imagesToKeep = currentImages;
 
-      if (product.featuredImageIndex >= product.productImages.length) {
-        product.featuredImageIndex = 0;
+    if (removeImages && removeImages.length > 0) {
+      // If removeImages provided, keep all EXCEPT those in removeImages
+      imagesToKeep = currentImages.filter((filename) => !removeImages.includes(filename));
+    } else if (keepImages && keepImages.length > 0) {
+      // If keepImages provided, keep only those in keepImages
+      imagesToKeep = keepImages.filter((filename) => currentImages.includes(filename));
+    }
+    // else: if neither is provided or both are empty, keep all current images (default behavior)
+
+    // Calculate how many new images we can add (max 3 total)
+    const availableSlots = Math.max(0, 3 - imagesToKeep.length);
+    const newImagesToAdd = newImageFilenames.slice(0, availableSlots);
+
+    // Determine which images to delete from GridFS
+    const finalImageList = [...imagesToKeep, ...newImagesToAdd];
+    const imagesToDelete = currentImages.filter((filename) => !finalImageList.includes(filename));
+
+    // Delete GridFS files only for images that are truly removed
+    for (const filename of imagesToDelete) {
+      await deleteFileFromGridFS(filename);
+    }
+
+    // Update product images
+    product.productImages = finalImageList;
+
+    // Ensure featuredImageIndex stays valid
+    if (product.productImages.length === 0) {
+      product.featuredImageIndex = 0;
+    } else if (product.featuredImageIndex >= product.productImages.length) {
+      product.featuredImageIndex = 0;
+    }
+
+    // Handle explicit featuredImageIndex update
+    if (featuredImageIndex !== undefined) {
+      const newIndex = Number(featuredImageIndex);
+      if (newIndex >= 0 && newIndex < product.productImages.length) {
+        product.featuredImageIndex = newIndex;
       }
     }
 
@@ -147,15 +205,10 @@ const addProduct = async (req, res) => {
     if (!owner) {
       return res.status(401).json({ message: "Unauthorized" });
     }
-
     const { productName, productDescription, productPrice, productStock, featuredImageIndex } = req.body;
 
     if (!productName || !productName.trim()) {
       return res.status(400).json({ message: "Product name is required" });
-    }
-
-    if (!productPrice || Number.isNaN(Number(productPrice))) {
-      return res.status(400).json({ message: "Valid product price is required" });
     }
 
     const shop = await Shop.findOne({ owner });

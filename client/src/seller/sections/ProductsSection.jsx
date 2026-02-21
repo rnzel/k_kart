@@ -15,6 +15,7 @@ function ProductsSection() {
     const [productImages, setProductImages] = React.useState([]);
     const [productImagePreviews, setProductImagePreviews] = React.useState([]);
     const [productImageNames, setProductImageNames] = React.useState([]);
+    const [keepImages, setKeepImages] = React.useState([]);
     const [productStock, setProductStock] = React.useState("");
     const [loading, setLoading] = React.useState(false);
     const [error, setError] = React.useState("");
@@ -113,6 +114,16 @@ function ProductsSection() {
     };
 
     const handleRemoveImage = (index) => {
+        // Check if this is an existing image (productImageNames[index] is empty) or a new one
+        const isExistingImage = productImageNames[index] === "";
+        
+        if (isExistingImage && isEditing) {
+            // Remove from keepImages - marks it for deletion on server
+            const removedImageName = productImagePreviews[index];
+            const filenameFromUrl = removedImageName.split('/').pop(); // Extract filename from URL
+            setKeepImages(prev => prev.filter(img => img !== filenameFromUrl));
+        }
+        
         const newImages = productImages.filter((_, i) => i !== index);
         const newPreviews = productImagePreviews.filter((_, i) => i !== index);
         const newNames = productImageNames.filter((_, i) => i !== index);
@@ -164,6 +175,8 @@ function ProductsSection() {
             productImages.forEach((file) => {
                 formData.append("productImages", file);
             });
+            // Include which existing images to keep so backend can merge and delete removed files
+            formData.append("keepImages", JSON.stringify(keepImages));
 
             const response = await api.post("/api/products", formData, {
                 headers: {
@@ -204,6 +217,11 @@ function ProductsSection() {
         setIsEditing(true);
         setEditingProductId(product._id);
         setShowForm(true);
+        setKeepImages(imagesArray);
+    };
+
+    const handleRemoveExistingImage = (filename) => {
+        setKeepImages(prev => prev.filter(img => img !== filename));
     };
 
     const handleDeleteClick = (productId) => {
@@ -266,6 +284,7 @@ function ProductsSection() {
             formData.append("productPrice", productPrice);
             formData.append("productStock", productStock);
             formData.append("featuredImageIndex", featuredImageIndex);
+            formData.append("keepImages", JSON.stringify(keepImages));
 
             productImages.forEach((file) => {
                 formData.append("productImages", file);
