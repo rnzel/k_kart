@@ -115,7 +115,7 @@ function MyShopSection() {
         if (isEditing && shopData && shopData._id) {
             // Update existing shop - use ID from shopData
             api
-                .put(`/api/shops/update-shop/${shopData._id}`, formData, {
+                .put(`/api/shops/update-shop`, formData, {
                     headers: {
                         "Content-Type": "multipart/form-data",
                     },

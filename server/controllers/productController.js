@@ -61,12 +61,18 @@ const updateProduct = async (req, res) => {
       if (Number.isNaN(Number(productPrice))) {
         return res.status(400).json({ message: "Invalid product price" });
       }
+      if (Number(productPrice) < 0) {
+        return res.status(400).json({ message: "Product price cannot be negative" });
+      }
       product.productPrice = Number(productPrice);
     }
 
     if (productStock !== undefined) {
       if (Number.isNaN(Number(productStock))) {
         return res.status(400).json({ message: "Invalid product stock" });
+      }
+      if (Number(productStock) < 0) {
+        return res.status(400).json({ message: "Product stock cannot be negative" });
       }
       product.productStock = Number(productStock);
     }
@@ -132,11 +138,6 @@ const updateProduct = async (req, res) => {
     const finalImageList = [...imagesToKeep, ...newImagesToAdd];
     const imagesToDelete = currentImages.filter((filename) => !finalImageList.includes(filename));
 
-    // Delete GridFS files only for images that are truly removed
-    for (const filename of imagesToDelete) {
-      await deleteFileFromGridFS(filename);
-    }
-
     // Update product images
     product.productImages = finalImageList;
 
@@ -155,7 +156,16 @@ const updateProduct = async (req, res) => {
       }
     }
 
+    // Save product FIRST to ensure data is persisted before deleting old images
+    // This prevents data loss if save fails
     const updatedProduct = await product.save();
+
+    // Delete old images from GridFS AFTER successful save
+    // This prevents losing images if save fails
+    for (const filename of imagesToDelete) {
+      await deleteFileFromGridFS(filename);
+    }
+
     res.status(200).json(updatedProduct);
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -211,6 +221,29 @@ const addProduct = async (req, res) => {
 
     if (!productName || !productName.trim()) {
       return res.status(400).json({ message: "Product name is required" });
+    }
+
+    // Validate productPrice
+    if (productPrice === undefined || productPrice === "") {
+      return res.status(400).json({ message: "Product price is required" });
+    }
+    const priceNum = Number(productPrice);
+    if (Number.isNaN(priceNum)) {
+      return res.status(400).json({ message: "Invalid product price" });
+    }
+    if (priceNum < 0) {
+      return res.status(400).json({ message: "Product price cannot be negative" });
+    }
+
+    // Validate productStock (allow 0 but not negative)
+    const stockNum = productStock ? Number(productStock) : 0;
+    if (productStock !== undefined && productStock !== "") {
+      if (Number.isNaN(stockNum)) {
+        return res.status(400).json({ message: "Invalid product stock" });
+      }
+      if (stockNum < 0) {
+        return res.status(400).json({ message: "Product stock cannot be negative" });
+      }
     }
 
     const shop = await Shop.findOne({ owner });

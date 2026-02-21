@@ -62,6 +62,7 @@ function ProductsSection() {
         setProductImages([]);
         setProductImagePreviews([]);
         setProductImageNames([]);
+        setKeepImages([]);  // Reset keepImages for new product
         setFeaturedImageIndex(0);
         setIsEditing(false);
         setEditingProductId(null);
@@ -78,6 +79,7 @@ function ProductsSection() {
         setProductImages([]);
         setProductImagePreviews([]);
         setProductImageNames([]);
+        setKeepImages([]);  // Reset keepImages
         setError("");
     };
 
@@ -131,11 +133,18 @@ function ProductsSection() {
         setProductImagePreviews(newPreviews);
         setProductImageNames(newNames);
         
-        if (index === featuredImageIndex) {
+        // Fix: Ensure featuredImageIndex stays valid after removing images
+        if (newPreviews.length === 0) {
+            // No images left, reset to 0
+            setFeaturedImageIndex(0);
+        } else if (index === featuredImageIndex) {
+            // Removed the featured image, select the first one
             setFeaturedImageIndex(0);
         } else if (index < featuredImageIndex) {
+            // Removed an image before the featured one, adjust index
             setFeaturedImageIndex(featuredImageIndex - 1);
         }
+        // If index > featuredImageIndex, no change needed
     };
 
     const handleSubmit = async (e) => {
@@ -175,8 +184,7 @@ function ProductsSection() {
             productImages.forEach((file) => {
                 formData.append("productImages", file);
             });
-            // Include which existing images to keep so backend can merge and delete removed files
-            formData.append("keepImages", JSON.stringify(keepImages));
+            // NOTE: keepImages is NOT sent on product create - only on update
 
             const response = await api.post("/api/products", formData, {
                 headers: {
@@ -326,7 +334,7 @@ function ProductsSection() {
             
             {!productExists && !showForm ? (
                 <div className="mt-4">
-                    <div className="d-flex flex-column align-items-center justify-content-center mb-3">
+                    <div className="d-flex flex-column align-items-center justify-content-center mb">
                         <FiBox size={48} className="text-secondary" />
                         <h3 className="text-center">No Products Added Yet</h3>
                         <p className="text-center text-secondary">

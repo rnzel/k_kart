@@ -28,8 +28,8 @@ router.post('/', authenticateToken, handleUpload('shopLogo'), createShop)
 // Route to get current user's shop
 router.get('/my-shop', authenticateToken, getMyShop)
 
-// Route to update shop details
-router.put('/update-shop/:id', authenticateToken, handleUpload('shopLogo'), updateShop)
+// Route to update shop details (ID parameter removed - uses JWT owner instead)
+router.put('/update-shop', authenticateToken, handleUpload('shopLogo'), updateShop)
 
 // Route to delete current user's shop
 router.delete('/delete-shop', authenticateToken, deleteShop)

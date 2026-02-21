@@ -1,5 +1,6 @@
 const mongoose = require('mongoose');
 const Shop = require("../models/Shop");
+const Product = require("../models/Product");
 const { getGridFSBucket } = require("../config/gridfsBucket");
 
 // Helper function to delete file from GridFS by filename
@@ -104,7 +105,7 @@ const getMyShop = async (req, res) => {
     }
 };
 
-// Delete current user's shop
+// Delete current user's shop (with cascade delete for products)
 const deleteShop = async (req, res) => {
     try {
         const owner = req.user.userId;
@@ -114,6 +115,22 @@ const deleteShop = async (req, res) => {
             return res.status(404).json({ message: "Shop not found" });
         }
 
+        // Find and delete all products associated with this shop
+        const products = await Product.find({ shop: shop._id });
+        
+        // Delete all product images from GridFS
+        for (const product of products) {
+            if (product.productImages && product.productImages.length > 0) {
+                for (const filename of product.productImages) {
+                    await deleteFileFromGridFS(filename);
+                }
+            }
+        }
+        
+        // Delete all products
+        await Product.deleteMany({ shop: shop._id });
+
+        // Delete shop logo from GridFS
         if (shop.shopLogo) {
             await deleteFileFromGridFS(shop.shopLogo);
         }
