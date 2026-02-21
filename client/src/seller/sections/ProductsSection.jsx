@@ -18,6 +18,7 @@ function ProductsSection() {
     const [keepImages, setKeepImages] = React.useState([]);
     const [productStock, setProductStock] = React.useState("");
     const [loading, setLoading] = React.useState(false);
+    const [loadingProducts, setLoadingProducts] = React.useState(true);
     const [error, setError] = React.useState("");
     const [featuredImageIndex, setFeaturedImageIndex] = React.useState(0);
     const [isEditing, setIsEditing] = React.useState(false);
@@ -38,7 +39,10 @@ function ProductsSection() {
 
     React.useEffect(() => {
         const fetchProducts = async () => {
-            if (!token) return;
+            if (!token) {
+                setLoadingProducts(false);
+                return;
+            }
             try {
                 const response = await api.get("/api/products/my-products");
                 // Ensure response.data is an array
@@ -49,6 +53,8 @@ function ProductsSection() {
                 console.error("Error fetching products", err);
                 setProducts([]);
                 setProductExists(false);
+            } finally {
+                setLoadingProducts(false);
             }
         };
 
@@ -331,8 +337,15 @@ function ProductsSection() {
                     {error}
                 </div>
             )}
-            
-            {!productExists && !showForm ? (
+
+            {loadingProducts ? (
+                <div className="text-center mt-4">
+                    <div className="spinner-border text-primary" role="status">
+                        <span className="visually-hidden">Loading...</span>
+                    </div>
+                    <p className="mt-2">Loading products...</p>
+                </div>
+            ) : !productExists && !showForm ? (
                 <div className="mt-4">
                     <div className="d-flex flex-column align-items-center justify-content-center mb">
                         <FiBox size={48} className="text-secondary" />
