@@ -33,6 +33,13 @@
   color: white !important;
 }
 
+@media (max-width: 576px) {
+  .card-body .btn {
+    padding: 0.25rem 0.5rem !important; /* smaller padding */
+    font-size: 0.8rem !important;        /* smaller font */
+  }
+}
+
 /* Form control focus/active border */
 .form-control:focus,
 .form-control:active {
