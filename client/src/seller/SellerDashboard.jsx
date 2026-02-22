@@ -20,7 +20,8 @@ function SellerDashboard() {
 
             <div className="container mt-4 d-flex flex-column gap-4">
                 <div className="row">
-                    <aside className="col-md-3 seller-sidebar" style={{fontSize:'17px'}}>
+                    {/* Desktop Sidebar - Hidden on mobile */}
+                    <aside className="col-md-3 seller-sidebar d-none d-md-block" style={{fontSize:'17px'}}>
                         <ul className="d-flex flex-column gap-3 list-unstyled p-3 justify-content-center">
                             <li className="item d-flex align-items-center font-weight-semibold mb-2">
                                 <a 
@@ -77,7 +78,7 @@ function SellerDashboard() {
                         </ul>
                     </aside>
 
-                    <div className="col-md-9 p-3">
+                    <div className="col-md-9 p-3 pb-5 pb-md-3">
                         {activeSection === 'my-shop' && (
                             <MyShopSection />
                         )}
@@ -87,7 +88,49 @@ function SellerDashboard() {
                     </div>
                 </div>
             </div>
-            </div>
+
+            {/* Sticky Bottom Nav - Mobile Only */}
+            <nav className="d-md-none fixed-bottom bg-white border-top">
+                <ul className="nav nav-justified py-2">
+                    <li className="nav-item">
+                        <button
+                            className={`nav-link btn btn-link ${activeSection === 'my-shop' ? 'active text-primary' : 'text-dark'}`}
+                            onClick={() => setActiveSection('my-shop')}
+                        >
+                            <FiHome size={24} />
+                            <div className="small">My Shop</div>
+                        </button>
+                    </li>
+                    <li className="nav-item">
+                        <button
+                            className={`nav-link btn btn-link ${activeSection === 'products' ? 'active text-primary' : 'text-dark'}`}
+                            onClick={() => setActiveSection('products')}
+                        >
+                            <FiBox size={24} />
+                            <div className="small">Products</div>
+                        </button>
+                    </li>
+                    <li className="nav-item">
+                        <button
+                            className={`nav-link btn btn-link ${activeSection === 'orders' ? 'active text-primary' : 'text-dark'}`}
+                            onClick={() => setActiveSection('orders')}
+                        >
+                            <FiShoppingCart size={24} />
+                            <div className="small">Orders</div>
+                        </button>
+                    </li>
+                    <li className="nav-item">
+                        <button
+                            className={`nav-link btn btn-link ${activeSection === 'messages' ? 'active text-primary' : 'text-dark'}`}
+                            onClick={() => setActiveSection('messages')}
+                        >
+                            <FiMessageCircle size={24} />
+                            <div className="small">Messages</div>
+                        </button>
+                    </li>
+                </ul>
+            </nav>
+        </div>
     );
 }
 

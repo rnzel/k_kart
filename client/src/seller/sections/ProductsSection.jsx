@@ -378,7 +378,7 @@ function ProductsSection() {
                                         : null;
 
                                 return (
-                                    <div className="col-md-4" key={product._id}>
+                                    <div className="col-6 col-md-4 col-lg-3" key={product._id}>
                                         <div className="card h-100 border border-black">
                                             {displayImage ? (
                                                 <img
@@ -386,51 +386,51 @@ function ProductsSection() {
                                                     className="card-img-top"
                                                     alt={product.productName}
                                                     style={{
-                                                        height: "180px",
+                                                        height: "120px",    
                                                         objectFit: "cover",
                                                     }}
                                                 />
                                             ) : (
                                                 <div
                                                     className="d-flex align-items-center justify-content-center bg-light"
-                                                    style={{ height: "180px" }}
+                                                    style={{ height: "120px" }}
                                                 >
-                                                    <FiBox size={48} className="text-secondary" />
+                                                    <FiBox size={32} className="text-secondary" />
                                                 </div>
                                             )}
-                                            <div className="card-body d-flex flex-column">
-                                                <h5 className="card-title">{product.productName}</h5>
+                                            <div className="card-body d-flex flex-column p-2">
+                                                <h6 className="card-title mb-1 text-truncate">{product.productName}</h6>
                                                 {product.productDescription && (
-                                                    <p className="card-text text-muted small flex-grow-1">
-                                                        {product.productDescription.length > 80
-                                                            ? `${product.productDescription.slice(0, 77)}...`
+                                                    <p className="card-text text-muted small flex-grow-1 mb-1 text-truncate">
+                                                        {product.productDescription.length > 40
+                                                            ? `${product.productDescription.slice(0, 37)}...`
                                                             : product.productDescription}
                                                     </p>
                                                 )}
-                                                <div className="d-flex justify-content-between align-items-center mt-2">
-                                                    <span className="fw-bold text-primary" style={{ fontSize: "1.2rem"}}>
-                                                        ₱{product.productPrice}
-                                                    </span>
-                                                    <span className="text-muted small">
-                                                        Stock: {product.productStock}
-                                                    </span>
-                                                </div>
+                                                <div className="mt-auto">
+                                                    <div className="d-flex justify-content-between align-items-center mt-1 mb-2">
+                                                        <span className="fw-bold text-primary" style={{ fontSize: "1rem"}}>
+                                                            ₱{product.productPrice}
+                                                        </span>
+                                                        <span className="text-muted" style={{ fontSize: "0.75rem"}}>
+                                                            Stock: {product.productStock}
+                                                        </span>
+                                                    </div>
 
-                                                <div className="d-flex gap-2">
-                                                    <button
-                                                        className="btn btn-primary"
-                                                        style={{ width: "100%" }}
-                                                        onClick={() => handleEditClick(product)}
-                                                    >
-                                                        Edit
-                                                    </button>
-                                                    <button
-                                                        className="btn btn-secondary"
-                                                        style={{ width: "100%" }}
-                                                        onClick={() => handleDeleteClick(product._id)}
-                                                    >
-                                                        Delete
-                                                    </button>
+                                                    <div className="d-flex justify-content-center gap-2">
+                                                        <button
+                                                            className="btn btn-primary w-100"
+                                                            onClick={() => handleEditClick(product)}
+                                                        >
+                                                            Edit
+                                                        </button>
+                                                        <button
+                                                            className="btn btn-secondary w-100"
+                                                            onClick={() => handleDeleteClick(product._id)}
+                                                        >
+                                                            Delete
+                                                        </button>
+                                                    </div>
                                                 </div>
                                             </div>
                                             
@@ -529,7 +529,7 @@ function ProductsSection() {
                             onChange={handleImageChange}
                         />
                         {productImagePreviews.length > 0 && (
-                            <div className="d-flex justify-content-center mb-2 gap-2">
+                            <div className="d-flex justify-content-center mb-2 gap-2 flex-wrap">
                                 {productImagePreviews.map((preview, index) => (
                                     <div key={index} style={{ position: "relative" }}>
                                         <img
@@ -537,8 +537,8 @@ function ProductsSection() {
                                             alt={`Preview ${index + 1}`}
                                             onClick={() => setFeaturedImageIndex(index)}
                                             style={{
-                                                width: "120px",
-                                                height: "120px",
+                                                width: "100px",
+                                                height: "100px",
                                                 objectFit: "cover",
                                                 borderRadius: "4px",
                                                 border: index === featuredImageIndex ? "3px solid #db4444" : "1px solid #db4444",
@@ -627,7 +627,7 @@ function ProductsSection() {
                             style={{ width: "100%" }}
                             disabled={loading}
                         >
-                            {isEditing ? "Update Product" : "Add Product"}
+                            {loading ? (isEditing ? "Updating..." : "Adding...") : (isEditing ? "Update Product" : "Add Product")}
                         </button>
                         <button
                             type="button"
