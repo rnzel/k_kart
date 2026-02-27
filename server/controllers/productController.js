@@ -292,4 +292,33 @@ const getMyProducts = async (req, res) => {
   }
 };
 
-module.exports = { addProduct, getMyProducts, updateProduct, deleteProduct };
+// Get all products (public) with pagination
+const getAllProducts = async (req, res) => {
+  try {
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 12;
+    const skip = (page - 1) * limit;
+
+    const products = await Product.find()
+      .populate('shop', 'shopName shopLogo shopDescription')
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit);
+
+    const total = await Product.countDocuments();
+
+    res.status(200).json({
+      products,
+      pagination: {
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit)
+      }
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  } 
+};
+
+module.exports = { addProduct, getMyProducts, updateProduct, deleteProduct, getAllProducts };

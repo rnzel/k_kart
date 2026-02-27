@@ -19,7 +19,7 @@ function ProtectedRoute({ children }) {
             if (user.role === 'seller') {
                 window.location.href = '/seller-dashboard';
             } else {
-                window.location.href = '/dashboard';
+                window.location.href = '/marketplace';
             }
         }
     }, [location.pathname]);

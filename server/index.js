@@ -3,7 +3,7 @@ require('dotenv').config()
 const express = require('express')
 const cors = require('cors')
 const mongoose = require('mongoose')
-const rateLimit = require('express-rate-limit')
+// Note: express-rate-limit is used in authRoutes.js for login rate limiting only
 
 // ============================================
 // Environment Variable Validation
@@ -59,27 +59,8 @@ app.use(express.urlencoded({ extended: true }))
 // ============================================
 // Rate Limiting Configuration
 // ============================================
-// General API rate limiter: 100 requests per 15 minutes
-const apiLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100, // Limit each IP to 100 requests per windowMs
-  message: { message: 'Too many requests from this IP, please try again later.' },
-  standardHeaders: true,
-  legacyHeaders: false,
-})
-
-// Strict limiter for auth routes: 10 requests per 15 minutes (prevents brute force)
-const authLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 10, // Limit each IP to 10 requests per windowMs
-  message: { message: 'Too many authentication attempts, please try again later.' },
-  standardHeaders: true,
-  legacyHeaders: false,
-})
-
-// Apply rate limiters to routes
-app.use('/api/auth', authLimiter)
-app.use('/api/', apiLimiter)
+// Note: Rate limiting is applied only to the login route via authRoutes.js
+// No global rate limiting applied to other routes
 
 // ============================================
 // Image Streaming Route

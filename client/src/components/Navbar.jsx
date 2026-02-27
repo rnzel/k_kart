@@ -4,6 +4,7 @@ import { useLocation } from 'react-router-dom';
 import { FiUser } from "react-icons/fi";
 import { FiLogOut } from "react-icons/fi";
 import { FiSearch } from 'react-icons/fi';
+import { FiShoppingCart } from "react-icons/fi";
 
 function Navbar() {
     const navigate = useNavigate();
@@ -40,15 +41,6 @@ function Navbar() {
         <nav className="navbar navbar-expand-lg navbar-light border-bottom">
             <div className="container d-flex justify-content-between align-items-center">
                 <Link className="navbar-brand">KampusKart</Link> 
-
-                {/* { location.pathname === '/dashboard' && (
-                    <div>
-                        <input className="d-flex search-bar rounded border border-black p-2" style={{ width: "700px"}} type="text" name="" id="" value="Search shops and products..."/>
-                        <FiSearch 
-                            className='postion-absolute'> 
-
-                    </div>
-                )} */}
                 
                 {/* User Avatar with Dropdown */}
                 <div className="position-relative">
@@ -70,7 +62,7 @@ function Navbar() {
 
                             <div className='item d-flex align-items-center px-3'>
                                 <div className="me-2 d-flex align-items-center justify-content-center"><FiUser size={18} /></div>
-                                <Link to="/profile" className="dropdown-item px-3 py-2 w-100 text-start border-0 bg-transparent">
+                                <Link to="/dashboard" className="dropdown-item px-3 py-2 w-100 text-start border-0 bg-transparent">
                                     Profile
                                 </Link>
                             </div>

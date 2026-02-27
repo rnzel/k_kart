@@ -2,9 +2,9 @@ import 'bootstrap/dist/css/bootstrap.min.css'
 import 'bootstrap-icons/font/bootstrap-icons.css'
 import './custom-bootstrap.css'
 import Auth from './Auth.jsx'
-import Profile from './Profile.jsx'
-import Dashboard from './Dashboard.jsx'
+import Marketplace from './Marketplace.jsx'
 import SellerDashboard from './seller/SellerDashboard.jsx'
+import UserDashboard from './user/UserDashboard.jsx'
 import ProtectedRoute from './components/ProtectedRoute.jsx'
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 
@@ -14,9 +14,9 @@ function App() {
     <BrowserRouter>
       <Routes>
         <Route path="/" element={<Auth />} />
-        <Route path="/dashboard" element={
+        <Route path="/marketplace" element={
           <ProtectedRoute>
-            <Dashboard />
+            <Marketplace />
           </ProtectedRoute>
         } />
         <Route path="/seller-dashboard" element={
@@ -24,9 +24,9 @@ function App() {
             <SellerDashboard />
           </ProtectedRoute>
         } />
-        <Route path="/profile" element={
+        <Route path="/dashboard" element={
           <ProtectedRoute>
-            <Profile />
+            <UserDashboard />
           </ProtectedRoute>
         } />
       </Routes>

@@ -10,6 +10,10 @@
   font-weight: 600 !important;
 }
 
+h2 {
+  font-size: 24px !important;
+}
+
 /* Custom btn-primary override */
 .btn-primary {
   background-color: #db4444 !important;
@@ -49,6 +53,16 @@
 
 .form-control:focus:not(:checked) {
   border-color: #db4444 !important;
+}
+
+.btn-outline-primary {
+  border-color: #db4444 !important;
+  color: #db4444 !important;
+}
+
+.btn-outline-primary:hover {
+  background-color: #db4444 !important;
+  color: white !important;
 }
 
 .btn-outline-secondary:hover {

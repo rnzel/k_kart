@@ -348,12 +348,9 @@ function ProductsSection() {
             ) : !productExists && !showForm ? (
                 <div className="mt-4">
                     <div className="d-flex flex-column align-items-center justify-content-center mb">
-                        <FiBox size={48} className="text-secondary" />
-                        <h3 className="text-center">No Products Added Yet</h3>
-                        <p className="text-center text-secondary">
-                            You haven't added any products yet. Start by adding your products to
-                            showcase your products!
-                        </p>
+                        <FiBox size={64} className="text-secondary" />
+                        <h4 className="text-muted mt-3">No Products Yet</h4>
+                        <p className="text-muted">Start adding products to your shop</p>
                     </div>
                     <button
                         className="btn btn-primary"

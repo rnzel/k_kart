@@ -226,12 +226,9 @@ function MyShopSection() {
                 ) : !shopExists && !showForm ? (
                     <div className="mt-4">
                         <div className="d-flex flex-column align-items-center justify-content-center mb-3">
-                            <FiHome size={48} className="text-secondary" />
-                            <h3 className="text-center">No Shop Created Yet</h3>
-                            <p className="text-center text-secondary">
-                                You haven't created a shop yet. Start by creating your shop to
-                                showcase your products!
-                            </p>
+                            <FiHome size={64} className="text-secondary" />
+                            <h4 className="text-muted mt-3">No Shop Yet</h4>
+                            <p className="text-muted">Create your shop to start selling</p>
                         </div>
                         <button
                             className="btn btn-primary"

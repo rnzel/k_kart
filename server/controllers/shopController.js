@@ -142,4 +142,14 @@ const deleteShop = async (req, res) => {
     }
 };
 
-module.exports = { createShop, getMyShop, updateShop, deleteShop };
+// Get all shops (public)
+const getAllShops = async (req, res) => {
+    try {
+        const shops = await Shop.find();
+        res.status(200).json(shops);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+module.exports = { createShop, getMyShop, getAllShops, updateShop, deleteShop };

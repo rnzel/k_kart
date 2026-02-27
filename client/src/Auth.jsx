@@ -44,7 +44,7 @@ function Auth() {
             if (response.data.user.role === 'seller') {
                 navigate('/seller-dashboard');
             } else {
-                navigate('/dashboard');
+                navigate('/marketplace');
             }
         })
         .catch(error => {

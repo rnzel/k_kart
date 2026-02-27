@@ -1,6 +1,6 @@
 const express = require('express')
 const router = express.Router()
-const { createShop, getMyShop, updateShop, deleteShop } = require('../controllers/shopController')
+const { createShop, getMyShop, getAllShops, updateShop, deleteShop } = require('../controllers/shopController')
 const authenticateToken = require('../middleware/auth')
 const { upload } = require('../config/multerStorage')
 
@@ -21,6 +21,9 @@ const handleUpload = (fieldName) => {
     })
   }
 }
+
+// Route to get all shops (public)
+router.get('/', getAllShops)
 
 // Route to create a new shop
 router.post('/', authenticateToken, handleUpload('shopLogo'), createShop)
