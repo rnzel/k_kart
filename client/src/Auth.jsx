@@ -20,7 +20,6 @@ function Auth() {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
-    const [studentIdNumber, setStudentIdNumber] = useState('');
     const [studentIdPicture, setStudentIdPicture] = useState(null);
     const [successMessage, setSuccessMessage] = useState('');
     const [error, setError] = useState('');
@@ -40,9 +39,12 @@ function Auth() {
             localStorage.setItem('token', response.data.token);
             localStorage.setItem('user', JSON.stringify(response.data.user));
             
-            // Redirect based on user role
-            if (response.data.user.role === 'seller') {
+            // Redirect based on user role and sellerStatus
+            const user = response.data.user;
+            if (user.role === 'seller' && user.sellerStatus === 'approved') {
                 navigate('/seller-dashboard');
+            } else if (user.role === 'admin') {
+                navigate('/admin');
             } else {
                 navigate('/marketplace');
             }
@@ -75,7 +77,7 @@ function Auth() {
         }
 
         if (accountType === 'seller' && !studentIdPicture) {
-            setError('Please upload your Student ID picture');
+            setError('Please upload your ID picture');
             setLoading(false);
             return;
         }
@@ -95,11 +97,14 @@ function Auth() {
                     email,
                     password,
                     role: accountType,
-                    studentIdNumber: accountType === 'seller' ? studentIdNumber : undefined,
                     studentIdPicture: accountType === 'seller' ? studentIdPicture : undefined
                 })
                 .then(() => {
-                    setSuccessMessage('Account created successfully! Please login.');
+                    if (accountType === 'seller') {
+                        setSuccessMessage('Your seller application has been submitted. Please wait for admin approval.');
+                    } else {
+                        setSuccessMessage('Account created successfully! Please login.');
+                    }
                     setActiveTab('login');
                 })
                 .catch((err) => {
@@ -201,13 +206,10 @@ function Auth() {
                         {accountType === 'seller' && (
                             <div className="bg-light p-3 rounded mb-3">
                                 <div className="mb-3">
-                                    <input type="text" className="form-control" id="studentIdNumber" placeholder="Student ID Number" value={studentIdNumber} onChange={(e) => setStudentIdNumber(e.target.value)} required/>
-                                </div>
-                                <div className="mb-3">
                                     <input type="file" className="d-none" id="studentIdPicture" accept="image/*" onChange={handleFileChange}/>
                                     <label htmlFor="studentIdPicture" className="form-control dashed-border" style={{ cursor: 'pointer' }}>{ studentIdPhotoName }</label>
                                 </div>
-                                <p className="text-muted small text-center">Upload a clear photo of your Student ID to verify you're an Entrepreneurship student</p>
+                                <p className="text-muted small text-center">Upload a clear photo of your ID to verify your an Entrepreneurship Student</p>
                             </div>
                         )}
                         <button type="submit" className="btn btn-primary w-100" disabled={loading}>{loading ? "Creating Account..." : "Create Account"}</button>

@@ -9,9 +9,16 @@ const userSchema = new mongoose.Schema({
   role: { type: String, enum: ["buyer", "seller", "admin"], default: "buyer" },
   dateRegistered: { type: Date, default: Date.now },
   emailVerifiedAt: { type: Date, default: null },
-  studentIdNumber: { type: String },
   studentIdPicture: { type: String },
-  isVerified: { type: Boolean, default: false }
+  // Seller verification fields
+  isVerified: { type: Boolean, default: false },
+  sellerStatus: { 
+    type: String, 
+    enum: ["pending", "approved", "rejected", null], 
+    default: null 
+  },
+  idImage: { type: String }, // ID image for seller verification
+  applicationDate: { type: Date }
 }, { timestamps: true })
 
 // Pre-save middleware to hash password

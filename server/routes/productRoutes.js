@@ -1,7 +1,7 @@
 const express = require("express")
 const router = express.Router()
 const { addProduct, getMyProducts, updateProduct, deleteProduct, getAllProducts } = require("../controllers/productController")
-const authenticateToken = require("../middleware/auth")
+const { authenticateToken, requireSellerVerified } = require("../middleware/auth")
 const { upload } = require("../config/multerStorage")
 
 // Middleware to handle multer errors
@@ -25,16 +25,16 @@ const handleUpload = (fieldName, maxCount) => {
 // Route to get all products (public)
 router.get("/", getAllProducts)
 
-// Route to create a new product for the authenticated seller's shop
-router.post("/", authenticateToken, handleUpload("productImages", 3), addProduct)
+// Route to create a new product (verified sellers only)
+router.post("/", authenticateToken, requireSellerVerified, handleUpload("productImages", 3), addProduct)
 
-// Route to get all products for the authenticated seller's shop
-router.get("/my-products", authenticateToken, getMyProducts)
+// Route to get all products for the authenticated seller (verified sellers only)
+router.get("/my-products", authenticateToken, requireSellerVerified, getMyProducts)
 
-// Route to update a product
-router.put("/update-product/:id", authenticateToken, handleUpload("productImages", 3), updateProduct)
+// Route to update a product (verified sellers only)
+router.put("/update-product/:id", authenticateToken, requireSellerVerified, handleUpload("productImages", 3), updateProduct)
 
-// Route to delete a product
-router.delete("/delete-product/:id", authenticateToken, deleteProduct)
+// Route to delete a product (verified sellers only)
+router.delete("/delete-product/:id", authenticateToken, requireSellerVerified, deleteProduct)
 
 module.exports = router

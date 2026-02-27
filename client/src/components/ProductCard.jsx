@@ -2,12 +2,14 @@ import React from "react";
 import { getImageUrl } from "../utils/imageUrl.js";
 import { FiBox, FiShoppingCart } from "react-icons/fi";
 
-function ProductCard({ product, onAddToCart }) {
+function ProductCard({ product, onAddToCart, isAddingToCart }) {
     const featuredIndex = product.featuredImageIndex || 0;
     const productImages = Array.isArray(product.productImages) ? product.productImages : [];
     const displayImage = productImages.length > 0
         ? getImageUrl(productImages[featuredIndex])
         : null;
+
+    const isDisabled = product.productStock <= 0 || isAddingToCart;
 
     return (
         <div className="col-6 col-md-4 col-lg-3">
@@ -52,10 +54,19 @@ function ProductCard({ product, onAddToCart }) {
                         <button
                             className="btn btn-primary w-100 d-flex align-items-center justify-content-center gap-2"
                             onClick={() => onAddToCart(product)}
-                            disabled={product.productStock <= 0}
+                            disabled={isDisabled}
                         >
-                            <FiShoppingCart size={16} />
-                            Add to Cart
+                            {isAddingToCart ? (
+                                <>
+                                    <span className="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                                    Adding...
+                                </>
+                            ) : (
+                                <>
+                                    <FiShoppingCart size={16} />
+                                    Add to Cart
+                                </>
+                            )}
                         </button>
                     </div>
                 </div>

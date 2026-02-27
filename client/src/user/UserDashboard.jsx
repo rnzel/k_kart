@@ -1,4 +1,5 @@
 import React from "react";
+import { useSearchParams } from "react-router-dom";
 import Navbar from "../components/Navbar.jsx";
 import MyProfileSection from "./sections/MyProfileSection.jsx";
 import MyOrdersSection from "./sections/MyOrdersSection.jsx";
@@ -7,7 +8,16 @@ import MessagesSection from "./sections/MessagesSection.jsx";
 import { FiUser, FiShoppingBag, FiShoppingCart, FiMessageCircle } from "react-icons/fi";
 
 function UserDashboard() {
-    const [activeSection, setActiveSection] = React.useState('profile');
+    const [searchParams] = useSearchParams();
+    const sectionParam = searchParams.get('section');
+    
+    // Set initial section based on URL query parameter
+    const [activeSection, setActiveSection] = React.useState(() => {
+        if (sectionParam === 'cart' || sectionParam === 'orders' || sectionParam === 'messages') {
+            return sectionParam;
+        }
+        return 'profile';
+    });
 
     return (
         <div>

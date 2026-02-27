@@ -20,19 +20,25 @@ const loginLimiter = rateLimit({
 // Register
 router.post('/register', async (req, res) => {
   try {
-    const { firstName, lastName, email, password, role, studentIdNumber, studentIdPicture } = req.body
+    const { firstName, lastName, email, password, role, studentIdPicture } = req.body
+    
+    // For seller registration, keep role as buyer but set sellerStatus to pending
+    let userRole = role || 'buyer'
+    let sellerStatus = null
+    
+    if (role === 'seller') {
+      userRole = 'buyer' // Keep as buyer until approved
+      sellerStatus = 'pending'
+    }
     
     const userData = {
       firstName,
       lastName,
       email,
       password,
-      role: role || 'buyer'
-    }
-    
-    if (role === 'seller') {
-      userData.studentIdNumber = studentIdNumber
-      userData.studentIdPicture = studentIdPicture
+      role: userRole,
+      sellerStatus: sellerStatus,
+      studentIdPicture: studentIdPicture
     }
     
     const user = await User.create(userData)
@@ -40,7 +46,9 @@ router.post('/register', async (req, res) => {
     const userResponse = user.toObject()
     delete userResponse.password
     res.status(201).json({ 
-      message: 'User registered successfully',
+      message: userRole === 'buyer' && sellerStatus === 'pending' 
+        ? 'Seller application submitted successfully. Please wait for admin approval.'
+        : 'User registered successfully',
       user: userResponse
     })
   } catch (err) {
@@ -75,9 +83,14 @@ router.post('/login', loginLimiter, async (req, res) => {
       return res.status(401).json({ error: 'Invalid email or password' })
     }
     
-    // Generate JWT token
+    // Generate JWT token with sellerStatus
     const token = jwt.sign(
-      { userId: user.id, role: user.role },
+      { 
+        userId: user.id, 
+        role: user.role, 
+        isVerified: user.isVerified,
+        sellerStatus: user.sellerStatus 
+      },
       process.env.JWT_SECRET,
       { expiresIn: '7d' }
     )
@@ -90,7 +103,9 @@ router.post('/login', loginLimiter, async (req, res) => {
         firstName: user.firstName,
         lastName: user.lastName,
         email: user.email,
-        role: user.role
+        role: user.role,
+        isVerified: user.isVerified,
+        sellerStatus: user.sellerStatus
       }
     })
   } catch (err) {

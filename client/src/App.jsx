@@ -5,7 +5,8 @@ import Auth from './Auth.jsx'
 import Marketplace from './Marketplace.jsx'
 import SellerDashboard from './seller/SellerDashboard.jsx'
 import UserDashboard from './user/UserDashboard.jsx'
-import ProtectedRoute from './components/ProtectedRoute.jsx'
+import AdminDashboard from './admin/AdminDashboard.jsx'
+import RoleProtectedRoute from './components/RoleProtectedRoute.jsx'
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 
 function App() {
@@ -13,21 +14,35 @@ function App() {
   return (
     <BrowserRouter>
       <Routes>
+        {/* Public route - Login page */}
         <Route path="/" element={<Auth />} />
+        
+        {/* Marketplace - accessible to buyers and verified sellers only */}
         <Route path="/marketplace" element={
-          <ProtectedRoute>
+          <RoleProtectedRoute allowedRoles={['buyer', 'seller']}>
             <Marketplace />
-          </ProtectedRoute>
+          </RoleProtectedRoute>
         } />
-        <Route path="/seller-dashboard" element={
-          <ProtectedRoute>
-            <SellerDashboard />
-          </ProtectedRoute>
-        } />
+ Dashboard - accessible        
+        {/* User to buyers and verified sellers only */}
         <Route path="/dashboard" element={
-          <ProtectedRoute>
+          <RoleProtectedRoute allowedRoles={['buyer', 'seller']}>
             <UserDashboard />
-          </ProtectedRoute>
+          </RoleProtectedRoute>
+        } />
+        
+        {/* Seller Dashboard - verified sellers ONLY */}
+        <Route path="/seller-dashboard" element={
+          <RoleProtectedRoute allowedRoles={['seller']}>
+            <SellerDashboard />
+          </RoleProtectedRoute>
+        } />
+        
+        {/* Admin Dashboard - admin ONLY */}
+        <Route path="/admin" element={
+          <RoleProtectedRoute allowedRoles={['admin']}>
+            <AdminDashboard />
+          </RoleProtectedRoute>
         } />
       </Routes>
     </BrowserRouter>

@@ -137,3 +137,151 @@ h1 {
 .item:hover {
   background-color: #f8f9fa !important;
 }
+
+/* Checkbox checked background color */
+.form-check-input:checked {
+  background-color: #db4444 !important;
+  border-color: #db4444 !important;
+}
+
+.form-check-input:focus {
+  border-color: #db4444 !important;
+  box-shadow: 0 0 0 0.25rem rgba(219, 68, 68, 0.25) !important;
+}
+
+/* Cart item mobile adjustments */
+@media (max-width: 576px) {
+  /* Cart card - smaller padding */
+  .cart-item-card {
+    padding: 0.5rem !important;
+  }
+  
+  /* Product image in cart */
+  .cart-item-card img {
+    height: 50px !important;
+  }
+  
+  /* Make quantity controls display inline on right */
+  .cart-item-card .row .col-4 {
+    display: flex !important;
+    justify-content: flex-end !important;
+    align-items: center !important;
+  }
+  
+  /* Cart item text sizes */
+  .cart-item-card h6 {
+    font-size: 0.85rem !important;
+  }
+  
+  .cart-item-card small {
+    font-size: 0.7rem !important;
+  }
+  
+  .cart-item-card .fw-bold {
+    font-size: 0.9rem !important;
+  }
+  
+  /* Quantity controls in cart */
+  .cart-item-card .input-group {
+    max-width: 85px !important;
+  }
+  
+  .cart-item-card .input-group button {
+    padding: 0.15rem 0.4rem !important;
+  }
+  
+  .cart-item-card .input-group input {
+    font-size: 0.8rem !important;
+    padding: 0.2rem !important;
+  }
+  
+  .cart-item-card .btn-sm {
+    padding: 0.15rem 0.4rem !important;
+    font-size: 0.75rem !important;
+  }
+  
+  /* Subtotal row */
+  .cart-item-card .border-top {
+    padding-top: 0.5rem !important;
+    margin-top: 0.5rem !important;
+  }
+  
+  /* Order summary card */
+  .order-summary-card {
+    margin-top: 1rem !important;
+    padding: 1rem !important;
+  }
+  
+  .order-summary-card h5 {
+    font-size: 1rem !important;
+  }
+  
+  /* ShopCard mobile adjustments */
+  .shop-card-container {
+    min-width: 120px !important;
+    width: 120px !important;
+  }
+  
+  .shop-card-logo {
+    width: 50px !important;
+    height: 50px !important;
+  }
+  
+  .shop-card-logo svg {
+    font-size: 20px !important;
+  }
+  
+  .shop-card-name {
+    font-size: 0.75rem !important;
+  }
+  
+  /* Shop card gap adjustments */
+  .shop-cards-container {
+    gap: 0.75rem !important;
+  }
+}
+
+/* Desktop shop card gap and size */
+@media (min-width: 577px) {
+  .shop-cards-container {
+    gap: 1rem !important;
+  }
+  
+  .shop-card-container {
+    min-width: 160px !important;
+    width: 160px !important;
+  }
+  
+  .shop-card-logo {
+    width: 70px !important;
+    height: 70px !important;
+  }
+  
+  .shop-card-logo svg {
+    font-size: 28px !important;
+  }
+  
+  .shop-card-name {
+    font-size: 0.9rem !important;
+  }
+}
+
+/* All Shops View - match product grid styling */
+.shop-all-container .shop-card-container {
+  min-width: unset !important;
+  width: unset !important;
+  display: block !important;
+}
+
+.shop-all-container .shop-card-logo {
+  width: 80px !important;
+  height: 80px !important;
+}
+
+.shop-all-container .shop-card-logo svg {
+  font-size: 32px !important;
+}
+
+.shop-all-container .shop-card-name {
+  font-size: 0.9rem !important;
+}
