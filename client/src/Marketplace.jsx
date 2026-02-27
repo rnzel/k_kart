@@ -10,6 +10,7 @@ function Marketplace() {
     const [shops, setShops] = React.useState([]);
     const [products, setProducts] = React.useState([]);
     const [loading, setLoading] = React.useState(true);
+    const [shopsLoading, setShopsLoading] = React.useState(true);
     const [error, setError] = React.useState("");
     const [searchTerm, setSearchTerm] = React.useState("");
     const [showDropdown, setShowDropdown] = React.useState(false);
@@ -22,13 +23,14 @@ function Marketplace() {
     React.useEffect(() => {
         const fetchShops = async () => {
             try {
+                setShopsLoading(true);
                 const response = await api.get("/api/shops");
                 const shops = Array.isArray(response.data) ? response.data : [];
                 setShops(shops);
             } catch (err) {
                 setError(err.response?.data?.error?.message || "Error fetching shops");
             } finally {
-                setLoading(false);
+                setShopsLoading(false);
             }
         };
 
@@ -132,7 +134,14 @@ function Marketplace() {
             {/* Shops Section - always visible */}
             <div className="container mt-4">
                 <h2 className="text-primary mb-4">Shops</h2>
-                {shops.length > 0 ? (
+                {shopsLoading ? (
+                    <div className="text-center mt-4">
+                        <div className="spinner-border text-primary" role="status">
+                            <span className="visually-hidden">Loading...</span>
+                        </div>
+                        <p className="mt-2">Loading shops...</p>
+                    </div>
+                ) : shops.length > 0 ? (
                     <div className="d-flex gap-3 overflow-auto pb-3" style={{ scrollbarWidth: "thin" }}>
                         {shops.map((shop) => (
                             <div key={shop._id} style={{ minWidth: "200px", width: "200px" }}>

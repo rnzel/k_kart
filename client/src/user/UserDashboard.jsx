@@ -118,34 +118,6 @@ function UserDashboard() {
                             onClick={() => setActiveSection('messages')}
                         >
                             <FiMessageCircle size={24} />
-                            <FiUser size={24} />
-                            <div className="small">Profile</div>
-                        </button>
-                    </li>
-                    <li className="nav-item">
-                        <button
-                            className={`nav-link btn btn-link ${activeSection === 'orders' ? 'active text-primary' : 'text-dark'}`}
-                            onClick={() => setActiveSection('orders')}
-                        >
-                            <FiShoppingBag size={24} />
-                            <div className="small">Orders</div>
-                        </button>
-                    </li>
-                    <li className="nav-item">
-                        <button
-                            className={`nav-link btn btn-link ${activeSection === 'cart' ? 'active text-primary' : 'text-dark'}`}
-                            onClick={() => setActiveSection('cart')}
-                        >
-                            <FiShoppingCart size={24} />
-                            <div className="small">Cart</div>
-                        </button>
-                    </li>
-                    <li className="nav-item">
-                        <button
-                            className={`nav-link btn btn-link ${activeSection === 'messages' ? 'active text-primary' : 'text-dark'}`}
-                            onClick={() => setActiveSection('messages')}
-                        >
-                            <FiMessageCircle size={24} />
                             <div className="small">Messages</div>
                         </button>
                     </li>
