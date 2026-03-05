@@ -73,11 +73,14 @@ export const adminAPI = {
     api.get('/api/admin/seller-applications', { params: { status, page, limit } }),
   
   // Approve or reject seller application
-  reviewApplication: (userId, status) => 
-    api.patch(`/api/admin/seller-applications/${userId}`, { status }),
+  reviewApplication: (userId, status, reason = '', note = '') => 
+    api.patch(`/api/admin/seller-applications/${userId}`, { status, rejectionReason: reason, rejectionNote: note }),
   
   // Get my application status
-  getMyApplication: () => api.get('/api/admin/my-application')
+  getMyApplication: () => api.get('/api/admin/my-application'),
+  
+  // Apply to become a seller
+  applySeller: (idImage) => api.post('/api/admin/apply-seller', { idImage })
 }
 
 export default api

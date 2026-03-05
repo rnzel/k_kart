@@ -18,7 +18,9 @@ const userSchema = new mongoose.Schema({
     default: null 
   },
   idImage: { type: String }, // ID image for seller verification
-  applicationDate: { type: Date }
+  applicationDate: { type: Date },
+  rejectionReason: { type: String }, // Predefined reason for rejection
+  rejectionNote: { type: String } // Optional custom note for rejection
 }, { timestamps: true })
 
 // Pre-save middleware to hash password

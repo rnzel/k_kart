@@ -1,16 +1,13 @@
 import React from "react";
-import api, { adminAPI } from "../../utils/api.js";
-import { FiSave, FiLock, FiX, FiShoppingBag, FiClock, FiCheck, FiX as FiXIcon } from "react-icons/fi";
+import api from "../../utils/api.js";
+import SellerApplicationForm from "../../components/SellerApplicationForm.jsx";
+import { FiSave, FiLock, FiX, FiClock, FiCheck } from "react-icons/fi";
 
-function MyProfileSection() {
+export default function MyProfileSection() {
     const [loading, setLoading] = React.useState(false);
     const [message, setMessage] = React.useState({ type: "", text: "" });
     const [error, setError] = React.useState("");
     const [showPasswordForm, setShowPasswordForm] = React.useState(false);
-    const [showSellerForm, setShowSellerForm] = React.useState(false);
-    const [idImage, setIdImage] = React.useState(null);
-    const [uploading, setUploading] = React.useState(false);
-    const [applicationStatus, setApplicationStatus] = React.useState(null);
     
     const [user, setUser] = React.useState({
         firstName: "",
@@ -24,9 +21,16 @@ function MyProfileSection() {
         confirmPassword: ""
     });
 
+    const [showSellerForm, setShowSellerForm] = React.useState(false);
+    const [applicationStatus, setApplicationStatus] = React.useState(null);
+
+    const openSellerAppModal = () => {
+        setShowSellerForm(true);
+    };
+
     React.useEffect(() => {
         fetchUserProfile();
-        fetchApplicationStatus();
+        fetchApplicationData();
     }, []);
 
     const fetchUserProfile = async () => {
@@ -42,12 +46,12 @@ function MyProfileSection() {
         }
     };
 
-    const fetchApplicationStatus = async () => {
+    const fetchApplicationData = async () => {
         try {
-            const response = await adminAPI.getMyApplication();
+            const response = await api.get("/api/admin/my-application");
             setApplicationStatus(response.data);
         } catch (err) {
-            console.error("Error fetching application status:", err);
+            console.error("Error fetching application data:", err);
         }
     };
 
@@ -142,259 +146,228 @@ function MyProfileSection() {
         setPasswordData({ ...passwordData, [e.target.name]: e.target.value });
     };
 
+    const getStatusBadge = (status) => {
+        switch (status) {
+            case 'pending':
+                return (
+                    <div className="alert alert-warning mb-3">
+                        <FiClock className="me-2" />
+                        Your seller application is pending review.
+                    </div>
+                );
+            case 'approved':
+                return (
+                    <div className="alert alert-success mb-3">
+                        <FiCheck className="me-2" />
+                        You are already a seller!
+                    </div>
+                );
+            case 'rejected':
+                return (
+                    <div className="alert alert-danger mb-3">
+                        <div className="align-items-center">
+                            <div className="mb-3"> 
+                                <FiX className="me-2" />
+                                Your seller application was rejected.
+                            </div>
+                            {applicationStatus?.rejectionReason && (
+                                <div className="mb-2">
+                                    <strong>Reason:</strong> {applicationStatus.rejectionReason}
+                                </div>
+                            )}
+                            {applicationStatus?.rejectionNote && (
+                                <div className="mb-3">
+                                    <strong>Note:</strong> {applicationStatus.rejectionNote}
+                                </div>
+                            )}
+                            <button 
+                                className="btn btn-primary"
+                                style={{ width: "100%" }}
+                                onClick={openSellerAppModal}
+                            >
+                                Apply Again
+                            </button>
+                        </div>
+                    </div>
+                );
+            default:
+                return null;
+        }
+    };
+
     return (
-        <div className="container border border-black rounded p-4">
-            <h2 className="text-primary mb-4">My Profile</h2>
+        <>
+            {/* Profile Container */}
+            <div className="container border border-black rounded p-4">
+                <h2 className="text-primary mb-4">My Profile</h2>
 
-            {message.text && (
-                <div className={`alert alert-${message.type} alert-dismissible`} role="alert">
-                    {message.text}
-                    <button type="button" className="btn-close" onClick={() => setMessage({ type: "", text: "" })}></button>
-                </div>
-            )}
-
-            <form onSubmit={showPasswordForm ? handlePasswordChange : handleSave}>
-                {error && (
-                    <div className="alert alert-danger" role="alert">
-                        {error}
+                {message.text && (
+                    <div className={`alert alert-${message.type} alert-dismissible`} role="alert">
+                        {message.text}
+                        <button type="button" className="btn-close" onClick={() => setMessage({ type: "", text: "" })}></button>
                     </div>
                 )}
 
-                {!showPasswordForm && (
-                    <>
-                        <div className="row">
-                            <div className="col-md-6 mb-3">
-                                <label className="form-label font-weight-semibold">First Name</label>
+                <form onSubmit={showPasswordForm ? handlePasswordChange : handleSave}>
+                    {error && (
+                        <div className="alert alert-danger" role="alert">
+                            {error}
+                        </div>
+                    )}
+
+                    {!showPasswordForm && (
+                        <>
+                            <div className="row">
+                                <div className="col-md-6 mb-3">
+                                    <label className="form-label font-weight-semibold">First Name</label>
+                                    <input
+                                        type="text"
+                                        className="form-control"
+                                        name="firstName"
+                                        value={user.firstName || ""}
+                                        onChange={handleInputChange}
+                                        required
+                                    />
+                                </div>
+                                <div className="col-md-6 mb-3">
+                                    <label className="form-label font-weight-semibold">Last Name</label>
+                                    <input
+                                        type="text"
+                                        className="form-control"
+                                        name="lastName"
+                                        value={user.lastName || ""}
+                                        onChange={handleInputChange}
+                                        required
+                                    />
+                                </div>
+                            </div>
+                            <div className="mb-3">
+                                <label className="form-label font-weight-semibold">Email</label>
                                 <input
-                                    type="text"
+                                    type="email"
                                     className="form-control"
-                                    name="firstName"
-                                    value={user.firstName || ""}
+                                    name="email"
+                                    value={user.email || ""}
                                     onChange={handleInputChange}
                                     required
                                 />
                             </div>
-                            <div className="col-md-6 mb-3">
-                                <label className="form-label font-weight-semibold">Last Name</label>
-                                <input
-                                    type="text"
-                                    className="form-control"
-                                    name="lastName"
-                                    value={user.lastName || ""}
-                                    onChange={handleInputChange}
-                                    required
-                                />
-                            </div>
-                        </div>
-                        <div className="mb-3">
-                            <label className="form-label font-weight-semibold">Email</label>
-                            <input
-                                type="email"
-                                className="form-control"
-                                name="email"
-                                value={user.email || ""}
-                                onChange={handleInputChange}
-                                required
-                            />
-                        </div>
-                    </>
-                )}
+                        </>
+                    )}
 
-                {showPasswordForm ? (
-                    <>
-                        <div className="mb-3">
-                            <label className="form-label font-weight-semibold">Current Password</label>
-                            <input
-                                type="password"
-                                className="form-control"
-                                name="currentPassword"
-                                value={passwordData.currentPassword}
-                                onChange={handlePasswordInputChange}
-                                required
-                            />
-                        </div>
-                        <div className="mb-3">
-                            <label className="form-label font-weight-semibold">New Password</label>
-                            <input
-                                type="password"
-                                className="form-control"
-                                name="newPassword"
-                                value={passwordData.newPassword}
-                                onChange={handlePasswordInputChange}
-                                required
-                            />
-                        </div>
-                        <div className="mb-3">
-                            <label className="form-label font-weight-semibold">Confirm New Password</label>
-                            <input
-                                type="password"
-                                className="form-control"
-                                name="confirmPassword"
-                                value={passwordData.confirmPassword}
-                                onChange={handlePasswordInputChange}
-                                required
-                            />
-                        </div>
-                    </>
-                ) : (
-                    <div className="mt-4">
-                        <button 
-                            type="button" 
-                            className="btn btn-outline-primary"
-                            onClick={() => setShowPasswordForm(true)}
-                        >
-                            Change Password
-                        </button>
-                    </div>
-                )}
-
-                <div className="d-flex gap-2 mt-4">
                     {showPasswordForm ? (
                         <>
-                            <button type="submit" className="btn btn-primary" style={{ width: "100%" }} disabled={loading}>
-                                {loading ? "Changing..." : "Save"}
-                            </button>
-                            <button 
-                                type="button" 
-                                className="btn btn-secondary" 
-                                style={{ width: "100%" }}
-                                onClick={() => {
-                                    setShowPasswordForm(false);
-                                    setPasswordData({ currentPassword: "", newPassword: "", confirmPassword: "" });
-                                    setMessage({ type: "", text: "" });
-                                }}
-                            >
-                                Cancel
-                            </button>
+                            <div className="mb-3">
+                                <label className="form-label font-weight-semibold">Current Password</label>
+                                <input
+                                    type="password"
+                                    className="form-control"
+                                    name="currentPassword"
+                                    value={passwordData.currentPassword}
+                                    onChange={handlePasswordInputChange}
+                                    required
+                                />
+                            </div>
+                            <div className="mb-3">
+                                <label className="form-label font-weight-semibold">New Password</label>
+                                <input
+                                    type="password"
+                                    className="form-control"
+                                    name="newPassword"
+                                    value={passwordData.newPassword}
+                                    onChange={handlePasswordInputChange}
+                                    required
+                                />
+                            </div>
+                            <div className="mb-3">
+                                <label className="form-label font-weight-semibold">Confirm New Password</label>
+                                <input
+                                    type="password"
+                                    className="form-control"
+                                    name="confirmPassword"
+                                    value={passwordData.confirmPassword}
+                                    onChange={handlePasswordInputChange}
+                                    required
+                                />
+                            </div>
                         </>
                     ) : (
-                        <button type="submit" className="btn btn-primary" style={{ width: "100%" }} disabled={loading}>
-                            {loading ? "Saving..." : "Edit Profile"}
-                        </button>
+                        <div className="mt-4">
+                            <button 
+                                type="button" 
+                                className="btn btn-outline-primary"
+                                onClick={() => setShowPasswordForm(true)}
+                            >
+                                Change Password
+                            </button>
+                        </div>
                     )}
-                </div>
-            </form>
 
-            {/* Seller Application Section */}
-            <hr className="my-4" />
-            
+                    <div className="d-flex gap-2 mt-4">
+                        {showPasswordForm ? (
+                            <>
+                                <button type="submit" className="btn btn-primary" style={{ width: "100%" }} disabled={loading}>
+                                    {loading ? "Changing..." : "Save"}
+                                </button>
+                                <button 
+                                    type="button" 
+                                    className="btn btn-secondary" 
+                                    style={{ width: "100%" }}
+                                    onClick={() => {
+                                        setShowPasswordForm(false);
+                                        setPasswordData({ currentPassword: "", newPassword: "", confirmPassword: "" });
+                                        setMessage({ type: "", text: "" });
+                                    }}
+                                >
+                                    Cancel
+                                </button>
+                            </>
+                        ) : (
+                            <button type="submit" className="btn btn-primary" style={{ width: "100%" }} disabled={loading}>
+                                {loading ? "Saving..." : "Edit Profile"}
+                            </button>
+                        )}
+                    </div>
+                </form>
+            </div>
+
+            {/* Seller Application Section - Conditional Rendering */}
             <div className="mt-4">
-                <h5 className="mb-3">Become a Seller</h5>
-                
-                {user.role === 'seller' ? (
+                {/* If user is already a seller, show approval status */}
+                {user?.role === 'seller' && (
                     <div className="alert alert-success">
                         <FiCheck className="me-2" />
                         You are already a seller!
                     </div>
-                ) : applicationStatus?.sellerApplicationStatus === 'pending' ? (
-                    <div className="alert alert-warning">
-                        <FiClock className="me-2" />
-                        Your seller application is pending review.
-                    </div>
-                ) : applicationStatus?.sellerApplicationStatus === 'rejected' ? (
-                    <div>
-                        <div className="alert alert-danger mb-3">
-                            <FiXIcon className="me-2" />
-                            Your seller application was rejected. You can apply again.
-                        </div>
-                        <button 
-                            className="btn btn-primary"
-                            onClick={() => setShowSellerForm(true)}
-                        >
-                            <FiShoppingBag className="me-2" />
-                            Apply Again
-                        </button>
-                    </div>
-                ) : (
-                    <button 
-                        className="btn btn-outline-primary"
-                        onClick={() => setShowSellerForm(true)}
-                    >
-                        <FiShoppingBag className="me-2" />
-                        Apply to be a Seller
-                    </button>
                 )}
 
-                {showSellerForm && (
-                    <div className="mt-3 p-3 border rounded">
-                        <h6>Submit Seller Application</h6>
-                        <p className="text-muted small">Please upload a photo of your ID for verification.</p>
-                        
+                {/* Show status badge if there's an application status */}
+                {applicationStatus?.sellerStatus && user?.role !== 'seller' && (
+                    <>{getStatusBadge(applicationStatus.sellerStatus)}</>
+                )}
+
+                {/* Show original application form if no application exists and user is not a seller */}
+                {!applicationStatus?.sellerStatus && user?.role !== 'seller' && (
+                    <div className="alert alert-info">
                         <div className="mb-3">
-                            <label className="form-label">Upload ID Image</label>
-                            <input 
-                                type="file" 
-                                className="form-control" 
-                                accept="image/*"
-                                onChange={(e) => setIdImage(e.target.files[0])}
-                            />
+                            <strong>Are you an Entrepreneurship Student?</strong> Join our marketplace as a seller and start selling your products to fellow students.
                         </div>
-
-                        {idImage && (
-                            <div className="mb-3">
-                                <img 
-                                    src={URL.createObjectURL(idImage)} 
-                                    alt="ID Preview" 
-                                    className="img-fluid rounded" 
-                                    style={{ maxHeight: '200px' }}
-                                />
-                            </div>
-                        )}
-
-                        <div className="d-flex gap-2">
-                            <button 
-                                className="btn btn-primary"
-                                onClick={async () => {
-                                    if (!idImage) {
-                                        alert("Please upload an ID image");
-                                        return;
-                                    }
-                                    try {
-                                        setUploading(true);
-                                        // For now, we'll use a simple approach - convert to base64
-                                        const reader = new FileReader();
-                                        reader.onloadend = async () => {
-                                            try {
-                                                await adminAPI.applySeller(reader.result);
-                                                alert("Application submitted successfully!");
-                                                setShowSellerForm(false);
-                                                setIdImage(null);
-                                                fetchApplicationStatus();
-                                                // Update user in localStorage
-                                                const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
-                                                localStorage.setItem('user', JSON.stringify(currentUser));
-                                            } catch (err) {
-                                                alert(err.response?.data?.message || "Error submitting application");
-                                            } finally {
-                                                setUploading(false);
-                                            }
-                                        };
-                                        reader.readAsDataURL(idImage);
-                                    } catch (err) {
-                                        alert("Error uploading image");
-                                        setUploading(false);
-                                    }
-                                }}
-                                disabled={uploading}
-                            >
-                                {uploading ? "Submitting..." : "Submit Application"}
-                            </button>
-                            <button 
-                                className="btn btn-secondary"
-                                onClick={() => {
-                                    setShowSellerForm(false);
-                                    setIdImage(null);
-                                }}
-                                disabled={uploading}
-                            >
-                                Cancel
-                            </button>
-                        </div>
+                        <button className="btn btn-primary" style={{ width: "100%" }} onClick={openSellerAppModal}>
+                            Apply as Seller
+                        </button>
                     </div>
                 )}
             </div>
-        </div>
+
+            {/* SellerApplicationForm modal at root level */}
+            <SellerApplicationForm 
+                show={showSellerForm}
+                onHide={() => setShowSellerForm(false)}
+                onApplicationSubmitted={() => {
+                    // Optional callback when application is submitted
+                    setShowSellerForm(false);
+                }}
+            />
+        </>
     );
 }
-
-export default MyProfileSection;

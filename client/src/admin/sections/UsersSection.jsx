@@ -1,6 +1,7 @@
 import React from "react";
 import { adminAPI } from "../../utils/api.js";
 import { FiTrash2, FiClock, FiCheck, FiX, FiChevronLeft, FiChevronRight } from "react-icons/fi";
+import DangerModal from "../../components/DangerModal";
 
 function UsersSection() {
     const [users, setUsers] = React.useState([]);
@@ -8,6 +9,8 @@ function UsersSection() {
     const [error, setError] = React.useState("");
     const [pagination, setPagination] = React.useState({ page: 1, pages: 1, total: 0 });
     const [currentUserId, setCurrentUserId] = React.useState(null);
+    const [showDeleteModal, setShowDeleteModal] = React.useState(false);
+    const [userToDelete, setUserToDelete] = React.useState(null);
 
     React.useEffect(() => {
         // Get current user ID from localStorage
@@ -37,15 +40,19 @@ function UsersSection() {
     };
 
     const handleDeleteUser = async (userId) => {
-        if (!window.confirm("Are you sure you want to delete this user? This action cannot be undone.")) {
-            return;
-        }
+        setUserToDelete(userId);
+        setShowDeleteModal(true);
+    };
+
+    const confirmDeleteUser = async () => {
+        if (!userToDelete) return;
         
         try {
-            await adminAPI.deleteUser(userId);
+            await adminAPI.deleteUser(userToDelete);
             // Remove the deleted user from the list
-            setUsers(users.filter(user => user._id !== userId));
-            alert("User deleted successfully");
+            setUsers(users.filter(user => user._id !== userToDelete));
+            setShowDeleteModal(false);
+            setUserToDelete(null);
         } catch (err) {
             alert(err.response?.data?.message || "Failed to delete user");
         }
@@ -66,11 +73,11 @@ function UsersSection() {
         if (!status) return null;
         switch (status) {
             case 'pending':
-                return <span className="badge bg-warning text-dark small ms-1"><FiClock size={10} className="me-1"/>Pending</span>;
+                return <span className="badge bg-warning small ms-1">Pending</span>;
             case 'approved':
-                return <span className="badge bg-success small ms-1"><FiCheck size={10} className="me-1"/>Approved</span>;
+                return <span className="badge bg-success small ms-1">Approved</span>;
             case 'rejected':
-                return <span className="badge bg-danger small ms-1"><FiX size={10} className="me-1"/>Rejected</span>;
+                return <span className="badge bg-danger small ms-1">Rejected</span>;
             default:
                 return null;
         }
@@ -92,39 +99,55 @@ function UsersSection() {
                 </div>
             )}
 
-            {/* Desktop Table View */}
-            <div className="d-none d-md-block">
-                <div className="table-responsive">
-                    <table className="table table-sm table-hover text-center">
-                        <thead>
-                            <tr>
-                                <th className="font-weight-semibold">Name</th>
-                                <th className="font-weight-semibold">Email</th>
-                                <th className="font-weight-semibold">Role</th>
-                                <th className="font-weight-semibold">Seller Status</th>
-                                <th className="font-weight-semibold">Registered</th>
-                                <th className="font-weight-semibold">Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {loading ? (
+            {/* Responsive User List */}
+            {loading ? (
+                <div className="text-center py-4">
+                    <div className="spinner-border text-primary" role="status">
+                        <span className="visually-hidden">Loading...</span>
+                    </div>
+                </div>
+            ) : users.length === 0 ? (
+                <p className="text-muted text-center">No users found.</p>
+            ) : (
+                <div className="user-list-container">
+                    {/* Desktop/Tablet Table Layout */}
+                    <div className="table-responsive d-none d-lg-block">
+                        <table className="table table-hover align-middle">
+                            <thead>
                                 <tr>
-                                    <td colSpan="6" className="text-center py-4">
-                                        <div className="spinner-border text-primary" role="status">
-                                            <span className="visually-hidden">Loading...</span>
-                                        </div>
-                                    </td>
+                                    <th className="small">Name</th>
+                                    <th className="small">Email</th>
+                                    <th className="small">Role</th>
+                                    <th className="small">Seller Status</th>
+                                    <th className="small">Registered</th>
+                                    <th className="small text-center">Actions</th>
                                 </tr>
-                            ) : (
-                                users.map(user => (
+                            </thead>
+                            <tbody>
+                                {users.map(user => (
                                     <tr key={user._id}>
-                                        <td className="small">{user.firstName} {user.lastName}</td>
-                                        <td className="small">{user.email}</td>
-                                        <td>{getRoleBadge(user.role)}</td>
-                                        <td>{getSellerStatusBadge(user.sellerStatus)}</td>
-                                        <td className="small">{new Date(user.dateRegistered || user.createdAt).toLocaleDateString()}</td>
                                         <td>
-                                            {/* Only show delete button if it's not the current user */}
+                                            <div className="small text-truncate" title={`${user.firstName} ${user.lastName}`}>
+                                                {user.firstName} {user.lastName}
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <div className="small text-muted text-truncate" title={user.email}>
+                                                {user.email}
+                                            </div>
+                                        </td>
+                                        <td>
+                                            {getRoleBadge(user.role)}
+                                        </td>
+                                        <td>
+                                            {getSellerStatusBadge(user.sellerStatus)}
+                                        </td>
+                                        <td>
+                                            <div className="small text-muted text-nowrap">
+                                                {new Date(user.dateRegistered || user.createdAt).toLocaleDateString()}
+                                            </div>
+                                        </td>
+                                        <td className="text-center">
                                             {user._id !== currentUserId && (
                                                 <button 
                                                     className="btn btn-sm btn-outline-danger"
@@ -136,55 +159,46 @@ function UsersSection() {
                                             )}
                                         </td>
                                     </tr>
-                                ))
-                            )}
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-
-            {/* Mobile Card View */}
-            <div className="d-md-none">
-                {loading ? (
-                    <div className="text-center py-4">
-                        <div className="spinner-border text-primary" role="status">
-                            <span className="visually-hidden">Loading...</span>
-                        </div>
+                                ))}
+                            </tbody>
+                        </table>
                     </div>
-                ) : (
-                    users.map(user => (
-                        <div key={user._id} className="card mb-3">
-                            <div className="card-body">
-                                <div className="d-flex justify-content-between align-items-start mb-2">
-                                    <div>
-                                        <h6 className="mb-0 small">{user.firstName} {user.lastName}</h6>
-                                        <small className="text-muted">{user.email}</small>
-                                    </div>
-                                    <div>
-                                        {getRoleBadge(user.role)}
-                                        {getSellerStatusBadge(user.sellerStatus)}
-                                    </div>
-                                </div>
-                                <div className="d-flex gap-2 mt-2">
-                                    {/* Only show delete button if it's not the current user */}
-                                    {user._id !== currentUserId && (
-                                        <button 
-                                            className="btn btn-sm btn-outline-danger"
-                                            onClick={() => handleDeleteUser(user._id)}
-                                        >
 
-                                            Delete
-                                        </button>
-                                    )}
+                    {/* Mobile Card Layout */}
+                    <div className="d-lg-none">
+                        {users.map(user => (
+                            <div key={user._id} className="user-item-card card mb-3">
+                                <div className="card-body p-3">
+                                    <div className="d-flex justify-content-between align-items-start mb-2">
+                                        <div>
+                                            <h6 className="mb-0 small">{user.firstName} {user.lastName}</h6>
+                                            <small className="text-muted">{user.email}</small>
+                                        </div>
+                                        <div className="text-end">
+                                            {getRoleBadge(user.role)}
+                                            {getSellerStatusBadge(user.sellerStatus)}
+                                        </div>
+                                    </div>
+                                    <div className="row small text-muted mb-2">
+                                        <div className="col-6">
+                                            <strong>Registered:</strong> {new Date(user.dateRegistered || user.createdAt).toLocaleDateString()}
+                                        </div>
+                                    </div>
+                                    <div className="d-flex gap-2">
+                                        {user._id !== currentUserId && (
+                                            <button 
+                                                className="btn btn-sm btn-outline-danger"
+                                                onClick={() => handleDeleteUser(user._id)}
+                                            >
+                                                Delete
+                                            </button>
+                                        )}
+                                    </div>
                                 </div>
                             </div>
-                        </div>
-                    ))
-                )}
-            </div>
-
-            {users.length === 0 && !loading && (
-                <p className="text-muted text-center">No users found.</p>
+                        ))}
+                    </div>
+                </div>
             )}
 
             {/* Pagination */}
@@ -208,7 +222,20 @@ function UsersSection() {
                         Next <FiChevronRight size={14} />
                     </button>
                 </div>
-            )}        </div>
+            )}
+
+            {/* Delete Confirmation Modal */}
+            <DangerModal
+                show={showDeleteModal}
+                onHide={() => {
+                    setShowDeleteModal(false);
+                    setUserToDelete(null);
+                }}
+                onConfirm={confirmDeleteUser}
+                title="Delete User"
+                messsage="Are you sure you want to delete this user? This action cannot be undone."
+            />
+        </div>
     );
 }
 

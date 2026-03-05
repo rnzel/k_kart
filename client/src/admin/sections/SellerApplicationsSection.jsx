@@ -1,15 +1,35 @@
 import React from "react";
 import { adminAPI } from "../../utils/api.js";
-import { FiCheck, FiX, FiClock, FiUsers, FiChevronLeft, FiChevronRight } from "react-icons/fi";
+import { FiCheck, FiX, FiClock, FiUsers, FiChevronLeft, FiChevronRight, FiEye } from "react-icons/fi";
 import { getImageUrl } from "../../utils/imageUrl.js";
+import IDViewModal from "../../components/IDViewModal.jsx";
+import DangerModal from "../../components/DangerModal.jsx";
 
 function SellerApplicationsSection() {
     const [applications, setApplications] = React.useState([]);
     const [loading, setLoading] = React.useState(true);
     const [error, setError] = React.useState("");
+    const [message, setMessage] = React.useState({ type: '', text: '' });
     const [processing, setProcessing] = React.useState(null);
     const [activeTab, setActiveTab] = React.useState('pending');
     const [pagination, setPagination] = React.useState({ page: 1, pages: 1, total: 0 });
+    const [showIdModal, setShowIdModal] = React.useState(false);
+    const [selectedApplication, setSelectedApplication] = React.useState(null);
+    const [showRejectModal, setShowRejectModal] = React.useState(false);
+    const [rejectionReason, setRejectionReason] = React.useState('');
+    const [rejectionNote, setRejectionNote] = React.useState('');
+    const [isCustomReason, setIsCustomReason] = React.useState(false);
+
+    // Predefined rejection reasons
+    const rejectionReasons = [
+        'ID image is unclear or blurry',
+        'Invalid or unsupported ID',
+        'ID details are not readable',
+        'ID is expired',
+        'ID does not match account information',
+        'Fake or suspicious ID',
+        'Other'
+    ];
 
     React.useEffect(() => {
         fetchApplications(1);
@@ -28,24 +48,74 @@ function SellerApplicationsSection() {
         }
     };
 
-    const handleReview = async (userId, status) => {
+    const handleReview = async (userId, status, reason = '', note = '') => {
         try {
             setProcessing(userId);
-            await adminAPI.reviewApplication(userId, status);
-            // Remove from current list
-            setApplications(applications.filter(app => app._id !== userId));
-            alert(`Application ${status} successfully!`);
+            
+            const response = await adminAPI.reviewApplication(userId, status, reason, note);
+            
+            if (response.data.success) {
+                // Update the application in the list with new status
+                setApplications(prevApplications => 
+                    prevApplications.map(app => 
+                        app._id === userId 
+                            ? { ...app, ...response.data.user }
+                            : app
+                    )
+                );
+                
+                // Show success message
+                setMessage({ type: 'success', text: `Application ${status} successfully!` });
+                
+                // Auto-hide success message after 3 seconds
+                setTimeout(() => {
+                    setMessage({ type: '', text: '' });
+                }, 3000);
+            } else {
+                throw new Error(response.data.message || `Failed to ${status} application`);
+            }
         } catch (err) {
-            alert(err.response?.data?.message || `Failed to ${status} application`);
+            const errorMessage = err.response?.data?.message || err.message || `Failed to ${status} application`;
+            setMessage({ type: 'danger', text: errorMessage });
+            
+            // Auto-hide error message after 5 seconds
+            setTimeout(() => {
+                setMessage({ type: '', text: '' });
+            }, 5000);
         } finally {
             setProcessing(null);
+        }
+    };
+
+    const handleReject = (application) => {
+        setSelectedApplication(application);
+        setShowRejectModal(true);
+        setRejectionReason('');
+        setRejectionNote('');
+        setIsCustomReason(false);
+    };
+
+    const confirmReject = async () => {
+        if (selectedApplication) {
+            const reason = isCustomReason ? rejectionNote : rejectionReason;
+            await handleReview(selectedApplication._id, 'rejected', reason, rejectionNote);
+            setShowRejectModal(false);
+        }
+    };
+
+    const handleReasonChange = (e) => {
+        const value = e.target.value;
+        setRejectionReason(value);
+        setIsCustomReason(value === 'Other');
+        if (value !== 'Other') {
+            setRejectionNote('');
         }
     };
 
     const getStatusBadge = (status) => {
         switch (status) {
             case 'pending':
-                return <span className="badge bg-warning text-dark small">Pending</span>;
+                return <span className="badge bg-warning small">Pending</span>;
             case 'approved':
                 return <span className="badge bg-success small">Approved</span>;
             case 'rejected':
@@ -61,6 +131,11 @@ function SellerApplicationsSection() {
         }
     };
 
+    const handleCloseModal = () => {
+        setShowIdModal(false);
+        setSelectedApplication(null);
+    };
+
     return (
         <div className="container border border-black rounded p-4">
             <h2 className="text-primary mb-4">Seller Applications</h2>
@@ -71,32 +146,37 @@ function SellerApplicationsSection() {
                 </div>
             )}
             
+            {message.text && (
+                <div className={`alert alert-${message.type} alert-dismissible fade show`} role="alert">
+                    {message.text}
+                    <button type="button" className="btn-close" onClick={() => setMessage({ type: '', text: '' })}></button>
+                </div>
+            )}
+            
             {/* Tabs */}
             <ul className="nav nav-tabs mb-4">
                 <li className="nav-item">
                     <button
-                        className={`nav-link ${activeTab === 'pending' ? 'active' : ''}`}
+                        className={`nav-link ${activeTab === 'pending' ? 'active text-primary fw-semibold' : 'text-muted'}`}
                         onClick={() => setActiveTab('pending')}
                     >
-                        <FiClock size={14} className="me-1" />
                         Pending
                     </button>
                 </li>
                 <li className="nav-item">
                     <button
-                        className={`nav-link ${activeTab === 'approved' ? 'active' : ''}`}
+                        className={`nav-link ${activeTab === 'approved' ? 'active text-primary fw-semibold' : 'text-muted'}`}
                         onClick={() => setActiveTab('approved')}
                     >
-                        <FiCheck size={14} className="me-1" />
                         Approved
                     </button>
                 </li>
                 <li className="nav-item">
                     <button
-                        className={`nav-link ${activeTab === 'rejected' ? 'active' : ''}`}
+                        className={`nav-link ${activeTab === 'rejected' ? 'active text-primary fw-semibold' : 'text-muted'}`}
                         onClick={() => setActiveTab('rejected')}
                     >
-                        <FiX size={14} className="me-1" />
+
                         Rejected
                     </button>
                 </li>
@@ -120,7 +200,22 @@ function SellerApplicationsSection() {
                         <div className="card-body">
                             <div className="d-flex justify-content-between align-items-start mb-2">
                                 <div>
-                                    <h5 className="mb-1 small">{application.firstName} {application.lastName}</h5>
+                                    <h5 className="mb-1">
+                                        {application.firstName} {application.lastName}
+                                        {(application.idImage || application.studentIdPicture) && (
+                                            <button
+                                                className="btn btn-outline-primary btn-sm ms-2"
+                                                onClick={() => {
+                                                    setSelectedApplication(application);
+                                                    setShowIdModal(true);
+                                                }}
+                                                title="View ID"
+                                            >
+                                                <FiEye size={16} />
+                                                <span className="ms-1">View ID</span>
+                                            </button>
+                                        )}
+                                    </h5>
                                     <p className="text-muted mb-1 small">{application.email}</p>
                                     <small className="text-muted">
                                         Applied on: {application.applicationDate 
@@ -133,37 +228,24 @@ function SellerApplicationsSection() {
                                 </div>
                             </div>
                             
-                            <div className="row mt-3">
-                                <div className="col-md-6">
-                                    <h6 className="mb-2 small">ID Picture:</h6>
-                                    {(application.idImage || application.studentIdPicture) && (
-                                        <img 
-                                            src={getImageUrl(application.idImage || application.studentIdPicture)} 
-                                            alt="ID" 
-                                            className="img-fluid rounded"
-                                            style={{ maxHeight: '150px', objectFit: 'cover' }}
-                                        />
-                                    )}
-                                </div>
-                            </div>
                             
                             {/* Show Approve/Reject buttons only for pending applications */}
                             {activeTab === 'pending' && (
                                 <div className="d-flex gap-2 mt-3">
                                     <button 
-                                        className="btn btn-success btn-sm"
+                                        className="btn btn-primary"
+                                        style={{ width: "100%" }}
                                         onClick={() => handleReview(application._id, 'approved')}
                                         disabled={processing === application._id}
                                     >
-                                        <FiCheck size={14} className="me-1" />
                                         Approve
                                     </button>
                                     <button 
-                                        className="btn btn-danger btn-sm"
-                                        onClick={() => handleReview(application._id, 'rejected')}
+                                        className="btn btn-secondary"
+                                        style={{ width: "100%" }}
+                                        onClick={() => handleReject(application)}
                                         disabled={processing === application._id}
                                     >
-                                        <FiX size={14} className="me-1" />
                                         Reject
                                     </button>
                                 </div>
@@ -195,6 +277,51 @@ function SellerApplicationsSection() {
                     </button>
                 </div>
             )}
+            
+            {/* ID View Modal */}
+            <IDViewModal
+                show={showIdModal}
+                onHide={handleCloseModal}
+                application={selectedApplication}
+            />
+
+            {/* Reject Confirmation Modal */}
+            <DangerModal
+                show={showRejectModal}
+                onHide={() => setShowRejectModal(false)}
+                onConfirm={confirmReject}
+                title="Reject Seller Application"
+                messsage={
+                    <div>
+                        <p>Are you sure you want to reject this seller application?</p>
+                        <div className="mb-3">
+                            <label className="form-label">Rejection Reason:</label>
+                            <select
+                                className="form-select"
+                                value={rejectionReason}
+                                onChange={handleReasonChange}
+                            >
+                                <option value="">Select a reason...</option>
+                                {rejectionReasons.map((reason, index) => (
+                                    <option key={index} value={reason}>{reason}</option>
+                                ))}
+                            </select>
+                        </div>
+                        {(isCustomReason || rejectionReason) && (
+                            <div className="mb-3">
+                                <label className="form-label">Additional Notes:</label>
+                                <textarea
+                                    className="form-control"
+                                    rows="3"
+                                    value={isCustomReason ? rejectionNote : rejectionNote}
+                                    onChange={(e) => setRejectionNote(e.target.value)}
+                                    placeholder={isCustomReason ? "Please provide a custom reason..." : "Additional explanation (optional)"}
+                                />
+                            </div>
+                        )}
+                    </div>
+                }
+            />
         </div>
     );
 }

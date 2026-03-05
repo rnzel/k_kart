@@ -72,7 +72,14 @@ function Navbar() {
     return (
         <nav className="navbar navbar-expand-lg navbar-light border-bottom" style={{ zIndex: 1050 }}>
             <div className="container d-flex justify-content-between align-items-center">
+                <div className='d-flex align-items-center gap-2'>
                 <Link to="/marketplace" className="navbar-brand">KampusKart</Link> 
+                
+                
+                {user?.role === "admin" && (
+                    <div className='badge small bg-primary'>Admin</div>
+                )}
+                </div>
                 
                 {/* User Avatar with Dropdown */}
                 <div className="position-relative">

@@ -27,15 +27,33 @@ function Auth() {
     const [loading, setLoading] = useState(false);
     
     // Handle login form submission
-    const handleLogin = (e) => {
+    const handleLogin = async (e) => {
         e.preventDefault();
-        setLoading(true);
+        
+        // Clear previous errors
         setLoginError('');
-        api.post(`/api/auth/login`, {
-            email: loginEmail,
-            password: loginPassword 
-        })
-        .then(response => {
+        
+        // Basic validation
+        if (!loginEmail || !loginPassword) {
+            setLoginError('Please enter both email and password.');
+            return;
+        }
+        
+        // Email format validation
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(loginEmail)) {
+            setLoginError('Please enter a valid email address.');
+            return;
+        }
+        
+        setLoading(true);
+        
+        try {
+            const response = await api.post(`/api/auth/login`, {
+                email: loginEmail,
+                password: loginPassword 
+            });
+            
             localStorage.setItem('token', response.data.token);
             localStorage.setItem('user', JSON.stringify(response.data.user));
             
@@ -48,76 +66,102 @@ function Auth() {
             } else {
                 navigate('/marketplace');
             }
-        })
-        .catch(error => {
-            setLoginError(error.response?.data?.error || 'Login failed. Please try again.');
-        }) 
-        .finally(() => {
+        } catch (error) {
+            // Handle different types of errors
+            if (error.response) {
+                // Server responded with error status
+                setLoginError(error.response.data?.error || 'Invalid email or password. Please try again.');
+            } else if (error.request) {
+                // Network error
+                setLoginError('Network error. Please check your connection and try again.');
+            } else {
+                // Other error
+                setLoginError('An unexpected error occurred. Please try again.');
+            }
+        } finally {
             setLoading(false);
-        });
+        }
     };
 
     // Handle register form submission
-    const handleRegister = (e) => {
+    const handleRegister = async (e) => {
         e.preventDefault();
+        
+        // Clear previous errors
         setError('');
-        setLoading(true);
+        
+        // Basic validation
+        if (!firstName || !lastName || !email || !password || !confirmPassword) {
+            setError('Please fill in all required fields.');
+            return;
+        }
+        
+        // Email format validation
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(email)) {
+            setError('Please enter a valid email address.');
+            return;
+        }
         
         // Password validation
         if (password !== confirmPassword) {
             setError('Passwords do not match');
-            setLoading(false);
             return;
         }
         
         if (password.length < 6) {
             setError('Password must be at least 6 characters');
-            setLoading(false);
             return;
         }
 
         if (accountType === 'seller' && !studentIdPicture) {
             setError('Please upload your ID picture');
-            setLoading(false);
             return;
         }
 
-        // Check if email is already in use
-        api.post(`/api/auth/check-email`, { email })
-            .then((response) => {
-                if (response.data.exists) {
-                    setError('Email is already in use');
-                    setLoading(false);
-                    return;
-                }
-                // Email is available, proceed with registration
-                api.post(`/api/auth/register`, {
-                    firstName,
-                    lastName,
-                    email,
-                    password,
-                    role: accountType,
-                    studentIdPicture: accountType === 'seller' ? studentIdPicture : undefined
-                })
-                .then(() => {
-                    if (accountType === 'seller') {
-                        setSuccessMessage('Your seller application has been submitted. Please wait for admin approval.');
-                    } else {
-                        setSuccessMessage('Account created successfully! Please login.');
-                    }
-                    setActiveTab('login');
-                })
-                .catch((err) => {
-                    setError(err.response?.data?.error || 'Registration failed. Please try again.');
-                })
-                .finally(() => {
-                    setLoading(false);
-                });
-            })
-            .catch(() => {
-                setError('Something went wrong. Please try again.');
+        setLoading(true);
+        
+        try {
+            // Check if email is already in use
+            const emailCheckResponse = await api.post(`/api/auth/check-email`, { email });
+            
+            if (emailCheckResponse.data.exists) {
+                setError('Email is already in use');
                 setLoading(false);
+                return;
+            }
+            
+            // Email is available, proceed with registration
+            await api.post(`/api/auth/register`, {
+                firstName,
+                lastName,
+                email,
+                password,
+                role: accountType,
+                studentIdPicture: accountType === 'seller' ? studentIdPicture : undefined
             });
+            
+            if (accountType === 'seller') {
+                setSuccessMessage('Your seller application has been submitted. Please wait for admin approval.');
+            } else {
+                setSuccessMessage('Account created successfully! Please login.');
+            }
+            setActiveTab('login');
+        } catch (err) {
+            // Handle different types of errors
+            if (err.response) {
+                // Server responded with error status
+                setError(err.response.data?.error || 'Registration failed. Please try again.');
+            } else if (err.request) {
+                // Network error
+                setError('Network error. Please check your connection and try again.');
+            } else {
+                // Other error
+                setError('An unexpected error occurred. Please try again.');
+            }
+        } finally {
+            setLoading(false);
+        }
     };
     
     // Handle file input change 
