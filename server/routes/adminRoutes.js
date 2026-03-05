@@ -164,7 +164,7 @@ router.patch('/seller-applications/:id', authenticateToken, requireAdmin, async 
 router.get('/my-application', authenticateToken, async (req, res) => {
     try {
         const user = await User.findById(req.user.userId)
-            .select('sellerStatus applicationDate idImage studentIdPicture')
+            .select('sellerStatus applicationDate idImage studentIdPicture rejectionReason rejectionNote')
         res.json(user)
     } catch (err) {
         res.status(500).json({ message: err.message })

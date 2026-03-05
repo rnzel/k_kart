@@ -49,6 +49,7 @@ export default function MyProfileSection() {
     const fetchApplicationData = async () => {
         try {
             const response = await api.get("/api/admin/my-application");
+            console.log('API response for my-application:', response.data);
             setApplicationStatus(response.data);
         } catch (err) {
             console.error("Error fetching application data:", err);
@@ -147,6 +148,12 @@ export default function MyProfileSection() {
     };
 
     const getStatusBadge = (status) => {
+        // Debug logging to help identify the issue
+        console.log('getStatusBadge called with status:', status);
+        console.log('applicationStatus:', applicationStatus);
+        console.log('rejectionReason:', applicationStatus?.rejectionReason);
+        console.log('rejectionNote:', applicationStatus?.rejectionNote);
+        
         switch (status) {
             case 'pending':
                 return (
@@ -171,7 +178,7 @@ export default function MyProfileSection() {
                                 Your seller application was rejected.
                             </div>
                             {applicationStatus?.rejectionReason && (
-                                <div className="mb-2">
+                                <div className="mb-3">
                                     <strong>Reason:</strong> {applicationStatus.rejectionReason}
                                 </div>
                             )}
