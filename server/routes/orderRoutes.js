@@ -12,6 +12,9 @@ router.get('/my-orders', auth.auth, orderController.getMyOrders);
 // GET /api/orders/seller-orders - Get seller's orders
 router.get('/seller-orders', auth.auth, orderController.getSellerOrders);
 
+// GET /api/orders/:orderNumber - Get order by order number
+router.get('/:orderNumber', auth.auth, orderController.getOrderByOrderNumber);
+
 // PATCH /api/orders/:id/status - Update order status (seller only)
 router.patch('/:id/status', auth.auth, orderController.updateOrderStatus);
 

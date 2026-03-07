@@ -8,22 +8,41 @@ const getCart = async (req, res) => {
     const userId = req.user?.userId;
 
     if (!userId) {
-      return res.status(401).json({ message: 'Unauthorized' });
+      return res.status(401).json({ 
+        success: false,
+        message: 'Unauthorized: Please log in to view your cart' 
+      });
     }
 
-    let cart = await Cart.findOne({ user: userId })
-      .populate('items.product', 'productStock')
-      .populate('items.shop', 'shopName shopLogo');
+    let cart = await Cart.findByUserWithPopulate(userId);
 
     // If cart doesn't exist, create an empty one
     if (!cart) {
       cart = new Cart({ user: userId, items: [] });
       await cart.save();
+      cart = await Cart.findByUserWithPopulate(userId);
     }
 
-    res.status(200).json(cart);
+    // Validate cart items and update price/stock snapshots
+    const validationErrors = await cart.validateItems();
+    if (validationErrors.length > 0) {
+      // Remove invalid items and save
+      cart.items = cart.items.filter(item => 
+        validationErrors.every(error => !error.includes(item.product.toString()))
+      );
+      await cart.save();
+    }
+
+    res.status(200).json({
+      success: true,
+      data: cart
+    });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error('Error getting cart:', error);
+    res.status(500).json({ 
+      success: false,
+      message: 'Failed to retrieve cart. Please try again.' 
+    });
   }
 };
 
@@ -33,85 +52,128 @@ const addToCart = async (req, res) => {
     const userId = req.user?.userId;
 
     if (!userId) {
-      return res.status(401).json({ message: 'Unauthorized' });
+      return res.status(401).json({ 
+        success: false,
+        message: 'Unauthorized: Please log in to add items to cart' 
+      });
     }
 
     const { productId, quantity = 1 } = req.body;
 
+    // Input validation
     if (!productId) {
-      return res.status(400).json({ message: 'Product ID is required' });
-    }
-
-    // Get product details
-    const product = await Product.findById(productId);
-    if (!product) {
-      return res.status(404).json({ message: 'Product not found' });
-    }
-
-    // Get shop details
-    const shop = await Shop.findById(product.shop);
-    if (!shop) {
-      return res.status(404).json({ message: 'Shop not found' });
-    }
-
-    // Check stock
-    const quantityNum = Number(quantity);
-    if (quantityNum > product.productStock) {
       return res.status(400).json({ 
-        message: 'Not enough stock available',
-        availableStock: product.productStock 
+        success: false,
+        message: 'Product ID is required' 
       });
     }
 
-    // Find or create cart
-    let cart = await Cart.findOne({ user: userId });
-    if (!cart) {
-      cart = new Cart({ user: userId, items: [] });
+    const quantityNum = Number(quantity);
+    if (isNaN(quantityNum) || quantityNum < 1 || quantityNum > 999) {
+      return res.status(400).json({ 
+        success: false,
+        message: 'Invalid quantity. Must be between 1 and 999' 
+      });
     }
 
-    // Check if item already exists in cart
-    const existingItemIndex = cart.items.findIndex(
-      item => item.product.toString() === productId
-    );
+    // Use transaction to prevent race conditions
+    const session = await Cart.startSession();
+    
+    try {
+      await session.withTransaction(async () => {
+        // Get product details with session
+        const product = await Product.findById(productId).session(session);
+        if (!product) {
+          throw new Error('Product not found');
+        }
 
-    if (existingItemIndex > -1) {
-      // Update quantity
-      const newQuantity = cart.items[existingItemIndex].quantity + quantityNum;
-      
-      if (newQuantity > product.productStock) {
+        // Check if product is deleted
+        if (product.isDeleted) {
+          throw new Error('Cannot add deleted product to cart');
+        }
+
+        // Get shop details with session
+        const shop = await Shop.findById(product.shop).session(session);
+        if (!shop) {
+          throw new Error('Shop not found');
+        }
+
+        // Check if shop is deleted
+        if (shop.isDeleted) {
+          throw new Error('Cannot add product from deleted shop to cart');
+        }
+
+        // Check stock
+        if (quantityNum > product.productStock) {
+          throw new Error(`Not enough stock available. Available: ${product.productStock}`);
+        }
+
+        // Find or create cart with session
+        let cart = await Cart.findOne({ user: userId }).session(session);
+        if (!cart) {
+          cart = new Cart({ user: userId, items: [] });
+        }
+
+        // Check if item already exists in cart
+        const existingItemIndex = cart.items.findIndex(
+          item => item.product.toString() === productId
+        );
+
+        if (existingItemIndex > -1) {
+          // Update quantity
+          const newQuantity = cart.items[existingItemIndex].quantity + quantityNum;
+          
+          if (newQuantity > product.productStock) {
+            throw new Error(`Not enough stock available. Current quantity: ${cart.items[existingItemIndex].quantity}, Requested: ${quantityNum}, Available: ${product.productStock}`);
+          }
+          
+          cart.items[existingItemIndex].quantity = newQuantity;
+        } else {
+          // Add new item
+          cart.items.push({
+            product: product._id,
+            productName: product.productName,
+            productPrice: product.productPrice,
+            productImages: product.productImages || [],
+            productStock: product.productStock,
+            quantity: quantityNum,
+            shop: shop._id,
+            shopName: shop.shopName,
+            shopLogo: shop.shopLogo || null
+          });
+        }
+
+        await cart.save({ session });
+      });
+
+      // Return populated cart
+      const updatedCart = await Cart.findByUserWithPopulate(userId);
+
+      res.status(200).json({
+        success: true,
+        message: 'Item added to cart successfully',
+        data: updatedCart
+      });
+    } catch (error) {
+      if (error.message.includes('Not enough stock') || 
+          error.message.includes('Product not found') ||
+          error.message.includes('Shop not found') ||
+          error.message.includes('deleted')) {
         return res.status(400).json({ 
-          message: 'Not enough stock available',
-          availableStock: product.productStock,
-          currentQuantity: cart.items[existingItemIndex].quantity
+          success: false,
+          message: error.message 
         });
       }
-      
-      cart.items[existingItemIndex].quantity = newQuantity;
-    } else {
-      // Add new item
-      cart.items.push({
-        product: product._id,
-        productName: product.productName,
-        productPrice: product.productPrice,
-        productImages: product.productImages || [],
-        productStock: product.productStock,
-        quantity: quantityNum,
-        shop: shop._id,
-        shopName: shop.shopName,
-        shopLogo: shop.shopLogo || null
-      });
+      throw error;
+    } finally {
+      await session.endSession();
     }
-
-    await cart.save();
-    
-    // Return populated cart
-    cart = await Cart.findById(cart._id)
-      .populate('items.product', 'productStock')
-      .populate('items.shop', 'shopName shopLogo');
-
-    res.status(200).json(cart);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error('Error adding to cart:', error);
+    res.status(500).json({ 
+      success: false,
+      message: 'Failed to add item to cart. Please try again.' 
+    });
   }
 };
 
@@ -123,54 +185,90 @@ const updateCartItem = async (req, res) => {
     const { quantity } = req.body;
 
     if (!userId) {
-      return res.status(401).json({ message: 'Unauthorized' });
-    }
-
-    if (!itemId) {
-      return res.status(400).json({ message: 'Item ID is required' });
-    }
-
-    const quantityNum = Number(quantity);
-    if (isNaN(quantityNum) || quantityNum < 1) {
-      return res.status(400).json({ message: 'Invalid quantity' });
-    }
-
-    const cart = await Cart.findOne({ user: userId });
-    if (!cart) {
-      return res.status(404).json({ message: 'Cart not found' });
-    }
-
-    const itemIndex = cart.items.findIndex(
-      item => item._id.toString() === itemId
-    );
-
-    if (itemIndex === -1) {
-      return res.status(404).json({ message: 'Item not found in cart' });
-    }
-
-    // Get product to check stock
-    const product = await Product.findById(cart.items[itemIndex].product);
-    if (!product) {
-      return res.status(404).json({ message: 'Product not found' });
-    }
-
-    if (quantityNum > product.productStock) {
-      return res.status(400).json({ 
-        message: 'Not enough stock available',
-        availableStock: product.productStock 
+      return res.status(401).json({ 
+        success: false,
+        message: 'Unauthorized: Please log in to update cart' 
       });
     }
 
-    cart.items[itemIndex].quantity = quantityNum;
-    await cart.save();
+    if (!itemId) {
+      return res.status(400).json({ 
+        success: false,
+        message: 'Item ID is required' 
+      });
+    }
 
-    const updatedCart = await Cart.findById(cart._id)
-      .populate('items.product', 'productStock')
-      .populate('items.shop', 'shopName shopLogo');
+    const quantityNum = Number(quantity);
+    if (isNaN(quantityNum) || quantityNum < 1 || quantityNum > 999) {
+      return res.status(400).json({ 
+        success: false,
+        message: 'Invalid quantity. Must be between 1 and 999' 
+      });
+    }
 
-    res.status(200).json(updatedCart);
+    const session = await Cart.startSession();
+    
+    try {
+      await session.withTransaction(async () => {
+        const cart = await Cart.findOne({ user: userId }).session(session);
+        if (!cart) {
+          throw new Error('Cart not found');
+        }
+
+        const itemIndex = cart.items.findIndex(
+          item => item._id.toString() === itemId
+        );
+
+        if (itemIndex === -1) {
+          throw new Error('Item not found in cart');
+        }
+
+        // Get product to check stock
+        const product = await Product.findById(cart.items[itemIndex].product).session(session);
+        if (!product) {
+          throw new Error('Product not found');
+        }
+
+        if (product.isDeleted) {
+          throw new Error('Cannot update quantity for deleted product');
+        }
+
+        if (quantityNum > product.productStock) {
+          throw new Error(`Not enough stock available. Available: ${product.productStock}`);
+        }
+
+        cart.items[itemIndex].quantity = quantityNum;
+        await cart.save({ session });
+      });
+
+      const updatedCart = await Cart.findByUserWithPopulate(userId);
+
+      res.status(200).json({
+        success: true,
+        message: 'Cart item updated successfully',
+        data: updatedCart
+      });
+    } catch (error) {
+      if (error.message.includes('Cart not found') || 
+          error.message.includes('Item not found') ||
+          error.message.includes('Product not found') ||
+          error.message.includes('Not enough stock') ||
+          error.message.includes('deleted')) {
+        return res.status(400).json({ 
+          success: false,
+          message: error.message 
+        });
+      }
+      throw error;
+    } finally {
+      await session.endSession();
+    }
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error('Error updating cart item:', error);
+    res.status(500).json({ 
+      success: false,
+      message: 'Failed to update cart item. Please try again.' 
+    });
   }
 };
 
@@ -181,36 +279,65 @@ const removeFromCart = async (req, res) => {
     const { itemId } = req.params;
 
     if (!userId) {
-      return res.status(401).json({ message: 'Unauthorized' });
+      return res.status(401).json({ 
+        success: false,
+        message: 'Unauthorized: Please log in to remove items from cart' 
+      });
     }
 
     if (!itemId) {
-      return res.status(400).json({ message: 'Item ID is required' });
+      return res.status(400).json({ 
+        success: false,
+        message: 'Item ID is required' 
+      });
     }
 
-    const cart = await Cart.findOne({ user: userId });
-    if (!cart) {
-      return res.status(404).json({ message: 'Cart not found' });
+    const session = await Cart.startSession();
+    
+    try {
+      await session.withTransaction(async () => {
+        const cart = await Cart.findOne({ user: userId }).session(session);
+        if (!cart) {
+          throw new Error('Cart not found');
+        }
+
+        const itemIndex = cart.items.findIndex(
+          item => item._id.toString() === itemId
+        );
+
+        if (itemIndex === -1) {
+          throw new Error('Item not found in cart');
+        }
+
+        cart.items.splice(itemIndex, 1);
+        await cart.save({ session });
+      });
+
+      const updatedCart = await Cart.findByUserWithPopulate(userId);
+
+      res.status(200).json({
+        success: true,
+        message: 'Item removed from cart successfully',
+        data: updatedCart
+      });
+    } catch (error) {
+      if (error.message.includes('Cart not found') || 
+          error.message.includes('Item not found')) {
+        return res.status(400).json({ 
+          success: false,
+          message: error.message 
+        });
+      }
+      throw error;
+    } finally {
+      await session.endSession();
     }
-
-    const itemIndex = cart.items.findIndex(
-      item => item._id.toString() === itemId
-    );
-
-    if (itemIndex === -1) {
-      return res.status(404).json({ message: 'Item not found in cart' });
-    }
-
-    cart.items.splice(itemIndex, 1);
-    await cart.save();
-
-    const updatedCart = await Cart.findById(cart._id)
-      .populate('items.product', 'productStock')
-      .populate('items.shop', 'shopName shopLogo');
-
-    res.status(200).json(updatedCart);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error('Error removing from cart:', error);
+    res.status(500).json({ 
+      success: false,
+      message: 'Failed to remove item from cart. Please try again.' 
+    });
   }
 };
 
@@ -220,20 +347,47 @@ const clearCart = async (req, res) => {
     const userId = req.user?.userId;
 
     if (!userId) {
-      return res.status(401).json({ message: 'Unauthorized' });
+      return res.status(401).json({ 
+        success: false,
+        message: 'Unauthorized: Please log in to clear cart' 
+      });
     }
 
-    const cart = await Cart.findOne({ user: userId });
-    if (!cart) {
-      return res.status(404).json({ message: 'Cart not found' });
+    const session = await Cart.startSession();
+    
+    try {
+      await session.withTransaction(async () => {
+        const cart = await Cart.findOne({ user: userId }).session(session);
+        if (!cart) {
+          throw new Error('Cart not found');
+        }
+
+        cart.items = [];
+        await cart.save({ session });
+      });
+
+      res.status(200).json({
+        success: true,
+        message: 'Cart cleared successfully',
+        data: { user: userId, items: [] }
+      });
+    } catch (error) {
+      if (error.message.includes('Cart not found')) {
+        return res.status(400).json({ 
+          success: false,
+          message: error.message 
+        });
+      }
+      throw error;
+    } finally {
+      await session.endSession();
     }
-
-    cart.items = [];
-    await cart.save();
-
-    res.status(200).json(cart);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error('Error clearing cart:', error);
+    res.status(500).json({ 
+      success: false,
+      message: 'Failed to clear cart. Please try again.' 
+    });
   }
 };
 
@@ -244,30 +398,58 @@ const removeMultipleItems = async (req, res) => {
     const { itemIds } = req.body;
 
     if (!userId) {
-      return res.status(401).json({ message: 'Unauthorized' });
+      return res.status(401).json({ 
+        success: false,
+        message: 'Unauthorized: Please log in to remove items from cart' 
+      });
     }
 
     if (!itemIds || !Array.isArray(itemIds) || itemIds.length === 0) {
-      return res.status(400).json({ message: 'Item IDs array is required' });
+      return res.status(400).json({ 
+        success: false,
+        message: 'Item IDs array is required' 
+      });
     }
 
-    const cart = await Cart.findOne({ user: userId });
-    if (!cart) {
-      return res.status(404).json({ message: 'Cart not found' });
+    const session = await Cart.startSession();
+    
+    try {
+      await session.withTransaction(async () => {
+        const cart = await Cart.findOne({ user: userId }).session(session);
+        if (!cart) {
+          throw new Error('Cart not found');
+        }
+
+        cart.items = cart.items.filter(
+          item => !itemIds.includes(item._id.toString())
+        );
+        await cart.save({ session });
+      });
+
+      const updatedCart = await Cart.findByUserWithPopulate(userId);
+
+      res.status(200).json({
+        success: true,
+        message: `${itemIds.length} item(s) removed from cart successfully`,
+        data: updatedCart
+      });
+    } catch (error) {
+      if (error.message.includes('Cart not found')) {
+        return res.status(400).json({ 
+          success: false,
+          message: error.message 
+        });
+      }
+      throw error;
+    } finally {
+      await session.endSession();
     }
-
-    cart.items = cart.items.filter(
-      item => !itemIds.includes(item._id.toString())
-    );
-    await cart.save();
-
-    const updatedCart = await Cart.findById(cart._id)
-      .populate('items.product', 'productStock')
-      .populate('items.shop', 'shopName shopLogo');
-
-    res.status(200).json(updatedCart);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error('Error removing multiple items from cart:', error);
+    res.status(500).json({ 
+      success: false,
+      message: 'Failed to remove items from cart. Please try again.' 
+    });
   }
 };
 

@@ -20,14 +20,20 @@ function CartSection() {
     const fetchCart = async () => {
         try {
             setLoading(true);
+            setError(null);
             const response = await cartAPI.getCart();
-            const cartData = response.data;
-            setCart(cartData.items || []);
-            // Initially select all items
-            setSelectedItems((cartData.items || []).map(item => item._id));
+            
+            if (response.success) {
+                const cartData = response.data;
+                setCart(cartData.items || []);
+                // Initially select all items
+                setSelectedItems((cartData.items || []).map(item => item._id));
+            } else {
+                setError(response.message || 'Failed to load cart');
+            }
         } catch (err) {
             console.error('Failed to fetch cart:', err);
-            setError('Failed to load cart');
+            setError('Failed to load cart. Please check your internet connection and try again.');
         } finally {
             setLoading(false);
         }
@@ -103,17 +109,27 @@ function CartSection() {
         if (newQuantity < 1) {
             try {
                 const response = await cartAPI.removeFromCart(itemId);
-                setCart(response.data.items);
-                setSelectedItems(prev => prev.filter(id => id !== itemId));
+                if (response.success) {
+                    setCart(response.data.items);
+                    setSelectedItems(prev => prev.filter(id => id !== itemId));
+                } else {
+                    alert(response.message || 'Failed to remove item');
+                }
             } catch (err) {
                 console.error('Failed to remove item:', err);
+                alert('Failed to remove item. Please try again.');
             }
         } else {
             try {
                 const response = await cartAPI.updateCartItem(itemId, newQuantity);
-                setCart(response.data.items);
+                if (response.success) {
+                    setCart(response.data.items);
+                } else {
+                    alert(response.message || 'Failed to update quantity');
+                }
             } catch (err) {
                 console.error('Failed to update quantity:', err);
+                alert('Failed to update quantity. Please try again.');
             }
         }
     };
@@ -121,20 +137,30 @@ function CartSection() {
     const removeItem = async (itemId) => {
         try {
             const response = await cartAPI.removeFromCart(itemId);
-            setCart(response.data.items);
-            setSelectedItems(prev => prev.filter(id => id !== itemId));
+            if (response.success) {
+                setCart(response.data.items);
+                setSelectedItems(prev => prev.filter(id => id !== itemId));
+            } else {
+                alert(response.message || 'Failed to remove item');
+            }
         } catch (err) {
             console.error('Failed to remove item:', err);
+            alert('Failed to remove item. Please try again.');
         }
     };
 
     const removeSelectedItems = async () => {
         try {
             const response = await cartAPI.removeMultipleItems(selectedItems);
-            setCart(response.data.items);
-            setSelectedItems([]);
+            if (response.success) {
+                setCart(response.data.items);
+                setSelectedItems([]);
+            } else {
+                alert(response.message || 'Failed to remove items');
+            }
         } catch (err) {
             console.error('Failed to remove items:', err);
+            alert('Failed to remove items. Please try again.');
         }
     };
 
@@ -146,6 +172,7 @@ function CartSection() {
     const [pickupLocation, setPickupLocation] = React.useState('');
     const [note, setNote] = React.useState('');
     const [checkoutLoading, setCheckoutLoading] = React.useState(false);
+    const [checkoutError, setCheckoutError] = React.useState(null);
 
     const handleCheckout = () => {
         if (selectedItems.length === 0) {
@@ -158,34 +185,40 @@ function CartSection() {
     const handleCheckoutConfirm = async () => {
         // Validate pickup location is not empty
         if (!pickupLocation.trim()) {
-            alert('Please enter a pickup location before placing your order.');
+            setCheckoutError('Please enter a pickup location before placing your order.');
             return;
         }
         
         setCheckoutLoading(true);
+        setCheckoutError(null);
         
         try {
             const response = await orderAPI.createOrder(pickupLocation, note);
             
-            if (response.data.createdOrders && response.data.createdOrders.length > 0) {
-                alert(`Successfully created ${response.data.createdOrders.length} order(s)!`);
-                setShowCheckoutModal(false);
-                setPickupLocation(''); // Clear after successful order
-                setNote('');
-                fetchCart(); // Refresh cart
+            if (response.success) {
+                if (response.data.createdOrders && response.data.createdOrders.length > 0) {
+                    alert(`Successfully created ${response.data.createdOrders.length} order(s)!`);
+                    setShowCheckoutModal(false);
+                    setPickupLocation(''); // Clear after successful order
+                    setNote('');
+                    setCheckoutError(null);
+                    fetchCart(); // Refresh cart
+                } else {
+                    setCheckoutError('No orders were created. Please try again.');
+                }
+                
+                if (response.data.failedOrders && response.data.failedOrders.length > 0) {
+                    const failedMessages = response.data.failedOrders.map(f => 
+                        `${f.sellerName}: ${f.error}`
+                    ).join('\n');
+                    alert(`Some orders failed:\n${failedMessages}`);
+                }
             } else {
-                alert('No orders were created. Please try again.');
-            }
-            
-            if (response.data.failedOrders && response.data.failedOrders.length > 0) {
-                const failedMessages = response.data.failedOrders.map(f => 
-                    `${f.sellerName}: ${f.error}`
-                ).join('\n');
-                alert(`Some orders failed:\n${failedMessages}`);
+                setCheckoutError(response.message || 'Checkout failed. Please try again.');
             }
         } catch (err) {
             console.error('Checkout failed:', err);
-            alert('Checkout failed. Please try again.');
+            setCheckoutError('Checkout failed. Please try again.');
         } finally {
             setCheckoutLoading(false);
         }
@@ -198,7 +231,7 @@ function CartSection() {
                 <h2 className="text-primary">Shopping Cart</h2>
                 <div className="d-flex justify-content-center align-items-center mt-4">
                     <div className="spinner-border text-primary" role="status">
-                        <span className="visually-hidden">Loading...</span>
+                        <span className="visually-hidden">Loading cart...</span>
                     </div>
                 </div>
             </div>
@@ -293,6 +326,7 @@ function CartSection() {
                                 <button 
                                     className="btn btn-outline-secondary btn-sm"
                                     onClick={() => updateQuantity(item._id, item.quantity - 1)}
+                                    disabled={loading}
                                 >
                                     <FiMinus size={14} />
                                 </button>
@@ -305,7 +339,7 @@ function CartSection() {
                                 <button 
                                     className="btn btn-outline-secondary btn-sm"
                                     onClick={() => updateQuantity(item._id, item.quantity + 1)}
-                                    disabled={item.quantity >= (item.productStock || 999)}
+                                    disabled={loading || item.quantity >= (item.productStock || 999)}
                                 >
                                     <FiPlus size={14} />
                                 </button>
@@ -324,6 +358,7 @@ function CartSection() {
                         <button 
                             className="btn btn-outline-primary btn-sm"
                             onClick={() => removeItem(item._id)}
+                            disabled={loading}
                         >
                             Remove
                         </button>
@@ -353,14 +388,15 @@ function CartSection() {
                         All ({cart.length})
                     </label>
                 </div>
-                {selectedItems.length > 0 && (
-                    <button 
-                        className="btn btn-outline-primary btn-sm ms-auto"
-                        onClick={removeSelectedItems}
-                    >
-                        Delete ({selectedItems.length})
-                    </button>
-                )}
+                    {selectedItems.length > 0 && (
+                        <button 
+                            className="btn btn-outline-primary btn-sm ms-auto"
+                            onClick={removeSelectedItems}
+                            disabled={loading}
+                        >
+                            Delete ({selectedItems.length})
+                        </button>
+                    )}
             </div>
 
             {/* Grouped by Shop */}
@@ -460,9 +496,9 @@ function CartSection() {
                     <button 
                         className="btn btn-primary w-100 py-2"
                         onClick={handleCheckout}
-                        disabled={selectedItems.length === 0}
+                        disabled={selectedItems.length === 0 || loading}
                     >
-                        Checkout ({selectedItemsCount})
+                        {loading ? 'Processing...' : `Checkout (${selectedItemsCount})`}
                     </button>
 
                     {selectedItems.length === 0 && (
@@ -476,13 +512,17 @@ function CartSection() {
             {/* Checkout Modal */}
             <CheckoutModal
                 showModal={showCheckoutModal}
-                onClose={() => setShowCheckoutModal(false)}
+                onClose={() => {
+                    setShowCheckoutModal(false);
+                    setCheckoutError(null);
+                }}
                 onConfirm={handleCheckoutConfirm}
                 pickupLocation={pickupLocation}
                 note={note}
                 onPickupLocationChange={setPickupLocation}
                 onNoteChange={setNote}
                 loading={checkoutLoading}
+                error={checkoutError}
             />
         </div>
     );

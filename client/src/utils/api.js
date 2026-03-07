@@ -34,75 +34,303 @@ api.interceptors.response.use(
   }
 )
 
-// Cart API methods
+// Enhanced error handler for API responses
+const handleApiError = (error) => {
+  if (error.response) {
+    // Server responded with error status
+    const { status, data } = error.response
+    
+    if (data && data.message) {
+      return {
+        success: false,
+        message: data.message,
+        errors: data.errors || [],
+        statusCode: status
+      }
+    }
+    
+    // Generic error messages based on status
+    const errorMessages = {
+      400: 'Bad Request: Invalid input data',
+      401: 'Unauthorized: Please log in to continue',
+      403: 'Forbidden: You do not have permission to access this resource',
+      404: 'Not Found: The requested resource was not found',
+      409: 'Conflict: The request conflicts with the current state',
+      422: 'Validation Error: Please check your input',
+      500: 'Server Error: Please try again later',
+      503: 'Service Unavailable: Please try again later'
+    }
+    
+    return {
+      success: false,
+      message: errorMessages[status] || `Server Error (${status})`,
+      errors: [],
+      statusCode: status
+    }
+  } else if (error.request) {
+    // Network error
+    return {
+      success: false,
+      message: 'Network Error: Please check your internet connection',
+      errors: [],
+      statusCode: 0
+    }
+  } else {
+    // Other error
+    return {
+      success: false,
+      message: 'An unexpected error occurred',
+      errors: [],
+      statusCode: -1
+    }
+  }
+}
+
+// Cart API methods with enhanced error handling
 export const cartAPI = {
   // Get user's cart
-  getCart: () => api.get('/api/cart'),
+  getCart: async () => {
+    try {
+      const response = await api.get('/api/cart')
+      return {
+        success: true,
+        data: response.data.data || response.data,
+        message: 'Cart retrieved successfully'
+      }
+    } catch (error) {
+      return handleApiError(error)
+    }
+  },
   
   // Add item to cart
-  addToCart: (productId, quantity = 1) => 
-    api.post('/api/cart/add', { productId, quantity }),
+  addToCart: async (productId, quantity = 1) => {
+    try {
+      const response = await api.post('/api/cart/add', { productId, quantity })
+      return {
+        success: true,
+        data: response.data.data || response.data,
+        message: response.data.message || 'Item added to cart successfully'
+      }
+    } catch (error) {
+      return handleApiError(error)
+    }
+  },
   
   // Update cart item quantity
-  updateCartItem: (itemId, quantity) => 
-    api.put(`/api/cart/update/${itemId}`, { quantity }),
+  updateCartItem: async (itemId, quantity) => {
+    try {
+      const response = await api.put(`/api/cart/update/${itemId}`, { quantity })
+      return {
+        success: true,
+        data: response.data.data || response.data,
+        message: response.data.message || 'Cart item updated successfully'
+      }
+    } catch (error) {
+      return handleApiError(error)
+    }
+  },
   
   // Remove item from cart
-  removeFromCart: (itemId) => 
-    api.delete(`/api/cart/remove/${itemId}`),
+  removeFromCart: async (itemId) => {
+    try {
+      const response = await api.delete(`/api/cart/remove/${itemId}`)
+      return {
+        success: true,
+        data: response.data.data || response.data,
+        message: response.data.message || 'Item removed from cart successfully'
+      }
+    } catch (error) {
+      return handleApiError(error)
+    }
+  },
   
   // Clear entire cart
-  clearCart: () => api.delete('/api/cart/clear'),
+  clearCart: async () => {
+    try {
+      const response = await api.delete('/api/cart/clear')
+      return {
+        success: true,
+        data: response.data.data || response.data,
+        message: response.data.message || 'Cart cleared successfully'
+      }
+    } catch (error) {
+      return handleApiError(error)
+    }
+  },
   
   // Remove multiple items
-  removeMultipleItems: (itemIds) => 
-    api.delete('/api/cart/remove-multiple', { data: { itemIds } })
+  removeMultipleItems: async (itemIds) => {
+    try {
+      const response = await api.delete('/api/cart/remove-multiple', { data: { itemIds } })
+      return {
+        success: true,
+        data: response.data.data || response.data,
+        message: response.data.message || 'Items removed from cart successfully'
+      }
+    } catch (error) {
+      return handleApiError(error)
+    }
+  }
 }
 
-// Admin API methods
+// Admin API methods with enhanced error handling
 export const adminAPI = {
   // Get all users with pagination (with optional role filter and search)
-  getUsers: (page = 1, limit = 10, role = null, search = null) => 
-    api.get('/api/admin/users', { params: { page, limit, role, search } }),
+  getUsers: async (page = 1, limit = 10, role = null, search = null) => {
+    try {
+      const response = await api.get('/api/admin/users', { params: { page, limit, role, search } })
+      return {
+        success: true,
+        data: response.data.data || response.data,
+        message: 'Users retrieved successfully'
+      }
+    } catch (error) {
+      return handleApiError(error)
+    }
+  },
   
   // Delete user
-  deleteUser: (userId) => 
-    api.delete(`/api/admin/users/${userId}`),
+  deleteUser: async (userId) => {
+    try {
+      const response = await api.delete(`/api/admin/users/${userId}`)
+      return {
+        success: true,
+        data: response.data.data || response.data,
+        message: response.data.message || 'User deleted successfully'
+      }
+    } catch (error) {
+      return handleApiError(error)
+    }
+  },
   
   // Get seller applications with pagination (with optional status filter)
-  getSellerApplications: (status, page = 1, limit = 10) => 
-    api.get('/api/admin/seller-applications', { params: { status, page, limit } }),
+  getSellerApplications: async (status, page = 1, limit = 10) => {
+    try {
+      const response = await api.get('/api/admin/seller-applications', { params: { status, page, limit } })
+      return {
+        success: true,
+        data: response.data.data || response.data,
+        message: 'Seller applications retrieved successfully'
+      }
+    } catch (error) {
+      return handleApiError(error)
+    }
+  },
   
   // Approve or reject seller application
-  reviewApplication: (userId, status, reason = '', note = '') => 
-    api.patch(`/api/admin/seller-applications/${userId}`, { status, rejectionReason: reason, rejectionNote: note }),
+  reviewApplication: async (userId, status, reason = '', note = '') => {
+    try {
+      const response = await api.patch(`/api/admin/seller-applications/${userId}`, { status, rejectionReason: reason, rejectionNote: note })
+      return {
+        success: true,
+        data: response.data.data || response.data,
+        message: response.data.message || 'Application reviewed successfully'
+      }
+    } catch (error) {
+      return handleApiError(error)
+    }
+  },
   
   // Get my application status
-  getMyApplication: () => api.get('/api/admin/my-application'),
+  getMyApplication: async () => {
+    try {
+      const response = await api.get('/api/admin/my-application')
+      return {
+        success: true,
+        data: response.data.data || response.data,
+        message: 'Application status retrieved successfully'
+      }
+    } catch (error) {
+      return handleApiError(error)
+    }
+  },
   
   // Apply to become a seller
-  applySeller: (idImage) => api.post('/api/admin/apply-seller', { idImage })
+  applySeller: async (idImage) => {
+    try {
+      const response = await api.post('/api/admin/apply-seller', { idImage })
+      return {
+        success: true,
+        data: response.data.data || response.data,
+        message: response.data.message || 'Application submitted successfully'
+      }
+    } catch (error) {
+      return handleApiError(error)
+    }
+  }
 }
 
-// Order API methods
+// Order API methods with enhanced error handling
 export const orderAPI = {
   // Create orders from cart (checkout)
-  createOrder: (pickupLocation, note) => 
-    api.post('/api/orders/checkout', { pickupLocation, note }),
+  createOrder: async (pickupLocation, note) => {
+    try {
+      const response = await api.post('/api/orders/checkout', { pickupLocation, note })
+      return {
+        success: true,
+        data: response.data.data || response.data,
+        message: response.data.message || 'Order created successfully'
+      }
+    } catch (error) {
+      return handleApiError(error)
+    }
+  },
   
   // Get buyer's orders
-  getMyOrders: () => api.get('/api/orders/my-orders'),
+  getMyOrders: async () => {
+    try {
+      const response = await api.get('/api/orders/my-orders')
+      return {
+        success: true,
+        data: response.data.data || response.data,
+        message: 'Orders retrieved successfully'
+      }
+    } catch (error) {
+      return handleApiError(error)
+    }
+  },
   
   // Get seller's orders
-  getSellerOrders: () => api.get('/api/orders/seller-orders'),
+  getSellerOrders: async () => {
+    try {
+      const response = await api.get('/api/orders/seller-orders')
+      return {
+        success: true,
+        data: response.data.data || response.data,
+        message: 'Orders retrieved successfully'
+      }
+    } catch (error) {
+      return handleApiError(error)
+    }
+  },
   
   // Update order status (seller only)
-  updateOrderStatus: (orderId, status) => 
-    api.patch(`/api/orders/${orderId}/status`, { status }),
+  updateOrderStatus: async (orderId, status) => {
+    try {
+      const response = await api.patch(`/api/orders/${orderId}/status`, { status })
+      return {
+        success: true,
+        data: response.data.data || response.data,
+        message: response.data.message || 'Order status updated successfully'
+      }
+    } catch (error) {
+      return handleApiError(error)
+    }
+  },
   
   // Cancel order (buyer only)
-  cancelOrder: (orderId) => 
-    api.patch(`/api/orders/${orderId}/cancel`)
+  cancelOrder: async (orderId) => {
+    try {
+      const response = await api.patch(`/api/orders/${orderId}/cancel`)
+      return {
+        success: true,
+        data: response.data.data || response.data,
+        message: response.data.message || 'Order cancelled successfully'
+      }
+    } catch (error) {
+      return handleApiError(error)
+    }
+  }
 }
 
 export default api

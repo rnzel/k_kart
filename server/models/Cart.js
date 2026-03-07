@@ -12,20 +12,22 @@ const cartItemSchema = new mongoose.Schema({
   },
   productPrice: {
     type: Number,
-    required: true
+    required: true,
+    min: 0
   },
   productImages: [{
     type: String
   }],
   productStock: {
     type: Number,
-    default: 0
+    default: 0,
+    min: 0
   },
   quantity: {
     type: Number,
     required: true,
     min: 1,
-    default: 1
+    max: 999
   },
   shop: {
     type: mongoose.Schema.Types.ObjectId,
@@ -50,13 +52,59 @@ const cartSchema = new mongoose.Schema({
     unique: true
   },
   items: [cartItemSchema]
-}, { timestamps: true });
+}, { 
+  timestamps: true,
+  // Add validation to prevent duplicate products in cart
+  validate: {
+    validator: function() {
+      const productIds = this.items.map(item => item.product.toString());
+      const uniqueProductIds = new Set(productIds);
+      return productIds.length === uniqueProductIds.size;
+    },
+    message: 'Cannot add duplicate products to cart'
+  }
+});
 
 // Method to calculate total price
 cartSchema.methods.calculateTotal = function() {
   return this.items.reduce((total, item) => {
     return total + (item.productPrice * item.quantity);
   }, 0);
+};
+
+// Static method to find cart by user with populated items
+cartSchema.statics.findByUserWithPopulate = function(userId) {
+  return this.findOne({ user: userId })
+    .populate('items.product', 'productStock productName productPrice')
+    .populate('items.shop', 'shopName shopLogo');
+};
+
+// Instance method to validate cart items
+cartSchema.methods.validateItems = async function() {
+  const Product = mongoose.model('Product');
+  const errors = [];
+  
+  for (let i = 0; i < this.items.length; i++) {
+    const item = this.items[i];
+    const product = await Product.findById(item.product);
+    
+    if (!product) {
+      errors.push(`Product ${item.productName} (${item.product}) not found`);
+      continue;
+    }
+    
+    if (product.productStock < item.quantity) {
+      errors.push(`Insufficient stock for ${item.productName}. Available: ${product.productStock}, Requested: ${item.quantity}`);
+    }
+    
+    // Update price and stock snapshot
+    if (product.productPrice !== item.productPrice) {
+      item.productPrice = product.productPrice;
+    }
+    item.productStock = product.productStock;
+  }
+  
+  return errors;
 };
 
 module.exports = mongoose.model('Cart', cartSchema);

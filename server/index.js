@@ -25,6 +25,9 @@ const cartRoutes = require('./routes/cartRoutes')
 const adminRoutes = require('./routes/adminRoutes')
 const orderRoutes = require('./routes/orderRoutes')
 
+// Import middleware
+const { errorHandler, notFound } = require('./middleware/errorHandler')
+
 // Import GridFS utilities
 const { initGridFSBucket, getGridFSBucket, isGridFSReady } = require('./config/gridfsBucket')
 
@@ -134,17 +137,12 @@ app.get('/api/health', (req, res) => {
 // ============================================
 // 404 Not Found Handler
 // ============================================
-app.use((req, res) => {
-  res.status(404).json({ message: 'Route not found' })
-})
+app.use(notFound)
 
 // ============================================
 // Error Handling Middleware
 // ============================================
-app.use((err, req, res, next) => {
-  console.error('Server error:', err)
-  res.status(500).json({ message: 'Internal server error' })
-})
+app.use(errorHandler)
 
 // ============================================
 // Server Initialization

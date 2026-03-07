@@ -13,10 +13,21 @@ const orderItemSchema = new mongoose.Schema({
   quantity: {
     type: Number,
     required: true,
-    min: 1
+    min: 1,
+    max: 999
   },
   price: {
     type: Number,
+    required: true,
+    min: 0
+  },
+  seller: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    required: true
+  },
+  sellerName: {
+    type: String,
     required: true
   }
 });
@@ -25,7 +36,8 @@ const orderSchema = new mongoose.Schema({
   orderNumber: {
     type: String,
     unique: true,
-    required: true
+    required: true,
+    uppercase: true
   },
   buyer: {
     type: mongoose.Schema.Types.ObjectId,
@@ -44,11 +56,15 @@ const orderSchema = new mongoose.Schema({
     min: 0
   },
   pickupLocation: {
-    type: String
+    type: String,
+    required: true,
+    trim: true,
+    maxlength: 200
   },
   note: {
     type: String,
-    default: ''
+    default: '',
+    maxlength: 500
   },
   paymentMethod: {
     type: String,
@@ -57,13 +73,81 @@ const orderSchema = new mongoose.Schema({
   },
   status: {
     type: String,
-    enum: ['pending', 'confirmed', 'on_delivery', 'completed', 'cancelled'],
-    default: 'pending'
+    enum: ['Pending', 'Accepted', 'Preparing', 'Ready for Pickup', 'Completed', 'Cancelled'],
+    default: 'Pending'
   },
   createdAt: {
     type: Date,
     default: Date.now
+  },
+  updatedAt: {
+    type: Date,
+    default: Date.now
   }
 });
+
+// Update updatedAt before saving
+orderSchema.pre('save', function() {
+  this.updatedAt = new Date();
+});
+
+// Static method to find order by order number
+orderSchema.statics.findByOrderNumber = function(orderNumber) {
+  return this.findOne({ orderNumber: orderNumber.toUpperCase() })
+    .populate('buyer', 'firstName lastName email')
+    .populate('seller', 'firstName lastName email')
+    .populate('items.product', 'productName productImages productStock')
+    .populate('items.seller', 'firstName lastName');
+};
+
+// Instance method to validate order
+orderSchema.methods.validateOrder = async function() {
+  const Product = mongoose.model('Product');
+  const errors = [];
+  
+  for (let i = 0; i < this.items.length; i++) {
+    const item = this.items[i];
+    const product = await Product.findById(item.product);
+    
+    if (!product) {
+      errors.push(`Product ${item.productName} (${item.product}) not found`);
+      continue;
+    }
+    
+    if (product.isDeleted) {
+      errors.push(`Cannot order deleted product: ${item.productName}`);
+    }
+    
+    if (product.productStock < item.quantity) {
+      errors.push(`Insufficient stock for ${item.productName}. Available: ${product.productStock}, Requested: ${item.quantity}`);
+    }
+  }
+  
+  return errors;
+};
+
+// Static method to get order status history
+orderSchema.statics.getStatusHistory = function() {
+  return [
+    'Pending',
+    'Accepted', 
+    'Preparing',
+    'Ready for Pickup',
+    'Completed',
+    'Cancelled'
+  ];
+};
+
+// Static method to get valid status transitions
+orderSchema.statics.getValidTransitions = function() {
+  return {
+    'Pending': ['Accepted', 'Cancelled'],
+    'Accepted': ['Preparing'],
+    'Preparing': ['Ready for Pickup'],
+    'Ready for Pickup': ['Completed'],
+    'Completed': [],
+    'Cancelled': []
+  };
+};
 
 module.exports = mongoose.model('Order', orderSchema);

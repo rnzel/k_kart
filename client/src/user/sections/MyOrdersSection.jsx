@@ -16,11 +16,17 @@ function MyOrdersSection() {
     const fetchOrders = async () => {
         try {
             setLoading(true);
+            setError(null);
             const response = await orderAPI.getMyOrders();
-            setOrders(response.data);
+            
+            if (response.success) {
+                setOrders(response.data);
+            } else {
+                setError(response.message || 'Failed to load orders');
+            }
         } catch (err) {
             console.error('Failed to fetch orders:', err);
-            setError('Failed to load orders');
+            setError('Failed to load orders. Please check your internet connection and try again.');
         } finally {
             setLoading(false);
         }
@@ -32,8 +38,13 @@ function MyOrdersSection() {
         }
 
         try {
-            await orderAPI.cancelOrder(orderId);
-            fetchOrders(); // Refresh orders
+            const response = await orderAPI.cancelOrder(orderId);
+            if (response.success) {
+                alert('Order cancelled successfully');
+                fetchOrders(); // Refresh orders
+            } else {
+                alert(response.message || 'Failed to cancel order. Please try again.');
+            }
         } catch (err) {
             console.error('Failed to cancel order:', err);
             alert('Failed to cancel order. Please try again.');
@@ -80,7 +91,7 @@ function MyOrdersSection() {
                 <h2 className="text-primary">My Orders</h2>
                 <div className="d-flex justify-content-center align-items-center mt-4">
                     <div className="spinner-border text-primary" role="status">
-                        <span className="visually-hidden">Loading...</span>
+                        <span className="visually-hidden">Loading orders...</span>
                     </div>
                 </div>
             </div>
@@ -218,7 +229,7 @@ function MyOrdersSection() {
                                         </div>
 
                                         <div className="mt-3">
-                                            {order.status === 'pending' && (
+                                            {order.status === 'Pending' && (
                                                 <button 
                                                     className="btn btn-outline-danger btn-sm"
                                                     onClick={() => handleCancelOrder(order._id)}

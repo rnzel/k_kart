@@ -1,5 +1,5 @@
 import React from "react";
-import { FiMapPin, FiMessageSquare } from "react-icons/fi";
+import { FiMapPin, FiMessageSquare, FiAlertCircle } from "react-icons/fi";
 
 function CheckoutModal({ 
     showModal, 
@@ -9,7 +9,8 @@ function CheckoutModal({
     note, 
     onPickupLocationChange, 
     onNoteChange,
-    loading = false
+    loading = false,
+    error = null
 }) {
     if (!showModal) {
         return null;
@@ -25,15 +26,22 @@ function CheckoutModal({
                             type="button" 
                             className="btn-close" 
                             onClick={onClose}
+                            disabled={loading}
                         ></button>
                     </div>
                     <div className="modal-body">
+                        {error && (
+                            <div className="alert alert-danger d-flex align-items-center mb-3" role="alert">
+                                <FiAlertCircle className="me-2" />
+                                <div>{error}</div>
+                            </div>
+                        )}
+                        
                         <div className="mb-3">
                             <label className="form-label fw-bold"> 
                                 <FiMapPin className="me-2" />
                                 Pickup Location
                                 <span className="text-primary"> *</span>
-                                
                             </label>
                             <input 
                                 type="text" 
@@ -42,7 +50,9 @@ function CheckoutModal({
                                 onChange={(e) => onPickupLocationChange(e.target.value)}
                                 placeholder="Enter specific location inside SorSU – Bulan Campus"
                                 required
+                                disabled={loading}
                             />
+                            <div className="form-text">Please enter a specific location inside SorSU – Bulan Campus for pickup</div>
                         </div>
                         <div className="mb-3">
                             <label className="form-label fw-bold">
@@ -55,7 +65,9 @@ function CheckoutModal({
                                 value={note}
                                 onChange={(e) => onNoteChange(e.target.value)}
                                 placeholder="Any special instructions for delivery..."
+                                disabled={loading}
                             ></textarea>
+                            <div className="form-text">Add any special instructions for delivery (optional)</div>
                         </div>
                         <div className="alert alert-info">
                             <strong>Payment Method:</strong> Cash on Delivery (COD)
@@ -77,9 +89,16 @@ function CheckoutModal({
                             type="button" 
                             className="btn btn-primary"
                             onClick={onConfirm}
-                            disabled={loading}
+                            disabled={loading || !pickupLocation.trim()}
                         >
-                            {loading ? 'Placing order...' : 'Place Order'}
+                            {loading ? (
+                                <>
+                                    <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                                    Placing Order...
+                                </>
+                            ) : (
+                                'Place Order'
+                            )}
                         </button>
                     </div>
                 </div>

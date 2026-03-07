@@ -275,8 +275,18 @@ function MyShopSection() {
                         <div className="d-flex flex-column align-items-center justify-content-center mb-3">
                             <FiHome size={64} className="text-secondary" />
                             <h4 className="text-muted mt-3">No Shop Yet</h4>
-                            <p className="text-muted">Create your shop to start selling</p>
+                            <p className="text-muted">Create your shop to start receiving orders</p>
                         </div>
+                        
+                        <div className="alert alert-info" role="alert">
+                            <h6 className="alert-heading">Before Creating Your Shop:</h6>
+                            <ul className="mb-0">
+                                <li>Ensure your seller application is approved</li>
+                                <li>Have a shop logo ready (optional but recommended)</li>
+                                <li>Prepare a compelling shop description</li>
+                            </ul>
+                        </div>
+                        
                         <button
                             className="btn btn-primary"
                             style={{ width: "100%" }}

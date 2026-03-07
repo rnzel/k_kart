@@ -1,35 +1,25 @@
-const express = require('express')
-const router = express.Router()
-const {
-  getCart,
-  addToCart,
-  updateCartItem,
-  removeFromCart,
-  clearCart,
-  removeMultipleItems
-} = require('../controllers/cartController')
-const { authenticateToken, requireBuyerOrVerifiedSeller } = require('../middleware/auth')
-
-// All routes require authentication and must be buyer or verified seller (not admin)
-router.use(authenticateToken)
-router.use(requireBuyerOrVerifiedSeller)
+const express = require('express');
+const router = express.Router();
+const auth = require('../middleware/auth');
+const validation = require('../middleware/validation');
+const cartController = require('../controllers/cartController');
 
 // GET /api/cart - Get user's cart
-router.get('/', getCart)
+router.get('/', auth.auth, cartController.getCart);
 
 // POST /api/cart/add - Add item to cart
-router.post('/add', addToCart)
+router.post('/add', auth.auth, validation.validateCartItem, cartController.addToCart);
 
-// PUT /api/cart/update/:itemId - Update cart item quantity
-router.put('/update/:itemId', updateCartItem)
+// PATCH /api/cart/update/:itemId - Update cart item quantity
+router.patch('/update/:itemId', auth.auth, validation.validateCartItem, cartController.updateCartItem);
 
-// DELETE /api/cart/remove/:itemId - Remove single item from cart
-router.delete('/remove/:itemId', removeFromCart)
+// DELETE /api/cart/remove/:itemId - Remove item from cart
+router.delete('/remove/:itemId', auth.auth, cartController.removeFromCart);
 
 // DELETE /api/cart/clear - Clear entire cart
-router.delete('/clear', clearCart)
+router.delete('/clear', auth.auth, cartController.clearCart);
 
-// DELETE /api/cart/remove-multiple - Remove multiple items from cart
-router.delete('/remove-multiple', removeMultipleItems)
+// POST /api/cart/remove-multiple - Remove multiple items from cart
+router.post('/remove-multiple', auth.auth, cartController.removeMultipleItems);
 
-module.exports = router
+module.exports = router;

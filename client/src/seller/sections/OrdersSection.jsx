@@ -16,11 +16,17 @@ function OrdersSection() {
     const fetchOrders = async () => {
         try {
             setLoading(true);
+            setError(null);
             const response = await orderAPI.getSellerOrders();
-            setOrders(response.data);
+            
+            if (response.success) {
+                setOrders(response.data);
+            } else {
+                setError(response.message || 'Failed to load orders');
+            }
         } catch (err) {
             console.error('Failed to fetch orders:', err);
-            setError('Failed to load orders');
+            setError('Failed to load orders. Please check your internet connection and try again.');
         } finally {
             setLoading(false);
         }
@@ -28,8 +34,13 @@ function OrdersSection() {
 
     const handleUpdateStatus = async (orderId, newStatus) => {
         try {
-            await orderAPI.updateOrderStatus(orderId, newStatus);
-            fetchOrders(); // Refresh orders
+            const response = await orderAPI.updateOrderStatus(orderId, newStatus);
+            if (response.success) {
+                alert('Order status updated successfully');
+                fetchOrders(); // Refresh orders
+            } else {
+                alert(response.message || 'Failed to update order status. Please try again.');
+            }
         } catch (err) {
             console.error('Failed to update order status:', err);
             alert('Failed to update order status. Please try again.');
@@ -60,10 +71,16 @@ function OrdersSection() {
 
     const getStatusColor = (status) => {
         switch (status) {
+            case 'Pending':
             case 'pending': return 'warning';
+            case 'Accepted':
             case 'confirmed': return 'info';
+            case 'Preparing':
             case 'on_delivery': return 'primary';
+            case 'Ready for Pickup': return 'primary';
+            case 'Completed':
             case 'completed': return 'success';
+            case 'Cancelled':
             case 'cancelled': return 'danger';
             default: return 'secondary';
         }
@@ -71,11 +88,12 @@ function OrdersSection() {
 
     const getAvailableStatuses = (currentStatus) => {
         const statusFlow = {
-            'pending': ['confirmed', 'cancelled'],
-            'confirmed': ['on_delivery'],
-            'on_delivery': ['completed'],
-            'completed': [],
-            'cancelled': []
+            'Pending': ['Accepted', 'Cancelled'],
+            'Accepted': ['Preparing'],
+            'Preparing': ['Ready for Pickup'],
+            'Ready for Pickup': ['Completed'],
+            'Completed': [],
+            'Cancelled': []
         };
         return statusFlow[currentStatus] || [];
     };
@@ -87,7 +105,7 @@ function OrdersSection() {
                 <h2 className="text-primary">My Orders</h2>
                 <div className="d-flex justify-content-center align-items-center mt-4">
                     <div className="spinner-border text-primary" role="status">
-                        <span className="visually-hidden">Loading...</span>
+                        <span className="visually-hidden">Loading orders...</span>
                     </div>
                 </div>
             </div>
@@ -109,15 +127,25 @@ function OrdersSection() {
         );
     }
 
-    // Empty state
+    // Empty state with shop guidance
     if (orders.length === 0) {
         return (
             <div className="container border border-black rounded p-4">
-                <h2 className="text-primary">My Orders</h2>
+                <div className="d-flex justify-content-between align-items-center mb-4">
+                    <h2 className="text-primary mb-0">My Orders</h2>
+                    <button 
+                        className="btn btn-outline-primary btn-sm"
+                        onClick={fetchOrders}
+                    >
+                        <FiRefreshCw className="me-2" />
+                        Refresh
+                    </button>
+                </div>
+
                 <div className="d-flex flex-column align-items-center justify-content-center mt-4">
                     <FiPackage size={64} className="text-secondary" />
                     <h4 className="text-muted mt-3">No Orders Yet</h4>
-                    <p className="text-muted">You haven't received any orders yet</p>
+                    <p className="text-muted text-center">You haven't received any orders yet</p>
                 </div>
             </div>
         );
@@ -240,11 +268,13 @@ function OrdersSection() {
                                                             key={status}
                                                             className={`btn btn-outline-${getStatusColor(status)} btn-sm`}
                                                             onClick={() => handleUpdateStatus(order._id, status)}
+                                                            disabled={loading}
                                                         >
-                                                            {status === 'confirmed' && 'Confirm Order'}
-                                                            {status === 'on_delivery' && 'Mark as On Delivery'}
-                                                            {status === 'completed' && 'Mark as Completed'}
-                                                            {status === 'cancelled' && 'Cancel Order'}
+                                                            {status === 'Accepted' && 'Accept Order'}
+                                                            {status === 'Preparing' && 'Mark as Preparing'}
+                                                            {status === 'Ready for Pickup' && 'Mark as Ready for Pickup'}
+                                                            {status === 'Completed' && 'Mark as Completed'}
+                                                            {status === 'Cancelled' && 'Cancel Order'}
                                                         </button>
                                                     ))}
                                                 </div>

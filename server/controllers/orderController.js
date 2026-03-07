@@ -10,188 +10,208 @@ const createOrder = async (req, res) => {
     const { pickupLocation, note } = req.body;
 
     if (!userId) {
-      return res.status(401).json({ message: 'Unauthorized' });
-    }
-
-    // Validate pickup location is provided
-    if (!pickupLocation || !pickupLocation.trim()) {
-      return res.status(400).json({ message: 'Pickup location is required' });
-    }
-
-    // Get user's cart
-    const cart = await Cart.findOne({ user: userId })
-      .populate('items.product', 'productStock productName productPrice')
-      .populate('items.shop', 'shopName');
-
-    if (!cart || cart.items.length === 0) {
-      return res.status(400).json({ message: 'Cart is empty' });
-    }
-
-    // Group cart items by seller
-    const itemsBySeller = {};
-    cart.items.forEach(item => {
-      const sellerId = item.shop._id.toString();
-      if (!itemsBySeller[sellerId]) {
-        itemsBySeller[sellerId] = {
-          seller: item.shop._id,
-          sellerName: item.shop.shopName,
-          items: []
-        };
-      }
-      itemsBySeller[sellerId].items.push({
-        product: item.product._id,
-        productName: item.product.productName,
-        quantity: item.quantity,
-        price: item.product.productPrice
+      return res.status(401).json({ 
+        success: false,
+        message: 'Unauthorized: Please log in to checkout' 
       });
-    });
+    }
 
-    const createdOrders = [];
-    const failedOrders = [];
+    // Validate pickup location
+    if (!pickupLocation || !pickupLocation.trim()) {
+      return res.status(400).json({ 
+        success: false,
+        message: 'Pickup location is required' 
+      });
+    }
 
-    // Create orders for each seller
-    for (const sellerId in itemsBySeller) {
-      const sellerData = itemsBySeller[sellerId];
-      
-      // Calculate total amount
-      const totalAmount = sellerData.items.reduce((sum, item) => {
-        return sum + (item.price * item.quantity);
-      }, 0);
+    if (pickupLocation.trim().length > 200) {
+      return res.status(400).json({ 
+        success: false,
+        message: 'Pickup location cannot exceed 200 characters' 
+      });
+    }
 
-      // Check stock for all items
-      const stockChecks = await Promise.all(
-        sellerData.items.map(async (item) => {
-          const product = await Product.findById(item.product);
-          if (!product) {
-            return { valid: false, message: `Product not found: ${item.productName}` };
+    if (note && note.length > 500) {
+      return res.status(400).json({ 
+        success: false,
+        message: 'Note cannot exceed 500 characters' 
+      });
+    }
+
+    // Use transaction to ensure atomicity
+    const session = await Order.startSession();
+    
+    try {
+      await session.withTransaction(async () => {
+        // Get user's cart with session
+        const cart = await Cart.findOne({ user: userId }).session(session)
+          .populate('items.product', 'productStock productName productPrice isDeleted')
+          .populate('items.shop', 'shopName owner isDeleted');
+
+        if (!cart || cart.items.length === 0) {
+          throw new Error('Cart is empty');
+        }
+
+        // Group cart items by seller
+        const itemsBySeller = {};
+        const validationErrors = [];
+
+        for (const item of cart.items) {
+          // Validate product and shop
+          if (!item.product) {
+            validationErrors.push(`Product not found for item: ${item.productName}`);
+            continue;
           }
-          if (product.productStock < item.quantity) {
-            return { 
-              valid: false, 
-              message: `Insufficient stock for ${item.productName}. Available: ${product.productStock}, Requested: ${item.quantity}` 
+
+          if (item.product.isDeleted) {
+            validationErrors.push(`Cannot order deleted product: ${item.productName}`);
+            continue;
+          }
+
+          if (!item.shop) {
+            validationErrors.push(`Shop not found for product: ${item.productName}`);
+            continue;
+          }
+
+          if (item.shop.isDeleted) {
+            validationErrors.push(`Cannot order from deleted shop: ${item.shop.shopName}`);
+            continue;
+          }
+
+          // Validate stock
+          if (item.product.productStock < item.quantity) {
+            validationErrors.push(`Insufficient stock for ${item.productName}. Available: ${item.product.productStock}, Requested: ${item.quantity}`);
+            continue;
+          }
+
+          // Use the shop owner's user ID as the seller ID
+          const sellerId = item.shop.owner.toString();
+          if (!itemsBySeller[sellerId]) {
+            itemsBySeller[sellerId] = {
+              seller: item.shop.owner,
+              sellerName: item.shop.shopName,
+              items: []
             };
           }
-          return { valid: true };
-        })
-      );
+          itemsBySeller[sellerId].items.push({
+            product: item.product._id,
+            productName: item.product.productName,
+            quantity: item.quantity,
+            price: item.product.productPrice,
+            seller: item.shop.owner,
+            sellerName: item.shop.shopName
+          });
+        }
 
-      const hasStockIssues = stockChecks.some(check => !check.valid);
-      if (hasStockIssues) {
-        failedOrders.push({
-          sellerName: sellerData.sellerName,
-          error: stockChecks.find(check => !check.valid).message
-        });
-        continue;
-      }
+        if (validationErrors.length > 0) {
+          throw new Error(validationErrors.join('; '));
+        }
 
-      try {
-        // Generate unique order number
-        const orderNumber = await generateOrderNumber();
-        
-        // Create order
-        const order = new Order({
-          orderNumber,
-          buyer: userId,
-          seller: sellerData.seller,
-          items: sellerData.items,
-          totalAmount,
-          pickupLocation: pickupLocation || 'SSU – Bulan Campus',
-          note: note || '',
-          paymentMethod: 'COD'
-        });
+        if (Object.keys(itemsBySeller).length === 0) {
+          throw new Error('No valid items found in cart');
+        }
 
-        console.log('Creating order with data:', {
-          orderNumber,
-          buyer: userId,
-          seller: sellerData.seller,
-          totalAmount,
-          pickupLocation: pickupLocation || 'SSU – Bulan Campus',
-          note: note || '',
-          paymentMethod: 'COD'
-        });
+        const createdOrders = [];
+        const failedOrders = [];
 
-        await order.save();
-        console.log('Order saved successfully with orderNumber:', order.orderNumber);
-        
-        // Update product stock and handle cart updates
-        const productsToUpdate = [];
-        const productsToRemoveFromCart = [];
-        
-        for (const item of sellerData.items) {
-          const product = await Product.findById(item.product);
-          if (product) {
-            // Update product stock
-            product.productStock -= item.quantity;
-            productsToUpdate.push(product);
+        // Create orders for each seller
+        for (const sellerId in itemsBySeller) {
+          const sellerData = itemsBySeller[sellerId];
+          
+          // Calculate total amount
+          const totalAmount = sellerData.items.reduce((sum, item) => {
+            return sum + (item.price * item.quantity);
+          }, 0);
+
+          try {
+            // Generate unique order number
+            const orderNumber = await generateOrderNumber();
             
-            // If stock reaches zero, mark for cart removal
-            if (product.productStock <= 0) {
-              productsToRemoveFromCart.push(item.product.toString());
+            // Create order
+            const order = new Order({
+              orderNumber,
+              buyer: userId,
+              seller: sellerData.seller,
+              items: sellerData.items,
+              totalAmount,
+              pickupLocation: pickupLocation.trim(),
+              note: note || '',
+              paymentMethod: 'COD',
+              status: 'Pending'
+            });
+
+            await order.save({ session });
+            
+            // Update product stock
+            for (const item of sellerData.items) {
+              const product = await Product.findById(item.product).session(session);
+              if (product) {
+                product.productStock -= item.quantity;
+                await product.save({ session });
+              }
             }
+            
+            createdOrders.push(order);
+          } catch (error) {
+            console.error('Error creating order for seller:', sellerId, error);
+            failedOrders.push({
+              sellerName: sellerData.sellerName,
+              error: error.message
+            });
           }
         }
-        
-        // Save all product updates
-        await Promise.all(productsToUpdate.map(product => product.save()));
-        
-        createdOrders.push(order);
-      } catch (error) {
-        console.error('Error creating order:', error);
-        console.error('Error details:', {
-          name: error.name,
-          message: error.message,
-          code: error.code,
-          errors: error.errors
-        });
-        
-        failedOrders.push({
-          sellerName: sellerData.sellerName,
-          error: error.message
+
+        // Remove purchased items from cart
+        if (createdOrders.length > 0) {
+          // Get all product IDs from successful orders
+          const purchasedProductIds = createdOrders.flatMap(order => 
+            order.items.map(item => item.product.toString())
+          );
+
+          // Remove purchased items from cart
+          cart.items = cart.items.filter(item => 
+            !purchasedProductIds.includes(item.product.toString())
+          );
+          
+          await cart.save({ session });
+        }
+
+        // Prepare response
+        const response = {
+          success: createdOrders.length > 0,
+          createdOrders,
+          failedOrders,
+          message: createdOrders.length > 0 
+            ? `Successfully created ${createdOrders.length} order(s)`
+            : 'No orders were created'
+        };
+
+        if (failedOrders.length > 0) {
+          response.message += `. Failed: ${failedOrders.length} order(s)`;
+        }
+
+        res.status(createdOrders.length > 0 ? 201 : 400).json(response);
+      });
+    } catch (error) {
+      if (error.message.includes('Cart is empty') ||
+          error.message.includes('Cannot order') ||
+          error.message.includes('Insufficient stock') ||
+          error.message.includes('No valid items')) {
+        return res.status(400).json({ 
+          success: false,
+          message: error.message 
         });
       }
+      throw error;
+    } finally {
+      await session.endSession();
     }
-
-    // Remove purchased items from cart
-    if (createdOrders.length > 0) {
-      // Get all product IDs from successful orders
-      const purchasedProductIds = createdOrders.flatMap(order => 
-        order.items.map(item => item.product.toString())
-      );
-
-      console.log('Purchased product IDs:', purchasedProductIds);
-      console.log('Cart items before filter:', cart.items.map(item => item.product.toString()));
-
-      // Remove purchased items from cart
-      cart.items = cart.items.filter(item => {
-        const productId = item.product.toString();
-        const shouldRemove = purchasedProductIds.includes(productId);
-        console.log(`Checking item ${productId}: shouldRemove = ${shouldRemove}`);
-        return !shouldRemove;
-      });
-      
-      console.log('Cart items after purchased items filter:', cart.items.map(item => item.product.toString()));
-      
-      await cart.save();
-      console.log('Cart saved successfully with', cart.items.length, 'items remaining');
-    }
-
-    // Prepare response
-    const response = {
-      success: true,
-      createdOrders,
-      failedOrders,
-      message: createdOrders.length > 0 
-        ? `Successfully created ${createdOrders.length} order(s)`
-        : 'No orders were created'
-    };
-
-    if (failedOrders.length > 0) {
-      response.message += `. Failed: ${failedOrders.length} order(s)`;
-    }
-
-    res.status(201).json(response);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error('Error creating order:', error);
+    res.status(500).json({ 
+      success: false,
+      message: 'Failed to create order. Please try again.' 
+    });
   }
 };
 
@@ -201,17 +221,28 @@ const getMyOrders = async (req, res) => {
     const userId = req.user?.userId;
 
     if (!userId) {
-      return res.status(401).json({ message: 'Unauthorized' });
+      return res.status(401).json({ 
+        success: false,
+        message: 'Unauthorized: Please log in to view your orders' 
+      });
     }
 
     const orders = await Order.find({ buyer: userId })
       .populate('seller', 'firstName lastName email')
-      .populate('items.product', 'productName productImages')
+      .populate('items.product', 'productName productImages productStock')
+      .populate('items.seller', 'firstName lastName')
       .sort({ createdAt: -1 });
 
-    res.status(200).json(orders);
+    res.status(200).json({
+      success: true,
+      data: orders
+    });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error('Error getting my orders:', error);
+    res.status(500).json({ 
+      success: false,
+      message: 'Failed to retrieve orders. Please try again.' 
+    });
   }
 };
 
@@ -221,17 +252,28 @@ const getSellerOrders = async (req, res) => {
     const userId = req.user?.userId;
 
     if (!userId) {
-      return res.status(401).json({ message: 'Unauthorized' });
+      return res.status(401).json({ 
+        success: false,
+        message: 'Unauthorized: Please log in to view your orders' 
+      });
     }
 
     const orders = await Order.find({ seller: userId })
       .populate('buyer', 'firstName lastName email')
-      .populate('items.product', 'productName productImages')
+      .populate('items.product', 'productName productImages productStock')
+      .populate('items.seller', 'firstName lastName')
       .sort({ createdAt: -1 });
 
-    res.status(200).json(orders);
+    res.status(200).json({
+      success: true,
+      data: orders
+    });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error('Error getting seller orders:', error);
+    res.status(500).json({ 
+      success: false,
+      message: 'Failed to retrieve orders. Please try again.' 
+    });
   }
 };
 
@@ -243,46 +285,68 @@ const updateOrderStatus = async (req, res) => {
     const { status } = req.body;
 
     if (!userId) {
-      return res.status(401).json({ message: 'Unauthorized' });
-    }
-
-    if (!status) {
-      return res.status(400).json({ message: 'Status is required' });
-    }
-
-    // Valid status transitions
-    const validTransitions = {
-      pending: ['confirmed', 'cancelled'],
-      confirmed: ['on_delivery'],
-      on_delivery: ['completed'],
-      completed: [],
-      cancelled: []
-    };
-
-    const order = await Order.findById(id);
-    if (!order) {
-      return res.status(404).json({ message: 'Order not found' });
-    }
-
-    // Check if user is the seller
-    if (order.seller.toString() !== userId) {
-      return res.status(403).json({ message: 'Forbidden: You can only update your own orders' });
-    }
-
-    // Check if status transition is valid
-    const allowedStatuses = validTransitions[order.status] || [];
-    if (!allowedStatuses.includes(status)) {
-      return res.status(400).json({ 
-        message: `Invalid status transition from ${order.status} to ${status}` 
+      return res.status(401).json({ 
+        success: false,
+        message: 'Unauthorized: Please log in to update order status' 
       });
     }
 
-    order.status = status;
-    await order.save();
+    if (!status) {
+      return res.status(400).json({ 
+        success: false,
+        message: 'Status is required' 
+      });
+    }
 
-    res.status(200).json(order);
+    const session = await Order.startSession();
+    
+    try {
+      await session.withTransaction(async () => {
+        const order = await Order.findById(id).session(session);
+        if (!order) {
+          throw new Error('Order not found');
+        }
+
+        // Check if user is the seller
+        if (order.seller.toString() !== userId) {
+          throw new Error('Forbidden: You can only update your own orders');
+        }
+
+        // Check if status transition is valid
+        const validTransitions = Order.getValidTransitions();
+        const allowedStatuses = validTransitions[order.status] || [];
+        if (!allowedStatuses.includes(status)) {
+          throw new Error(`Invalid status transition from ${order.status} to ${status}`);
+        }
+
+        order.status = status;
+        await order.save({ session });
+
+        res.status(200).json({
+          success: true,
+          message: 'Order status updated successfully',
+          data: order
+        });
+      });
+    } catch (error) {
+      if (error.message.includes('Order not found') ||
+          error.message.includes('Forbidden') ||
+          error.message.includes('Invalid status transition')) {
+        return res.status(400).json({ 
+          success: false,
+          message: error.message 
+        });
+      }
+      throw error;
+    } finally {
+      await session.endSession();
+    }
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error('Error updating order status:', error);
+    res.status(500).json({ 
+      success: false,
+      message: 'Failed to update order status. Please try again.' 
+    });
   }
 };
 
@@ -293,66 +357,125 @@ const cancelOrder = async (req, res) => {
     const { id } = req.params;
 
     if (!userId) {
-      return res.status(401).json({ message: 'Unauthorized' });
-    }
-
-    const order = await Order.findById(id);
-    if (!order) {
-      return res.status(404).json({ message: 'Order not found' });
-    }
-
-    // Check if user is the buyer
-    if (order.buyer.toString() !== userId) {
-      return res.status(403).json({ message: 'Forbidden: You can only cancel your own orders' });
-    }
-
-    // Check if order can be cancelled (only pending orders can be cancelled)
-    if (order.status !== 'pending') {
-      return res.status(400).json({ 
-        message: `Cannot cancel order with status: ${order.status}. Only pending orders can be cancelled.` 
+      return res.status(401).json({ 
+        success: false,
+        message: 'Unauthorized: Please log in to cancel order' 
       });
     }
 
-    // Restore product stock for each item in the order
-    const productsToUpdate = [];
+    const session = await Order.startSession();
     
-    for (const item of order.items) {
-      try {
-        const product = await Product.findById(item.product);
-        if (product) {
-          // Add back the quantity that was reserved
-          product.productStock += item.quantity;
-          productsToUpdate.push(product);
+    try {
+      await session.withTransaction(async () => {
+        const order = await Order.findById(id).session(session);
+        if (!order) {
+          throw new Error('Order not found');
         }
-      } catch (error) {
-        console.error(`Error restoring stock for product ${item.product}:`, error);
-        return res.status(500).json({ 
-          message: `Failed to restore stock for product: ${item.productName || item.product}` 
+
+        // Check if user is the buyer
+        if (order.buyer.toString() !== userId) {
+          throw new Error('Forbidden: You can only cancel your own orders');
+        }
+
+        // Check if order can be cancelled (only pending orders can be cancelled)
+        if (order.status !== 'Pending') {
+          throw new Error(`Cannot cancel order with status: ${order.status}. Only pending orders can be cancelled.`);
+        }
+
+        // Restore product stock for each item in the order
+        for (const item of order.items) {
+          try {
+            const product = await Product.findById(item.product).session(session);
+            if (product) {
+              // Add back the quantity that was reserved
+              product.productStock += item.quantity;
+              await product.save({ session });
+            }
+          } catch (error) {
+            console.error(`Error restoring stock for product ${item.product}:`, error);
+            throw new Error(`Failed to restore stock for product: ${item.productName || item.product}`);
+          }
+        }
+
+        // Update order status to cancelled
+        order.status = 'Cancelled';
+        await order.save({ session });
+
+        res.status(200).json({
+          success: true,
+          message: 'Order cancelled successfully and stock has been restored.',
+          data: order
+        });
+      });
+    } catch (error) {
+      if (error.message.includes('Order not found') ||
+          error.message.includes('Forbidden') ||
+          error.message.includes('Cannot cancel order') ||
+          error.message.includes('Failed to restore stock')) {
+        return res.status(400).json({ 
+          success: false,
+          message: error.message 
         });
       }
+      throw error;
+    } finally {
+      await session.endSession();
     }
+  } catch (error) {
+    console.error('Error cancelling order:', error);
+    res.status(500).json({ 
+      success: false,
+      message: 'Failed to cancel order. Please try again.' 
+    });
+  }
+};
 
-    // Save all product updates
-    try {
-      await Promise.all(productsToUpdate.map(product => product.save()));
-    } catch (error) {
-      console.error('Error saving product updates:', error);
-      return res.status(500).json({ 
-        message: 'Failed to restore product stock. Please try again.' 
+// Get order by order number
+const getOrderByOrderNumber = async (req, res) => {
+  try {
+    const { orderNumber } = req.params;
+    const userId = req.user?.userId;
+
+    if (!userId) {
+      return res.status(401).json({ 
+        success: false,
+        message: 'Unauthorized: Please log in to view order' 
       });
     }
 
-    // Update order status to cancelled
-    order.status = 'cancelled';
-    await order.save();
+    if (!orderNumber) {
+      return res.status(400).json({ 
+        success: false,
+        message: 'Order number is required' 
+      });
+    }
+
+    const order = await Order.findByOrderNumber(orderNumber);
+    if (!order) {
+      return res.status(404).json({ 
+        success: false,
+        message: 'Order not found' 
+      });
+    }
+
+    // Check if user owns the order (either as buyer or seller)
+    if (order.buyer._id.toString() !== userId && order.seller._id.toString() !== userId) {
+      return res.status(403).json({ 
+        success: false,
+        message: 'Forbidden: You can only view your own orders' 
+      });
+    }
 
     res.status(200).json({
-      ...order.toObject(),
-      message: 'Order cancelled successfully and stock has been restored.'
+      success: true,
+      data: order
     });
   } catch (error) {
-    console.error('Error cancelling order:', error);
-    res.status(500).json({ message: 'Failed to cancel order. Please try again.' });
+    console.error('Error getting order by order number:', error);
+    res.status(500).json({ 
+      success: false,
+      message: 'Failed to retrieve order. Please try again.' 
+    });
   }
 };
 
@@ -361,5 +484,6 @@ module.exports = {
   getMyOrders,
   getSellerOrders,
   updateOrderStatus,
-  cancelOrder
+  cancelOrder,
+  getOrderByOrderNumber
 };
