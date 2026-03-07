@@ -44,8 +44,7 @@ const orderSchema = new mongoose.Schema({
     min: 0
   },
   pickupLocation: {
-    type: String,
-    default: 'SSU – Bulan Campus'
+    type: String
   },
   note: {
     type: String,
@@ -65,16 +64,6 @@ const orderSchema = new mongoose.Schema({
     type: Date,
     default: Date.now
   }
-});
-
-// Generate order number
-orderSchema.pre('save', async function(next) {
-  if (this.isNew) {
-    const year = new Date().getFullYear();
-    const count = await this.constructor.countDocuments({ createdAt: { $gte: new Date(year, 0, 1) } });
-    this.orderNumber = `ORD-${year}-${String(count + 1).padStart(3, '0')}`;
-  }
-  next();
 });
 
 module.exports = mongoose.model('Order', orderSchema);

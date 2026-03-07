@@ -1,6 +1,7 @@
 const Order = require('../models/Order');
 const Cart = require('../models/Cart');
 const Product = require('../models/Product');
+const { generateOrderNumber } = require('../utils/orderNumberGenerator');
 
 // Create orders from cart items (checkout)
 const createOrder = async (req, res) => {
@@ -10,6 +11,11 @@ const createOrder = async (req, res) => {
 
     if (!userId) {
       return res.status(401).json({ message: 'Unauthorized' });
+    }
+
+    // Validate pickup location is provided
+    if (!pickupLocation || !pickupLocation.trim()) {
+      return res.status(400).json({ message: 'Pickup location is required' });
     }
 
     // Get user's cart
@@ -79,8 +85,12 @@ const createOrder = async (req, res) => {
       }
 
       try {
+        // Generate unique order number
+        const orderNumber = await generateOrderNumber();
+        
         // Create order
         const order = new Order({
+          orderNumber,
           buyer: userId,
           seller: sellerData.seller,
           items: sellerData.items,
@@ -90,9 +100,50 @@ const createOrder = async (req, res) => {
           paymentMethod: 'COD'
         });
 
+        console.log('Creating order with data:', {
+          orderNumber,
+          buyer: userId,
+          seller: sellerData.seller,
+          totalAmount,
+          pickupLocation: pickupLocation || 'SSU – Bulan Campus',
+          note: note || '',
+          paymentMethod: 'COD'
+        });
+
         await order.save();
+        console.log('Order saved successfully with orderNumber:', order.orderNumber);
+        
+        // Update product stock and handle cart updates
+        const productsToUpdate = [];
+        const productsToRemoveFromCart = [];
+        
+        for (const item of sellerData.items) {
+          const product = await Product.findById(item.product);
+          if (product) {
+            // Update product stock
+            product.productStock -= item.quantity;
+            productsToUpdate.push(product);
+            
+            // If stock reaches zero, mark for cart removal
+            if (product.productStock <= 0) {
+              productsToRemoveFromCart.push(item.product.toString());
+            }
+          }
+        }
+        
+        // Save all product updates
+        await Promise.all(productsToUpdate.map(product => product.save()));
+        
         createdOrders.push(order);
       } catch (error) {
+        console.error('Error creating order:', error);
+        console.error('Error details:', {
+          name: error.name,
+          message: error.message,
+          code: error.code,
+          errors: error.errors
+        });
+        
         failedOrders.push({
           sellerName: sellerData.sellerName,
           error: error.message
@@ -107,11 +158,21 @@ const createOrder = async (req, res) => {
         order.items.map(item => item.product.toString())
       );
 
+      console.log('Purchased product IDs:', purchasedProductIds);
+      console.log('Cart items before filter:', cart.items.map(item => item.product.toString()));
+
       // Remove purchased items from cart
-      cart.items = cart.items.filter(item => 
-        !purchasedProductIds.includes(item.product.toString())
-      );
+      cart.items = cart.items.filter(item => {
+        const productId = item.product.toString();
+        const shouldRemove = purchasedProductIds.includes(productId);
+        console.log(`Checking item ${productId}: shouldRemove = ${shouldRemove}`);
+        return !shouldRemove;
+      });
+      
+      console.log('Cart items after purchased items filter:', cart.items.map(item => item.product.toString()));
+      
       await cart.save();
+      console.log('Cart saved successfully with', cart.items.length, 'items remaining');
     }
 
     // Prepare response
@@ -245,19 +306,53 @@ const cancelOrder = async (req, res) => {
       return res.status(403).json({ message: 'Forbidden: You can only cancel your own orders' });
     }
 
-    // Check if order can be cancelled
+    // Check if order can be cancelled (only pending orders can be cancelled)
     if (order.status !== 'pending') {
       return res.status(400).json({ 
-        message: `Cannot cancel order with status: ${order.status}` 
+        message: `Cannot cancel order with status: ${order.status}. Only pending orders can be cancelled.` 
       });
     }
 
+    // Restore product stock for each item in the order
+    const productsToUpdate = [];
+    
+    for (const item of order.items) {
+      try {
+        const product = await Product.findById(item.product);
+        if (product) {
+          // Add back the quantity that was reserved
+          product.productStock += item.quantity;
+          productsToUpdate.push(product);
+        }
+      } catch (error) {
+        console.error(`Error restoring stock for product ${item.product}:`, error);
+        return res.status(500).json({ 
+          message: `Failed to restore stock for product: ${item.productName || item.product}` 
+        });
+      }
+    }
+
+    // Save all product updates
+    try {
+      await Promise.all(productsToUpdate.map(product => product.save()));
+    } catch (error) {
+      console.error('Error saving product updates:', error);
+      return res.status(500).json({ 
+        message: 'Failed to restore product stock. Please try again.' 
+      });
+    }
+
+    // Update order status to cancelled
     order.status = 'cancelled';
     await order.save();
 
-    res.status(200).json(order);
+    res.status(200).json({
+      ...order.toObject(),
+      message: 'Order cancelled successfully and stock has been restored.'
+    });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error('Error cancelling order:', error);
+    res.status(500).json({ message: 'Failed to cancel order. Please try again.' });
   }
 };
 

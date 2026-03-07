@@ -8,7 +8,8 @@ function CheckoutModal({
     pickupLocation, 
     note, 
     onPickupLocationChange, 
-    onNoteChange 
+    onNoteChange,
+    loading = false
 }) {
     if (!showModal) {
         return null;
@@ -28,9 +29,11 @@ function CheckoutModal({
                     </div>
                     <div className="modal-body">
                         <div className="mb-3">
-                            <label className="form-label fw-bold">
+                            <label className="form-label fw-bold"> 
                                 <FiMapPin className="me-2" />
                                 Pickup Location
+                                <span className="text-primary"> *</span>
+                                
                             </label>
                             <input 
                                 type="text" 
@@ -38,6 +41,7 @@ function CheckoutModal({
                                 value={pickupLocation}
                                 onChange={(e) => onPickupLocationChange(e.target.value)}
                                 placeholder="Enter specific location inside SorSU – Bulan Campus"
+                                required
                             />
                         </div>
                         <div className="mb-3">
@@ -65,6 +69,7 @@ function CheckoutModal({
                             type="button" 
                             className="btn btn-secondary"
                             onClick={onClose}
+                            disabled={loading}
                         >
                             Cancel
                         </button>
@@ -72,8 +77,9 @@ function CheckoutModal({
                             type="button" 
                             className="btn btn-primary"
                             onClick={onConfirm}
+                            disabled={loading}
                         >
-                            Place Order
+                            {loading ? 'Placing order...' : 'Place Order'}
                         </button>
                     </div>
                 </div>

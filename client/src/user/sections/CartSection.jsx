@@ -145,6 +145,7 @@ function CartSection() {
     const [showCheckoutModal, setShowCheckoutModal] = React.useState(false);
     const [pickupLocation, setPickupLocation] = React.useState('');
     const [note, setNote] = React.useState('');
+    const [checkoutLoading, setCheckoutLoading] = React.useState(false);
 
     const handleCheckout = () => {
         if (selectedItems.length === 0) {
@@ -155,13 +156,21 @@ function CartSection() {
     };
 
     const handleCheckoutConfirm = async () => {
+        // Validate pickup location is not empty
+        if (!pickupLocation.trim()) {
+            alert('Please enter a pickup location before placing your order.');
+            return;
+        }
+        
+        setCheckoutLoading(true);
+        
         try {
             const response = await orderAPI.createOrder(pickupLocation, note);
             
             if (response.data.createdOrders && response.data.createdOrders.length > 0) {
                 alert(`Successfully created ${response.data.createdOrders.length} order(s)!`);
                 setShowCheckoutModal(false);
-                setPickupLocation('SSU – Bulan Campus');
+                setPickupLocation(''); // Clear after successful order
                 setNote('');
                 fetchCart(); // Refresh cart
             } else {
@@ -177,6 +186,8 @@ function CartSection() {
         } catch (err) {
             console.error('Checkout failed:', err);
             alert('Checkout failed. Please try again.');
+        } finally {
+            setCheckoutLoading(false);
         }
     };
 
@@ -471,6 +482,7 @@ function CartSection() {
                 note={note}
                 onPickupLocationChange={setPickupLocation}
                 onNoteChange={setNote}
+                loading={checkoutLoading}
             />
         </div>
     );
