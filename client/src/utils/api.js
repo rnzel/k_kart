@@ -21,7 +21,8 @@ api.interceptors.response.use(
   (response) => response,
   (error) => {
     // Handle 401 Unauthorized errors
-    if (error.response?.status === 401) {
+    if (error.response?.status === 401 && !error.config.url.includes('api/auth/login')
+    ) {
       // Clear local storage
       localStorage.removeItem('token')
       localStorage.removeItem('user')
@@ -60,9 +61,9 @@ export const cartAPI = {
 
 // Admin API methods
 export const adminAPI = {
-  // Get all users with pagination
-  getUsers: (page = 1, limit = 10) => 
-    api.get('/api/admin/users', { params: { page, limit } }),
+  // Get all users with pagination (with optional role filter and search)
+  getUsers: (page = 1, limit = 10, role = null, search = null) => 
+    api.get('/api/admin/users', { params: { page, limit, role, search } }),
   
   // Delete user
   deleteUser: (userId) => 
@@ -81,6 +82,27 @@ export const adminAPI = {
   
   // Apply to become a seller
   applySeller: (idImage) => api.post('/api/admin/apply-seller', { idImage })
+}
+
+// Order API methods
+export const orderAPI = {
+  // Create orders from cart (checkout)
+  createOrder: (pickupLocation, note) => 
+    api.post('/api/orders/checkout', { pickupLocation, note }),
+  
+  // Get buyer's orders
+  getMyOrders: () => api.get('/api/orders/my-orders'),
+  
+  // Get seller's orders
+  getSellerOrders: () => api.get('/api/orders/seller-orders'),
+  
+  // Update order status (seller only)
+  updateOrderStatus: (orderId, status) => 
+    api.patch(`/api/orders/${orderId}/status`, { status }),
+  
+  // Cancel order (buyer only)
+  cancelOrder: (orderId) => 
+    api.patch(`/api/orders/${orderId}/cancel`)
 }
 
 export default api

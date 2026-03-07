@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react';
-import { Navigate, useLocation } from 'react-router-dom';
+import { Navigate, useLocation, useNavigate } from 'react-router-dom';
 
 function ProtectedRoute({ children }) {
     const location = useLocation();
+    const navigate = useNavigate();
     const [isAuthenticated, setIsAuthenticated] = useState(null);
     
     useEffect(() => {
@@ -28,17 +29,17 @@ function ProtectedRoute({ children }) {
             // Check if user is on the root path and redirect based on role
             if (location.pathname === '/') {
                 if (user.role === 'admin') {
-                    window.location.href = '/admin';
+                    navigate('/admin', { replace: true });
                 } else if (user.role === 'seller' && user.sellerStatus === 'approved') {
-                    window.location.href = '/seller-dashboard';
+                    navigate('/seller-dashboard', { replace: true });
                 } else {
-                    window.location.href = '/marketplace';
+                    navigate('/marketplace', { replace: true });
                 }
             }
         } catch {
             setIsAuthenticated(false);
         }
-    }, [location.pathname]);
+    }, [location.pathname, navigate]);
 
     // Show nothing while checking authentication
     if (isAuthenticated === null) {

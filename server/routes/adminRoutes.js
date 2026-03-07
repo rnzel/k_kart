@@ -1,23 +1,86 @@
 const express = require('express')
 const router = express.Router()
 const User = require('../models/User')
+const Shop = require('../models/Shop')
 const { authenticateToken, requireAdmin } = require('../middleware/auth')
 
 // Get all users with pagination (admin only)
 router.get('/users', authenticateToken, requireAdmin, async (req, res) => {
     try {
+        const { role, search } = req.query
         const page = parseInt(req.query.page) || 1
         const limit = parseInt(req.query.limit) || 10
         const skip = (page - 1) * limit
-
-        const [users, total] = await Promise.all([
-            User.find()
-                .select('-password')
-                .sort({ createdAt: -1 })
-                .skip(skip)
-                .limit(limit),
-            User.countDocuments()
-        ])
+        
+        let query = {}
+        
+        // Filter by role if provided
+        if (role) {
+            query.role = role
+        }
+        
+        // Filter by search term if provided
+        if (search && search.trim()) {
+            const searchRegex = new RegExp(search.trim(), 'i')
+            query.$or = [
+                { firstName: { $regex: searchRegex } },
+                { lastName: { $regex: searchRegex } },
+                { email: { $regex: searchRegex } }
+            ]
+            
+            // For sellers, also search shop names
+            if (role === 'seller' || !role) {
+                const matchingShops = await Shop.find({ 
+                    shopName: { $regex: searchRegex } 
+                }).select('owner')
+                
+                if (matchingShops.length > 0) {
+                    const shopOwnerIds = matchingShops.map(shop => shop.owner)
+                    query.$or.push({ _id: { $in: shopOwnerIds } })
+                }
+            }
+        }
+        
+        // Get total count for pagination
+        const total = await User.countDocuments(query)
+        
+        // Get users with pagination
+        let users = await User.find(query)
+            .select('-password')
+            .sort({ createdAt: -1 })
+            .skip(skip)
+            .limit(limit)
+        
+        // For sellers, fetch their shop names
+        if (users.length > 0) {
+            try {
+                const sellerIds = users
+                    .filter(user => user.role === 'seller')
+                    .map(user => user._id)
+                
+                if (sellerIds.length > 0) {
+                    const shops = await Shop.find({ owner: { $in: sellerIds } })
+                        .select('owner shopName')
+                    
+                    const shopMap = new Map()
+                    shops.forEach(shop => {
+                        shopMap.set(shop.owner.toString(), shop.shopName)
+                    })
+                    
+                    // Convert users to plain objects and add shop names
+                    users = users.map(user => {
+                        const userObj = user.toObject()
+                        if (user.role === 'seller' && shopMap.has(user._id.toString())) {
+                            userObj.shopName = shopMap.get(user._id.toString())
+                        }
+                        return userObj
+                    })
+                }
+            } catch (shopError) {
+                console.error('Error fetching shop names:', shopError)
+                // Continue without shop names if there's an error
+            }
+        }
 
         res.json({
             users,
@@ -29,6 +92,7 @@ router.get('/users', authenticateToken, requireAdmin, async (req, res) => {
             }
         })
     } catch (err) {
+        console.error('Error fetching users:', err)
         res.status(500).json({ message: err.message })
     }
 })

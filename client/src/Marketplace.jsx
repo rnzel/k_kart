@@ -273,7 +273,7 @@ function Marketplace() {
             {!showAllShops && (
                 <>
                     <hr className="my-4"/>
-                    <div className="container mt-4">
+                    <div className="container mt-4 mb-4">
                         <h2 className="text-primary mb-4">All Products</h2>
 
                         {loading && (

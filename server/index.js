@@ -23,6 +23,7 @@ const shopRoutes = require('./routes/shopRoutes')
 const productRoutes = require('./routes/productRoutes')
 const cartRoutes = require('./routes/cartRoutes')
 const adminRoutes = require('./routes/adminRoutes')
+const orderRoutes = require('./routes/orderRoutes')
 
 // Import GridFS utilities
 const { initGridFSBucket, getGridFSBucket, isGridFSReady } = require('./config/gridfsBucket')
@@ -117,6 +118,7 @@ app.use('/api/shops', shopRoutes)
 app.use('/api/products', productRoutes)
 app.use('/api/cart', cartRoutes)
 app.use('/api/admin', adminRoutes)
+app.use('/api/orders', orderRoutes)
 
 // ============================================
 // Health Check Route

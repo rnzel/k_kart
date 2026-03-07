@@ -94,18 +94,15 @@ const getMyShop = async (req, res) => {
     try {
         const owner = req.user.userId;
         const shop = await Shop.findOne({ owner });
-        
         if (!shop) {
             return res.status(404).json({ message: "Shop not found" });
         }
-        
+
         res.status(200).json(shop);
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
 };
-
-// Delete current user's shop (with cascade delete for products)
 const deleteShop = async (req, res) => {
     try {
         const owner = req.user.userId;

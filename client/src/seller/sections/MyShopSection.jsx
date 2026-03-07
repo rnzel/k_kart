@@ -7,6 +7,7 @@ import DangerModal from "../../components/DangerModal.jsx";
 function MyShopSection() {
     const [shopExists, setShopExists] = React.useState(null);
     const [shopData, setShopData] = React.useState(null);
+    const [fetchError, setFetchError] = React.useState(null);
 
     // Form state for creating/editing shop
     const [shopName, setShopName] = React.useState("");
@@ -32,20 +33,48 @@ function MyShopSection() {
                 if (response.data && response.data._id) {
                     setShopData(response.data);
                     setShopExists(true);
+                    setFetchError(null);
                 } else {
                     setShopExists(false);
+                    setFetchError(null);
                 }
             } catch (err) {
+                console.log('Shop fetch error details:', {
+                    message: err.message,
+                    status: err.response?.status,
+                    statusText: err.response?.statusText,
+                    data: err.response?.data
+                });
+                
                 if (err.response && err.response.status === 404) {
+                    // No shop found - this is expected if user hasn't created a shop
                     setShopExists(false);
+                    setFetchError(null);
+                } else if (err.response && err.response.status === 401) {
+                    // Authentication error
+                    setShopExists(false);
+                    setFetchError('Authentication failed. Please log in again.');
+                } else if (err.response && err.response.status === 403) {
+                    // Forbidden - likely seller not approved
+                    setShopExists(false);
+                    setFetchError('Access denied. Your seller application may not be approved yet.');
+                } else if (err.response && err.response.status >= 500) {
+                    // Server error
+                    setShopExists(false);
+                    setFetchError('Server error. Please try again later.');
                 } else {
+                    // Network error or other
                     setShopExists(false);
+                    setFetchError('Network error. Please check your connection.');
                 }
             }
         };
 
         if (token) {
             checkShopExists();
+        } else {
+            setShopExists(false);
+            setFetchError('Please log in to view your shop.');
         }
     }, [token]);
 
@@ -222,6 +251,24 @@ function MyShopSection() {
                             <span className="visually-hidden">Loading...</span>
                         </div>
                         <p className="mt-2">Loading...</p>
+                    </div>
+                ) : fetchError ? (
+                    <div className="mt-4">
+                        <div className="alert alert-warning" role="alert">
+                            <strong>Error:</strong> {fetchError}
+                        </div>
+                        {fetchError.includes('seller application') && (
+                            <div className="text-center">
+                                <p className="text-muted">You need to be an approved seller to create a shop.</p>
+                                <button
+                                    className="btn btn-primary"
+                                    style={{ width: "100%" }}
+                                    onClick={() => window.location.href = '/user'}
+                                >
+                                    Go to User Dashboard
+                                </button>
+                            </div>
+                        )}
                     </div>
                 ) : !shopExists && !showForm ? (
                     <div className="mt-4">

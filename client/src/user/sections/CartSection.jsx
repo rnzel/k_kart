@@ -2,7 +2,8 @@ import React from "react";
 import { useNavigate } from "react-router-dom";
 import { getImageUrl } from "../../utils/imageUrl.js";
 import { FiTrash2, FiShoppingCart, FiMinus, FiPlus, FiArrowLeft, FiShoppingBag } from "react-icons/fi";
-import { cartAPI } from "../../utils/api.js";
+import { cartAPI, orderAPI } from "../../utils/api.js";
+import CheckoutModal from "../../components/CheckoutModal.jsx";
 
 function CartSection() {
     const navigate = useNavigate();
@@ -141,12 +142,42 @@ function CartSection() {
         navigate('/marketplace');
     };
 
+    const [showCheckoutModal, setShowCheckoutModal] = React.useState(false);
+    const [pickupLocation, setPickupLocation] = React.useState('');
+    const [note, setNote] = React.useState('');
+
     const handleCheckout = () => {
         if (selectedItems.length === 0) {
             alert('Please select at least one item to checkout.');
             return;
         }
-        alert('Checkout functionality coming soon!');
+        setShowCheckoutModal(true);
+    };
+
+    const handleCheckoutConfirm = async () => {
+        try {
+            const response = await orderAPI.createOrder(pickupLocation, note);
+            
+            if (response.data.createdOrders && response.data.createdOrders.length > 0) {
+                alert(`Successfully created ${response.data.createdOrders.length} order(s)!`);
+                setShowCheckoutModal(false);
+                setPickupLocation('SSU – Bulan Campus');
+                setNote('');
+                fetchCart(); // Refresh cart
+            } else {
+                alert('No orders were created. Please try again.');
+            }
+            
+            if (response.data.failedOrders && response.data.failedOrders.length > 0) {
+                const failedMessages = response.data.failedOrders.map(f => 
+                    `${f.sellerName}: ${f.error}`
+                ).join('\n');
+                alert(`Some orders failed:\n${failedMessages}`);
+            }
+        } catch (err) {
+            console.error('Checkout failed:', err);
+            alert('Checkout failed. Please try again.');
+        }
     };
 
     // Loading state
@@ -430,6 +461,17 @@ function CartSection() {
                     )}
                 </div>
             </div>
+
+            {/* Checkout Modal */}
+            <CheckoutModal
+                showModal={showCheckoutModal}
+                onClose={() => setShowCheckoutModal(false)}
+                onConfirm={handleCheckoutConfirm}
+                pickupLocation={pickupLocation}
+                note={note}
+                onPickupLocationChange={setPickupLocation}
+                onNoteChange={setNote}
+            />
         </div>
     );
 }
