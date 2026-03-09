@@ -466,8 +466,12 @@ function ProductsSection() {
                             className="form-control"
                             id="productName"
                             value={productName}
+                            maxLength={50}
                             onChange={(e) => setProductName(e.target.value)}
                         />
+                        <small className="text-muted">
+                            {productName.length}/50 characters
+                        </small>
                     </div>
 
                     <div className="mb-3">
@@ -480,9 +484,14 @@ function ProductsSection() {
                         <textarea
                             className="form-control"
                             id="productDescription"
+                            rows="3"
                             value={productDescription}
+                            maxLength={500}
                             onChange={(e) => setProductDescription(e.target.value)}
                         />
+                        <small className="text-muted">
+                            {productDescription.length}/500 characters
+                        </small>
                     </div>
 
                     <div className="mb-3 d-flex gap-2">
@@ -644,7 +653,7 @@ function ProductsSection() {
                 onHide={() => setShowDeleteModal(false)}
                 onConfirm={confirmDeleteProduct}
                 title="Delete Product"
-                messsage="Are you sure you want to delete this product? This action cannot be undone."
+                message="Are you sure you want to delete this product? This action cannot be undone."
             />
         </div>
     );

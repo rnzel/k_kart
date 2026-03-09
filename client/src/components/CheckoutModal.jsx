@@ -7,8 +7,10 @@ function CheckoutModal({
     onConfirm, 
     pickupLocation, 
     note, 
+    contactNumber,
     onPickupLocationChange, 
     onNoteChange,
+    onContactNumberChange,
     loading = false,
     error = null
 }) {
@@ -57,6 +59,25 @@ function CheckoutModal({
                         <div className="mb-3">
                             <label className="form-label fw-bold">
                                 <FiMessageSquare className="me-2" />
+                                Contact Number
+                                <span className="text-primary"> *</span>
+                            </label>
+                            <input 
+                                type="tel" 
+                                className="form-control"
+                                value={contactNumber}
+                                onChange={(e) => onContactNumberChange(e.target.value)}
+                                placeholder="09XXXXXXXXX"
+                                pattern="[0-9]{10}"
+                                maxLength="10"
+                                required
+                                disabled={loading}
+                            />
+                            <div className="form-text">Enter your 10-digit mobile number (e.g., 09123456789)</div>
+                        </div>
+                        <div className="mb-3">
+                            <label className="form-label fw-bold">
+                                <FiMessageSquare className="me-2" />
                                 Delivery Instructions (Optional)
                             </label>
                             <textarea 
@@ -89,7 +110,7 @@ function CheckoutModal({
                             type="button" 
                             className="btn btn-primary"
                             onClick={onConfirm}
-                            disabled={loading || !pickupLocation.trim()}
+                            disabled={loading || !pickupLocation.trim() || !contactNumber.trim() || !/^[0-9]{10}$/.test(contactNumber)}
                         >
                             {loading ? (
                                 <>

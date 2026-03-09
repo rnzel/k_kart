@@ -25,17 +25,38 @@ const getCart = async (req, res) => {
 
     // Validate cart items and update price/stock snapshots
     const validationErrors = await cart.validateItems();
+    let removedItemsCount = 0;
+    
     if (validationErrors.length > 0) {
       // Remove invalid items and save
-      cart.items = cart.items.filter(item => 
-        validationErrors.every(error => !error.includes(item.product.toString()))
-      );
-      await cart.save();
+      const validItems = cart.items.filter(item => {
+        // Check if item.product is null or undefined before calling toString()
+        if (!item.product) {
+          return false; // Remove items with null product references
+        }
+        return validationErrors.every(error => !error.includes(item.product.toString()));
+      });
+      
+      removedItemsCount = cart.items.length - validItems.length;
+      
+      // Only save if items were actually removed
+      if (removedItemsCount > 0) {
+        try {
+          cart.items = validItems;
+          await cart.save();
+        } catch (saveError) {
+          console.error('Error saving cleaned cart:', saveError);
+          // Continue with the original cart even if save fails
+          // This prevents 500 errors when products are deleted
+        }
+      }
     }
 
     res.status(200).json({
       success: true,
-      data: cart
+      data: cart,
+      removedItemsCount: removedItemsCount,
+      validationErrors: validationErrors
     });
   } catch (error) {
     console.error('Error getting cart:', error);
@@ -103,7 +124,7 @@ const addToCart = async (req, res) => {
           throw new Error('Cannot add product from deleted shop to cart');
         }
 
-        // Check stock
+        // Check stock - ensure we have enough for the requested quantity
         if (quantityNum > product.productStock) {
           throw new Error(`Not enough stock available. Available: ${product.productStock}`);
         }
@@ -120,14 +141,18 @@ const addToCart = async (req, res) => {
         );
 
         if (existingItemIndex > -1) {
-          // Update quantity
-          const newQuantity = cart.items[existingItemIndex].quantity + quantityNum;
+          // Update quantity - check if new total would exceed stock
+          const currentQuantity = cart.items[existingItemIndex].quantity;
+          const newTotalQuantity = currentQuantity + quantityNum;
           
-          if (newQuantity > product.productStock) {
-            throw new Error(`Not enough stock available. Current quantity: ${cart.items[existingItemIndex].quantity}, Requested: ${quantityNum}, Available: ${product.productStock}`);
+          if (newTotalQuantity > product.productStock) {
+            throw new Error(`Cannot add ${quantityNum} more items. Total would exceed available stock. Current: ${currentQuantity}, Requested: ${quantityNum}, Available: ${product.productStock}`);
           }
           
-          cart.items[existingItemIndex].quantity = newQuantity;
+          cart.items[existingItemIndex].quantity = newTotalQuantity;
+          // Update price and stock snapshot
+          cart.items[existingItemIndex].productPrice = product.productPrice;
+          cart.items[existingItemIndex].productStock = product.productStock;
         } else {
           // Add new item
           cart.items.push({

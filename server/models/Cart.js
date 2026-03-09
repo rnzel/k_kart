@@ -84,9 +84,13 @@ cartSchema.methods.validateItems = async function() {
   const Product = mongoose.model('Product');
   const errors = [];
   
+  // Use Promise.all for better performance
+  const productPromises = this.items.map(item => Product.findById(item.product));
+  const products = await Promise.all(productPromises);
+  
   for (let i = 0; i < this.items.length; i++) {
     const item = this.items[i];
-    const product = await Product.findById(item.product);
+    const product = products[i];
     
     if (!product) {
       errors.push(`Product ${item.productName} (${item.product}) not found`);

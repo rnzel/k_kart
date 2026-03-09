@@ -29,6 +29,13 @@ const orderItemSchema = new mongoose.Schema({
   sellerName: {
     type: String,
     required: true
+  },
+  contactNumber: {
+    type: String,
+    required: true,
+    trim: true,
+    match: [/^[0-9]{10}$/, 'Contact number must be a 10-digit Philippine number'],
+    maxlength: 10
   }
 });
 
@@ -61,6 +68,13 @@ const orderSchema = new mongoose.Schema({
     trim: true,
     maxlength: 200
   },
+  contactNumber: {
+    type: String,
+    required: true,
+    trim: true,
+    match: [/^[0-9]{10}$/, 'Contact number must be a 10-digit Philippine number'],
+    maxlength: 10
+  },
   note: {
     type: String,
     default: '',
@@ -73,7 +87,7 @@ const orderSchema = new mongoose.Schema({
   },
   status: {
     type: String,
-    enum: ['Pending', 'Accepted', 'Preparing', 'Ready for Pickup', 'Completed', 'Cancelled'],
+    enum: ['Pending', 'Confirmed', 'On-Delivery', 'Completed', 'Cancelled'],
     default: 'Pending'
   },
   createdAt: {
@@ -130,9 +144,8 @@ orderSchema.methods.validateOrder = async function() {
 orderSchema.statics.getStatusHistory = function() {
   return [
     'Pending',
-    'Accepted', 
-    'Preparing',
-    'Ready for Pickup',
+    'Confirmed',
+    'On-Delivery',
     'Completed',
     'Cancelled'
   ];
@@ -141,10 +154,9 @@ orderSchema.statics.getStatusHistory = function() {
 // Static method to get valid status transitions
 orderSchema.statics.getValidTransitions = function() {
   return {
-    'Pending': ['Accepted', 'Cancelled'],
-    'Accepted': ['Preparing'],
-    'Preparing': ['Ready for Pickup'],
-    'Ready for Pickup': ['Completed'],
+    'Pending': ['Confirmed', 'Cancelled'],
+    'Confirmed': ['On-Delivery'],
+    'On-Delivery': ['Completed'],
     'Completed': [],
     'Cancelled': []
   };

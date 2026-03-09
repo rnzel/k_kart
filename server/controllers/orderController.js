@@ -7,7 +7,7 @@ const { generateOrderNumber } = require('../utils/orderNumberGenerator');
 const createOrder = async (req, res) => {
   try {
     const userId = req.user?.userId;
-    const { pickupLocation, note } = req.body;
+    const { pickupLocation, note, selectedItems, contactNumber } = req.body;
 
     if (!userId) {
       return res.status(401).json({ 
@@ -21,6 +21,22 @@ const createOrder = async (req, res) => {
       return res.status(400).json({ 
         success: false,
         message: 'Pickup location is required' 
+      });
+    }
+
+    // Validate contact number
+    if (!contactNumber || !contactNumber.trim()) {
+      return res.status(400).json({ 
+        success: false,
+        message: 'Contact number is required' 
+      });
+    }
+
+    // Validate Philippine phone number format (10 digits)
+    if (!/^[0-9]{10}$/.test(contactNumber)) {
+      return res.status(400).json({ 
+        success: false,
+        message: 'Contact number must be a 10-digit Philippine number (e.g., 09123456789)' 
       });
     }
 
@@ -38,6 +54,14 @@ const createOrder = async (req, res) => {
       });
     }
 
+    // Validate selected items
+    if (!selectedItems || !Array.isArray(selectedItems) || selectedItems.length === 0) {
+      return res.status(400).json({ 
+        success: false,
+        message: 'Selected items are required' 
+      });
+    }
+
     // Use transaction to ensure atomicity
     const session = await Order.startSession();
     
@@ -52,11 +76,20 @@ const createOrder = async (req, res) => {
           throw new Error('Cart is empty');
         }
 
-        // Group cart items by seller
+        // Filter cart items to only include selected items
+        const selectedCartItems = cart.items.filter(item => 
+          selectedItems.includes(item._id.toString())
+        );
+
+        if (selectedCartItems.length === 0) {
+          throw new Error('No selected items found in cart');
+        }
+
+        // Group selected cart items by seller
         const itemsBySeller = {};
         const validationErrors = [];
 
-        for (const item of cart.items) {
+        for (const item of selectedCartItems) {
           // Validate product and shop
           if (!item.product) {
             validationErrors.push(`Product not found for item: ${item.productName}`);
@@ -99,7 +132,8 @@ const createOrder = async (req, res) => {
             quantity: item.quantity,
             price: item.product.productPrice,
             seller: item.shop.owner,
-            sellerName: item.shop.shopName
+            sellerName: item.shop.shopName,
+            contactNumber: contactNumber.trim()
           });
         }
 
@@ -135,6 +169,7 @@ const createOrder = async (req, res) => {
               items: sellerData.items,
               totalAmount,
               pickupLocation: pickupLocation.trim(),
+              contactNumber: contactNumber.trim(),
               note: note || '',
               paymentMethod: 'COD',
               status: 'Pending'
@@ -163,15 +198,20 @@ const createOrder = async (req, res) => {
 
         // Remove purchased items from cart
         if (createdOrders.length > 0) {
-          // Get all product IDs from successful orders
-          const purchasedProductIds = createdOrders.flatMap(order => 
+          // Get all cart item IDs that were successfully purchased
+          const purchasedCartItemIds = createdOrders.flatMap(order => 
             order.items.map(item => item.product.toString())
           );
 
-          // Remove purchased items from cart
-          cart.items = cart.items.filter(item => 
-            !purchasedProductIds.includes(item.product.toString())
-          );
+          // Remove only the successfully purchased items from the cart
+          cart.items = cart.items.filter(item => {
+            const wasSelected = selectedItems.includes(item._id.toString());
+            const wasPurchased = purchasedCartItemIds.includes(item.product.toString());
+            
+            // Remove the item if it was selected AND successfully purchased
+            // Keep the item if it wasn't selected OR if it was selected but failed to purchase
+            return !(wasSelected && wasPurchased);
+          });
           
           await cart.save({ session });
         }

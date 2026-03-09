@@ -491,7 +491,7 @@ function MyShopSection() {
                 onHide={() => setShowDeleteModal(false)}
                 onConfirm={checkDeleteShop}
                 title="Delete Shop"
-                messsage="Are you sure you want to delete your shop? This action cannot be undone."
+                message="Are you sure you want to delete your shop? This action cannot be undone."
             />
         </>
     );

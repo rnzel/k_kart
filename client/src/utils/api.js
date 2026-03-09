@@ -161,7 +161,7 @@ export const cartAPI = {
   // Remove multiple items
   removeMultipleItems: async (itemIds) => {
     try {
-      const response = await api.delete('/api/cart/remove-multiple', { data: { itemIds } })
+      const response = await api.post('/api/cart/remove-multiple', { itemIds })
       return {
         success: true,
         data: response.data.data || response.data,
@@ -263,9 +263,9 @@ export const adminAPI = {
 // Order API methods with enhanced error handling
 export const orderAPI = {
   // Create orders from cart (checkout)
-  createOrder: async (pickupLocation, note) => {
+  createOrder: async (pickupLocation, note, selectedItems, contactNumber) => {
     try {
-      const response = await api.post('/api/orders/checkout', { pickupLocation, note })
+      const response = await api.post('/api/orders/checkout', { pickupLocation, note, selectedItems, contactNumber })
       return {
         success: true,
         data: response.data.data || response.data,

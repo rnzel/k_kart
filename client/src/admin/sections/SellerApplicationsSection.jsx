@@ -291,7 +291,7 @@ function SellerApplicationsSection() {
                 onHide={() => setShowRejectModal(false)}
                 onConfirm={confirmReject}
                 title="Reject Seller Application"
-                messsage={
+                message={
                     <div>
                         <p>Are you sure you want to reject this seller application?</p>
                         <div className="mb-3">

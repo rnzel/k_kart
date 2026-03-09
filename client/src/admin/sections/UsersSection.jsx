@@ -345,7 +345,7 @@ function UsersSection() {
                 }}
                 onConfirm={confirmDeleteUser}
                 title="Delete User"
-                messsage="Are you sure you want to delete this user? This action cannot be undone."
+                message="Are you sure you want to delete this user? This action cannot be undone."
             />
         </div>
     );

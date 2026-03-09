@@ -4,6 +4,8 @@ import { getImageUrl } from "../../utils/imageUrl.js";
 import { FiTrash2, FiShoppingCart, FiMinus, FiPlus, FiArrowLeft, FiShoppingBag } from "react-icons/fi";
 import { cartAPI, orderAPI } from "../../utils/api.js";
 import CheckoutModal from "../../components/CheckoutModal.jsx";
+import DangerModal from "../../components/DangerModal.jsx";
+import SuccessModal from "../../components/SuccessModal.jsx";
 
 function CartSection() {
     const navigate = useNavigate();
@@ -28,6 +30,13 @@ function CartSection() {
                 setCart(cartData.items || []);
                 // Initially select all items
                 setSelectedItems((cartData.items || []).map(item => item._id));
+                
+                // Handle removed items notification
+                if (response.removedItemsCount > 0) {
+                    // Products were removed from cart (likely deleted)
+                    const removedCount = response.removedItemsCount;
+                    alert(`${removedCount} item(s) were removed from your cart because they are no longer available.`);
+                }
             } else {
                 setError(response.message || 'Failed to load cart');
             }
@@ -43,9 +52,11 @@ function CartSection() {
     const groupedByShop = React.useMemo(() => {
         const groups = {};
         cart.forEach(item => {
-            const shopId = item.shop?._id || item.shopId || 'unknown';
-            const shopName = item.shop?.shopName || 'Unknown Shop';
-            const shopLogo = item.shop?.shopLogo || null;
+            // Use consistent shop identification
+            const shopId = item.shop?._id || item.shop || 'unknown';
+            const shopName = item.shopName || 'Unknown Shop';
+            const shopLogo = item.shopLogo || null;
+            
             if (!groups[shopId]) {
                 groups[shopId] = {
                     shopName,
@@ -125,7 +136,14 @@ function CartSection() {
                 if (response.success) {
                     setCart(response.data.items);
                 } else {
-                    alert(response.message || 'Failed to update quantity');
+                    // Show specific error message
+                    if (response.message.includes('Not enough stock')) {
+                        alert('Cannot update quantity: Not enough stock available');
+                    } else if (response.message.includes('deleted')) {
+                        alert('Cannot update quantity: Product is no longer available');
+                    } else {
+                        alert(response.message || 'Failed to update quantity');
+                    }
                 }
             } catch (err) {
                 console.error('Failed to update quantity:', err);
@@ -134,22 +152,27 @@ function CartSection() {
         }
     };
 
-    const removeItem = async (itemId) => {
+    const handleRemoveItemConfirm = async () => {
+        if (!itemToRemove) return;
+        
         try {
-            const response = await cartAPI.removeFromCart(itemId);
+            const response = await cartAPI.removeFromCart(itemToRemove);
             if (response.success) {
                 setCart(response.data.items);
-                setSelectedItems(prev => prev.filter(id => id !== itemId));
+                setSelectedItems(prev => prev.filter(id => id !== itemToRemove));
             } else {
                 alert(response.message || 'Failed to remove item');
             }
         } catch (err) {
             console.error('Failed to remove item:', err);
             alert('Failed to remove item. Please try again.');
+        } finally {
+            setShowRemoveModal(false);
+            setItemToRemove(null);
         }
     };
 
-    const removeSelectedItems = async () => {
+    const handleDeleteSelectedItemsConfirm = async () => {
         try {
             const response = await cartAPI.removeMultipleItems(selectedItems);
             if (response.success) {
@@ -161,18 +184,37 @@ function CartSection() {
         } catch (err) {
             console.error('Failed to remove items:', err);
             alert('Failed to remove items. Please try again.');
+        } finally {
+            setShowDeleteModal(false);
         }
+    };
+
+    const removeItem = async (itemId) => {
+        setItemToRemove(itemId);
+        setShowRemoveModal(true);
+    };
+
+    const removeSelectedItems = async () => {
+        setShowDeleteModal(true);
     };
 
     const continueShopping = () => {
         navigate('/marketplace');
     };
 
+    // Modal state for delete and remove confirmations
+    const [showDeleteModal, setShowDeleteModal] = React.useState(false);
+    const [showRemoveModal, setShowRemoveModal] = React.useState(false);
+    const [itemToRemove, setItemToRemove] = React.useState(null);
+
     const [showCheckoutModal, setShowCheckoutModal] = React.useState(false);
     const [pickupLocation, setPickupLocation] = React.useState('');
     const [note, setNote] = React.useState('');
+    const [contactNumber, setContactNumber] = React.useState('');
     const [checkoutLoading, setCheckoutLoading] = React.useState(false);
     const [checkoutError, setCheckoutError] = React.useState(null);
+    const [showSuccessModal, setShowSuccessModal] = React.useState(false);
+    const [successMessage, setSuccessMessage] = React.useState('');
 
     const handleCheckout = () => {
         if (selectedItems.length === 0) {
@@ -193,11 +235,14 @@ function CartSection() {
         setCheckoutError(null);
         
         try {
-            const response = await orderAPI.createOrder(pickupLocation, note);
+            // Send selected items to the backend
+            const response = await orderAPI.createOrder(pickupLocation, note, selectedItems, contactNumber);
             
             if (response.success) {
                 if (response.data.createdOrders && response.data.createdOrders.length > 0) {
-                    alert(`Successfully created ${response.data.createdOrders.length} order(s)!`);
+                    const successMsg = `Successfully created ${response.data.createdOrders.length} order(s)!`;
+                    setSuccessMessage(successMsg);
+                    setShowSuccessModal(true);
                     setShowCheckoutModal(false);
                     setPickupLocation(''); // Clear after successful order
                     setNote('');
@@ -316,6 +361,11 @@ function CartSection() {
                         <h6 className="mb-1 text-truncate">{item.productName}</h6>
                         <div className="mt-2">
                             <span className="fw-bold text-primary">₱{item.productPrice}</span>
+                            {item.productStock !== undefined && (
+                                <span className={`badge ms-2 ${item.quantity > item.productStock ? 'bg-danger' : 'bg-success'}`}>
+                                    {item.productStock} in stock
+                                </span>
+                            )}
                         </div>
                     </div>
 
@@ -519,10 +569,50 @@ function CartSection() {
                 onConfirm={handleCheckoutConfirm}
                 pickupLocation={pickupLocation}
                 note={note}
+                contactNumber={contactNumber}
                 onPickupLocationChange={setPickupLocation}
                 onNoteChange={setNote}
+                onContactNumberChange={setContactNumber}
                 loading={checkoutLoading}
                 error={checkoutError}
+            />
+
+            {/* Delete Selected Items Modal */}
+            <DangerModal
+                show={showDeleteModal}
+                onHide={() => setShowDeleteModal(false)}
+                onConfirm={handleDeleteSelectedItemsConfirm}
+                title="Delete Selected Items"
+                message={`Are you sure you want to delete ${selectedItems.length} selected item(s) from your cart? This action cannot be undone.`}
+                confirmText="Delete Items"
+                loading={loading}
+            />
+
+            {/* Remove Single Item Modal */}
+            <DangerModal
+                show={showRemoveModal}
+                onHide={() => {
+                    setShowRemoveModal(false);
+                    setItemToRemove(null);
+                }}
+                onConfirm={handleRemoveItemConfirm}
+                title="Remove Item"
+                message="Are you sure you want to remove this item from your cart? This action cannot be undone."
+                confirmText="Remove Item"
+                loading={loading}
+            />
+
+            {/* Success Modal */}
+            <SuccessModal
+                showModal={showSuccessModal}
+                onClose={() => setShowSuccessModal(false)}
+                title="Order Placed Successfully"
+                message={successMessage}
+                buttonText="Continue Shopping"
+                onButtonClick={() => {
+                    setShowSuccessModal(false);
+                    navigate('/marketplace');
+                }}
             />
         </div>
     );
