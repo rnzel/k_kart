@@ -154,8 +154,8 @@ const addToCart = async (req, res) => {
           cart.items[existingItemIndex].productPrice = product.productPrice;
           cart.items[existingItemIndex].productStock = product.productStock;
         } else {
-          // Add new item
-          cart.items.push({
+          // Add new item with validation
+          const newItem = {
             product: product._id,
             productName: product.productName,
             productPrice: product.productPrice,
@@ -165,7 +165,15 @@ const addToCart = async (req, res) => {
             shop: shop._id,
             shopName: shop.shopName,
             shopLogo: shop.shopLogo || null
-          });
+          };
+          
+          // Validate item before adding
+          const itemValidation = await validateCartItem(newItem);
+          if (!itemValidation.valid) {
+            throw new Error(itemValidation.message);
+          }
+          
+          cart.items.push(newItem);
         }
 
         await cart.save({ session });
@@ -183,7 +191,8 @@ const addToCart = async (req, res) => {
       if (error.message.includes('Not enough stock') || 
           error.message.includes('Product not found') ||
           error.message.includes('Shop not found') ||
-          error.message.includes('deleted')) {
+          error.message.includes('deleted') ||
+          error.message.includes('Cannot add')) {
         return res.status(400).json({ 
           success: false,
           message: error.message 
@@ -199,6 +208,46 @@ const addToCart = async (req, res) => {
       success: false,
       message: 'Failed to add item to cart. Please try again.' 
     });
+  }
+};
+
+// Helper function to validate cart item
+const validateCartItem = async (item) => {
+  try {
+    // Check if product exists and is not deleted
+    const product = await Product.findById(item.product);
+    if (!product) {
+      return { valid: false, message: `Product ${item.productName} not found` };
+    }
+    
+    if (product.isDeleted) {
+      return { valid: false, message: `Cannot add deleted product: ${item.productName}` };
+    }
+    
+    // Check if shop exists and is not deleted
+    const shop = await Shop.findById(item.shop);
+    if (!shop) {
+      return { valid: false, message: `Shop ${item.shopName} not found` };
+    }
+    
+    if (shop.isDeleted) {
+      return { valid: false, message: `Cannot add product from deleted shop: ${item.shopName}` };
+    }
+    
+    // Check stock
+    if (product.productStock < item.quantity) {
+      return { valid: false, message: `Insufficient stock for ${item.productName}. Available: ${product.productStock}, Requested: ${item.quantity}` };
+    }
+    
+    // Validate price consistency
+    if (product.productPrice !== item.productPrice) {
+      return { valid: false, message: `Price mismatch for ${item.productName}. Current price: ${product.productPrice}` };
+    }
+    
+    return { valid: true };
+  } catch (error) {
+    console.error('Error validating cart item:', error);
+    return { valid: false, message: 'Failed to validate cart item. Please try again.' };
   }
 };
 

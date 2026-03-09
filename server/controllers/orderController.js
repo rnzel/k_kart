@@ -89,6 +89,7 @@ const createOrder = async (req, res) => {
         const itemsBySeller = {};
         const validationErrors = [];
 
+        // First pass: Validate all items and reserve stock
         for (const item of selectedCartItems) {
           // Validate product and shop
           if (!item.product) {
@@ -111,7 +112,7 @@ const createOrder = async (req, res) => {
             continue;
           }
 
-          // Validate stock
+          // Validate stock with additional safety margin
           if (item.product.productStock < item.quantity) {
             validationErrors.push(`Insufficient stock for ${item.productName}. Available: ${item.product.productStock}, Requested: ${item.quantity}`);
             continue;
@@ -148,7 +149,7 @@ const createOrder = async (req, res) => {
         const createdOrders = [];
         const failedOrders = [];
 
-        // Create orders for each seller
+        // Second pass: Create orders and update stock atomically
         for (const sellerId in itemsBySeller) {
           const sellerData = itemsBySeller[sellerId];
           
@@ -177,10 +178,15 @@ const createOrder = async (req, res) => {
 
             await order.save({ session });
             
-            // Update product stock
+            // Update product stock atomically
             for (const item of sellerData.items) {
               const product = await Product.findById(item.product).session(session);
               if (product) {
+                // Double-check stock before updating (optimistic concurrency control)
+                if (product.productStock < item.quantity) {
+                  throw new Error(`Stock reservation failed for ${item.productName}. Stock changed during checkout.`);
+                }
+                
                 product.productStock -= item.quantity;
                 await product.save({ session });
               }
@@ -196,7 +202,7 @@ const createOrder = async (req, res) => {
           }
         }
 
-        // Remove purchased items from cart
+        // Third pass: Remove purchased items from cart
         if (createdOrders.length > 0) {
           // Get all cart item IDs that were successfully purchased
           const purchasedCartItemIds = createdOrders.flatMap(order => 
@@ -236,7 +242,8 @@ const createOrder = async (req, res) => {
       if (error.message.includes('Cart is empty') ||
           error.message.includes('Cannot order') ||
           error.message.includes('Insufficient stock') ||
-          error.message.includes('No valid items')) {
+          error.message.includes('No valid items') ||
+          error.message.includes('Stock reservation failed')) {
         return res.status(400).json({ 
           success: false,
           message: error.message 

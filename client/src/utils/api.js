@@ -86,6 +86,26 @@ const handleApiError = (error) => {
   }
 }
 
+// Stock validation helper
+const validateStockBeforeAction = async (productId, quantity = 1) => {
+  try {
+    const response = await api.get(`/api/products/${productId}/stock`);
+    if (response.data && response.data.stock !== undefined) {
+      if (response.data.stock < quantity) {
+        return {
+          success: false,
+          message: `Not enough stock available. Available: ${response.data.stock}, Requested: ${quantity}`
+        };
+      }
+      return { success: true, availableStock: response.data.stock };
+    }
+    return { success: true }; // If we can't validate, let the server handle it
+  } catch (error) {
+    console.warn('Stock validation failed:', error);
+    return { success: true }; // If validation fails, let the server handle it
+  }
+}
+
 // Cart API methods with enhanced error handling
 export const cartAPI = {
   // Get user's cart
@@ -102,9 +122,19 @@ export const cartAPI = {
     }
   },
   
-  // Add item to cart
+  // Add item to cart with stock validation
   addToCart: async (productId, quantity = 1) => {
     try {
+      // Validate stock before adding
+      const stockValidation = await validateStockBeforeAction(productId, quantity);
+      if (!stockValidation.success) {
+        return {
+          success: false,
+          message: stockValidation.message,
+          data: null
+        };
+      }
+      
       const response = await api.post('/api/cart/add', { productId, quantity })
       return {
         success: true,

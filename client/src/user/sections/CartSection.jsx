@@ -1,7 +1,7 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import { getImageUrl } from "../../utils/imageUrl.js";
-import { FiTrash2, FiShoppingCart, FiMinus, FiPlus, FiArrowLeft, FiShoppingBag } from "react-icons/fi";
+import { FiTrash2, FiShoppingCart, FiMinus, FiPlus, FiArrowLeft, FiShoppingBag, FiAlertTriangle, FiCheckCircle } from "react-icons/fi";
 import { cartAPI, orderAPI } from "../../utils/api.js";
 import CheckoutModal from "../../components/CheckoutModal.jsx";
 import DangerModal from "../../components/DangerModal.jsx";
@@ -149,6 +149,37 @@ function CartSection() {
                 console.error('Failed to update quantity:', err);
                 alert('Failed to update quantity. Please try again.');
             }
+        }
+    };
+
+    // Enhanced add to cart with stock validation
+    const addToCartWithValidation = async (productId, quantity = 1) => {
+        try {
+            setLoading(true);
+            const response = await cartAPI.addToCart(productId, quantity);
+            
+            if (response.success) {
+                setCart(response.data.items);
+                // Auto-select the newly added item
+                const newItemId = response.data.items.find(item => item.product.toString() === productId)?._id;
+                if (newItemId) {
+                    setSelectedItems(prev => [...prev, newItemId]);
+                }
+            } else {
+                // Show specific error message
+                if (response.message.includes('Not enough stock')) {
+                    alert('Cannot add item: Not enough stock available');
+                } else if (response.message.includes('deleted')) {
+                    alert('Cannot add item: Product is no longer available');
+                } else {
+                    alert(response.message || 'Failed to add item to cart');
+                }
+            }
+        } catch (err) {
+            console.error('Failed to add item to cart:', err);
+            alert('Failed to add item to cart. Please try again.');
+        } finally {
+            setLoading(false);
         }
     };
 

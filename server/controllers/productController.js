@@ -321,4 +321,38 @@ const getAllProducts = async (req, res) => {
   } 
 };
 
-module.exports = { addProduct, getMyProducts, updateProduct, deleteProduct, getAllProducts };
+// Get product stock by ID
+const getProductStock = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const product = await Product.findById(id);
+
+    if (!product) {
+      return res.status(404).json({ 
+        success: false,
+        message: 'Product not found' 
+      });
+    }
+
+    if (product.isDeleted) {
+      return res.status(404).json({ 
+        success: false,
+        message: 'Product not found' 
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      stock: product.productStock,
+      productName: product.productName
+    });
+  } catch (error) {
+    console.error('Error getting product stock:', error);
+    res.status(500).json({ 
+      success: false,
+      message: 'Failed to get product stock. Please try again.' 
+    });
+  }
+};
+
+module.exports = { addProduct, getMyProducts, updateProduct, deleteProduct, getAllProducts, getProductStock };
