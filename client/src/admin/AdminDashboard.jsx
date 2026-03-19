@@ -3,14 +3,18 @@ import { useSearchParams } from "react-router-dom";
 import Navbar from "../components/Navbar.jsx";
 import UsersSection from "./sections/UsersSection.jsx";
 import SellerApplicationsSection from "./sections/SellerApplicationsSection.jsx";
-import { FiUsers, FiFileText } from "react-icons/fi";
+import ShopManagementSection from "./sections/ShopManagementSection.jsx";
+import ProductManagementSection from "./sections/ProductManagementSection.jsx";
+import OrderManagementSection from "./sections/OrderManagementSection.jsx";
+import { FiUsers, FiFileText, FiPackage, FiShoppingBag, FiRefreshCw, FiEye } from "react-icons/fi";
 
 function AdminDashboard() {
     const [searchParams] = useSearchParams();
     const sectionParam = searchParams.get('section');
     
     const [activeSection, setActiveSection] = React.useState(() => {
-        if (sectionParam === 'users' || sectionParam === 'applications') {
+        if (sectionParam === 'users' || sectionParam === 'applications' || 
+            sectionParam === 'shops' || sectionParam === 'products' || sectionParam === 'orders') {
             return sectionParam;
         }
         return 'users';
@@ -51,12 +55,54 @@ function AdminDashboard() {
                                     Seller Applications
                                 </a>
                             </li>
+                            <li className="item d-flex align-items-center font-weight-semibold mb-2">
+                                <a 
+                                    href="#shops" 
+                                    className={`d-flex align-items-center text-decoration-none ${activeSection === 'shops' ? 'text-primary' : 'text-dark'}`}
+                                    onClick={(e) => {
+                                        e.preventDefault();
+                                        setActiveSection('shops');
+                                    }}
+                                >
+                                    <div className="me-2 d-flex align-items-center justify-content-center"><FiShoppingBag size={24} /></div>
+                                    Shop Management
+                                </a>
+                            </li>
+                            <li className="item d-flex align-items-center font-weight-semibold mb-2">
+                                <a 
+                                    href="#products" 
+                                    className={`d-flex align-items-center text-decoration-none ${activeSection === 'products' ? 'text-primary' : 'text-dark'}`}
+                                    onClick={(e) => {
+                                        e.preventDefault();
+                                        setActiveSection('products');
+                                    }}
+                                >
+                                    <div className="me-2 d-flex align-items-center justify-content-center"><FiPackage size={24} /></div>
+                                    Product Management
+                                </a>
+                            </li>
+                            <li className="item d-flex align-items-center font-weight-semibold mb-2">
+                                <a 
+                                    href="#orders" 
+                                    className={`d-flex align-items-center text-decoration-none ${activeSection === 'orders' ? 'text-primary' : 'text-dark'}`}
+                                    onClick={(e) => {
+                                        e.preventDefault();
+                                        setActiveSection('orders');
+                                    }}
+                                >
+                                    <div className="me-2 d-flex align-items-center justify-content-center"><FiShoppingBag size={24} /></div>
+                                    Order Management
+                                </a>
+                            </li>
                         </ul>
                     </aside>
 
                     <div className="col-md-9 p-3 pb-5 pb-md-3">
                         {activeSection === 'users' && <UsersSection />}
                         {activeSection === 'applications' && <SellerApplicationsSection />}
+                        {activeSection === 'shops' && <ShopManagementSection />}
+                        {activeSection === 'products' && <ProductManagementSection />}
+                        {activeSection === 'orders' && <OrderManagementSection />}
                     </div>
                 </div>
             </div>
@@ -80,6 +126,33 @@ function AdminDashboard() {
                         >
                             <FiFileText size={24} />
                             <div className="small">Applications</div>
+                        </button>
+                    </li>
+                    <li className="nav-item">
+                        <button
+                            className={`nav-link btn btn-link ${activeSection === 'shops' ? 'active text-primary' : 'text-dark'}`}
+                            onClick={() => setActiveSection('shops')}
+                        >
+                            <FiShoppingBag size={24} />
+                            <div className="small">Shops</div>
+                        </button>
+                    </li>
+                    <li className="nav-item">
+                        <button
+                            className={`nav-link btn btn-link ${activeSection === 'products' ? 'active text-primary' : 'text-dark'}`}
+                            onClick={() => setActiveSection('products')}
+                        >
+                            <FiPackage size={24} />
+                            <div className="small">Products</div>
+                        </button>
+                    </li>
+                    <li className="nav-item">
+                        <button
+                            className={`nav-link btn btn-link ${activeSection === 'orders' ? 'active text-primary' : 'text-dark'}`}
+                            onClick={() => setActiveSection('orders')}
+                        >
+                            <FiShoppingBag size={24} />
+                            <div className="small">Orders</div>
                         </button>
                     </li>
                 </ul>

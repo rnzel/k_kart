@@ -318,6 +318,39 @@ export const shopAPI = {
     } catch (error) {
       return handleApiError(error)
     }
+  },
+  
+  // Get all shops (admin only)
+  getAllShops: async (page = 1, limit = 10) => {
+    try {
+      const response = await api.get('/api/admin/shops', { params: { page, limit } })
+      return {
+        success: true,
+        data: response.data.data || response.data,
+        pagination: response.data.pagination,
+        message: 'Shops retrieved successfully'
+      }
+    } catch (error) {
+      return handleApiError(error)
+    }
+  }
+}
+
+// Product API methods with enhanced error handling
+export const productAPI = {
+  // Get all products (admin only)
+  getAllProducts: async (page = 1, limit = 10) => {
+    try {
+      const response = await api.get('/api/admin/products', { params: { page, limit } })
+      return {
+        success: true,
+        data: response.data.data || response.data,
+        pagination: response.data.pagination,
+        message: 'Products retrieved successfully'
+      }
+    } catch (error) {
+      return handleApiError(error)
+    }
   }
 }
 
@@ -356,6 +389,21 @@ export const orderAPI = {
   getSellerOrders: async (page = 1, limit = 10) => {
     try {
       const response = await api.get('/api/orders/seller-orders', { params: { page, limit } })
+      return {
+        success: true,
+        data: response.data.data || response.data,
+        pagination: response.data.pagination,
+        message: 'Orders retrieved successfully'
+      }
+    } catch (error) {
+      return handleApiError(error)
+    }
+  },
+  
+  // Get all orders (admin only)
+  getAllOrders: async (page = 1, limit = 10) => {
+    try {
+      const response = await api.get('/api/admin/orders', { params: { page, limit } })
       return {
         success: true,
         data: response.data.data || response.data,
