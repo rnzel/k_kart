@@ -23,7 +23,7 @@ const deleteFileFromGridFS = async (filename) => {
 // Update shop details 
 const updateShop = async (req, res) => {
     try {
-        const { shopName, shopDescription } = req.body;
+        const { shopName, shopDescription, shopContact, shopEmail, shopLocation } = req.body;
         const shopLogo = req.file ? req.file.filename : null;
         const owner = req.user.userId;
 
@@ -32,6 +32,26 @@ const updateShop = async (req, res) => {
         }
         if (!shopDescription || !shopDescription.trim()) {
             return res.status(400).json({ message: "Shop description is required" });
+        }
+        if (!shopContact || !shopContact.trim()) {
+            return res.status(400).json({ message: "Shop contact is required" });
+        }
+
+        // Validate Philippine phone number format
+        const phoneRegex = /^(?:\+63|0)\d{10}$/;
+        if (!phoneRegex.test(shopContact.trim())) {
+            return res.status(400).json({ message: "Invalid Philippine phone number format. Use +63XXXXXXXXXX or 09XXXXXXXXX" });
+        }
+        if (!shopLocation || !shopLocation.trim()) {
+            return res.status(400).json({ message: "Shop location is required" });
+        }
+        
+        // Validate email if provided
+        if (shopEmail && shopEmail.trim()) {
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailRegex.test(shopEmail.trim())) {
+                return res.status(400).json({ message: "Invalid email format" });
+            }
         }
 
         const shop = await Shop.findOne({ owner });
@@ -41,25 +61,27 @@ const updateShop = async (req, res) => {
 
         shop.shopName = shopName.trim();
         shop.shopDescription = shopDescription.trim();
-        
+        shop.shopContact = shopContact.trim();
+        shop.shopLocation = shopLocation.trim();
+
         if (req.file) {
             if (shop.shopLogo) {
                 await deleteFileFromGridFS(shop.shopLogo);
             }
             shop.shopLogo = req.file.filename;
         }
-        
+
         await shop.save();
         res.status(200).json(shop);
     } catch (error) {
         res.status(500).json({ message: error.message });
-    }   
+    }
 };
 
 // Create a new shop
 const createShop = async (req, res) => {
     try {
-        const { shopName, shopDescription } = req.body;
+        const { shopName, shopDescription, shopContact, shopEmail, shopLocation } = req.body;
         const shopLogo = req.file ? req.file.filename : null;
         const owner = req.user.userId;
 
@@ -68,6 +90,26 @@ const createShop = async (req, res) => {
         }
         if (!shopDescription || !shopDescription.trim()) {
             return res.status(400).json({ message: "Shop description is required" });
+        }
+        if (!shopContact || !shopContact.trim()) {
+            return res.status(400).json({ message: "Shop contact is required" });
+        }
+
+        // Validate Philippine phone number format
+        const phoneRegex = /^(?:\+63|0)\d{10}$/;
+        if (!phoneRegex.test(shopContact.trim())) {
+            return res.status(400).json({ message: "Invalid Philippine phone number format. Use +63XXXXXXXXXX or 09XXXXXXXXX" });
+        }
+        if (!shopLocation || !shopLocation.trim()) {
+            return res.status(400).json({ message: "Shop location is required" });
+        }
+        
+        // Validate email if provided
+        if (shopEmail && shopEmail.trim()) {
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailRegex.test(shopEmail.trim())) {
+                return res.status(400).json({ message: "Invalid email format" });
+            }
         }
 
         const existingShop = await Shop.findOne({ owner });
@@ -78,6 +120,8 @@ const createShop = async (req, res) => {
         const newShop = new Shop({
             shopName: shopName.trim(),
             shopDescription: shopDescription.trim(),
+            shopContact: shopContact.trim(),
+            shopLocation: shopLocation.trim(),
             shopLogo,
             owner
         });
@@ -149,4 +193,67 @@ const getAllShops = async (req, res) => {
     }
 };
 
-module.exports = { createShop, getMyShop, getAllShops, updateShop, deleteShop };
+// Get shop by ID (public)
+const getShopById = async (req, res) => {
+    try {
+        const { shopId } = req.params;
+        
+        if (!mongoose.Types.ObjectId.isValid(shopId)) {
+            return res.status(400).json({ message: "Invalid shop ID" });
+        }
+
+        const shop = await Shop.findById(shopId);
+        if (!shop) {
+            return res.status(404).json({ message: "Shop not found" });
+        }
+
+        res.status(200).json(shop);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+// Get products by shop ID (public)
+const getProductsByShopId = async (req, res) => {
+    try {
+        const { shopId } = req.params;
+        const page = parseInt(req.query.page) || 1;
+        const limit = parseInt(req.query.limit) || 12;
+        const skip = (page - 1) * limit;
+
+        if (!mongoose.Types.ObjectId.isValid(shopId)) {
+            return res.status(400).json({ message: "Invalid shop ID" });
+        }
+
+        // Check if shop exists
+        const shop = await Shop.findById(shopId);
+        if (!shop) {
+            return res.status(404).json({ message: "Shop not found" });
+        }
+
+        // Get products for this shop
+        const products = await Product.find({ shop: shopId })
+            .sort({ createdAt: -1 })
+            .skip(skip)
+            .limit(limit);
+
+        // Get total count for pagination
+        const totalProducts = await Product.countDocuments({ shop: shopId });
+        const totalPages = Math.ceil(totalProducts / limit);
+
+        res.status(200).json({
+            products,
+            pagination: {
+                currentPage: page,
+                totalPages,
+                totalProducts,
+                hasNextPage: page < totalPages,
+                hasPrevPage: page > 1
+            }
+        });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+module.exports = { createShop, getMyShop, getAllShops, updateShop, deleteShop, getShopById, getProductsByShopId };

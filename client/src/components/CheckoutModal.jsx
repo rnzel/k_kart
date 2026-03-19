@@ -12,7 +12,9 @@ function CheckoutModal({
     onNoteChange,
     onContactNumberChange,
     loading = false,
-    error = null
+    error = null,
+    itemDetails = null,
+    userName = null
 }) {
     if (!showModal) {
         return null;
@@ -20,7 +22,7 @@ function CheckoutModal({
 
     // Validation states
     const isPickupLocationValid = pickupLocation.trim().length > 0 && pickupLocation.trim().length <= 200;
-    const isContactNumberValid = /^[0-9]{10}$/.test(contactNumber);
+    const isContactNumberValid = /^09[0-9]{9}$/.test(contactNumber);
     const isFormValid = isPickupLocationValid && isContactNumberValid;
 
     return (
@@ -61,15 +63,10 @@ function CheckoutModal({
                                 maxLength="200"
                                 disabled={loading}
                             />
-                            <div className="form-text">Please enter a specific location inside SorSU – Bulan Campus for pickup (max 200 characters)</div>
+                            <div className="form-text">Please enter a specific location inside SorSU – Bulan Campus</div>
                             {!isPickupLocationValid && pickupLocation.trim() && (
                                 <div className="invalid-feedback">
                                     Pickup location is required and cannot exceed 200 characters
-                                </div>
-                            )}
-                            {isPickupLocationValid && (
-                                <div className="valid-feedback">
-                                    <FiCheckCircle className="me-1" />Valid pickup location
                                 </div>
                             )}
                         </div>
@@ -87,14 +84,14 @@ function CheckoutModal({
                                 value={contactNumber}
                                 onChange={(e) => onContactNumberChange(e.target.value)}
                                 placeholder="09XXXXXXXXX"
-                                pattern="[0-9]{10}"
-                                maxLength="10"
+                                pattern="[0-9]{11}"
+                                maxLength="11"
                                 disabled={loading}
                             />
-                            <div className="form-text">Enter your 10-digit mobile number (e.g., 09123456789)</div>
+                            <div className="form-text">Enter your 11-digit mobile number starting with 09 (e.g., 09123456789)</div>
                             {!isContactNumberValid && contactNumber.trim() && (
                                 <div className="invalid-feedback">
-                                    Please enter a valid 10-digit Philippine mobile number
+                                    Please enter a valid 11-digit mobile number
                                 </div>
                             )}
                             {isContactNumberValid && (
@@ -121,6 +118,37 @@ function CheckoutModal({
                             ></textarea>
                             <div className="form-text">Add any special instructions for delivery (optional, max 500 characters)</div>
                         </div>
+
+                        {/* Order Summary */}
+                        {itemDetails && (
+                            <div className="mb-3">
+                                <h6 className="fw-bold text-primary">Order Summary</h6>
+                                <div className="border rounded p-3 bg-light">
+                                    {userName && (
+                                        <div className="mb-2 d-flex justify-content-between">
+                                            <span>Customer:</span>
+                                            <span className="fw-bold">{userName}</span>
+                                        </div>
+                                    )}
+                                    <div className="d-flex justify-content-between mb-2">
+                                        <span>Product:</span>
+                                        <span className="fw-bold">{itemDetails.productName}</span>
+                                    </div>
+                                    <div className="d-flex justify-content-between mb-2">
+                                        <span>Quantity:</span>
+                                        <span className="fw-bold">{itemDetails.quantity}</span>
+                                    </div>
+                                    <div className="d-flex justify-content-between mb-2">
+                                        <span>Price per item:</span>
+                                        <span className="fw-bold">₱{itemDetails.price}</span>
+                                    </div>
+                                    <div className="d-flex justify-content-between mb-0">
+                                        <span className="fw-bold">Total:</span>
+                                        <span className="fw-bold text-primary">₱{itemDetails.total}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
 
                         {/* Information Alerts */}
                         <div className="alert alert-info">

@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { getImageUrl } from "../../utils/imageUrl.js";
 import { FiTrash2, FiShoppingCart, FiMinus, FiPlus, FiArrowLeft, FiShoppingBag, FiAlertTriangle, FiCheckCircle } from "react-icons/fi";
 import { cartAPI, orderAPI } from "../../utils/api.js";
+import socketService from "../../utils/socket.js";
 import CheckoutModal from "../../components/CheckoutModal.jsx";
 import DangerModal from "../../components/DangerModal.jsx";
 import SuccessModal from "../../components/SuccessModal.jsx";
@@ -17,7 +18,80 @@ function CartSection() {
     // Fetch cart from backend
     React.useEffect(() => {
         fetchCart();
+        
+        // Setup real-time cart updates
+        setupCartUpdates();
+        
+        return () => {
+            // Cleanup event listener
+            window.removeEventListener('cart-updated', handleCartUpdate);
+        };
     }, []);
+
+    // Setup real-time cart updates
+    const setupCartUpdates = () => {
+        // Listen for cart updates from WebSocket
+        window.addEventListener('cart-updated', handleCartUpdate);
+        
+        // Get user ID from localStorage
+        const user = JSON.parse(localStorage.getItem('user') || '{}');
+        if (user._id && socketService.isConnected()) {
+            socketService.joinUserRoom(user._id);
+        }
+    };
+
+    // Handle real-time cart updates
+    const handleCartUpdate = (event) => {
+        const { data: updatedCart } = event.detail;
+        
+        if (updatedCart && updatedCart.items) {
+            console.log('Real-time cart update received:', updatedCart);
+            
+            // Update cart state
+            setCart(updatedCart.items);
+            
+            // Update selected items to maintain selection
+            const newSelectedItems = updatedCart.items
+                .filter(item => selectedItems.includes(item._id))
+                .map(item => item._id);
+            setSelectedItems(newSelectedItems);
+            
+            // Show toast notification for better UX
+            showToast('Cart updated successfully', 'success');
+        }
+    };
+
+    // Show toast notification
+    const showToast = (message, type = 'info') => {
+        // Create toast element
+        const toast = document.createElement('div');
+        toast.className = `toast align-items-center text-white bg-${type === 'success' ? 'success' : 'primary'} border-0`;
+        toast.style.cssText = `
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 9999;
+            min-width: 300px;
+        `;
+        
+        toast.innerHTML = `
+            <div class="d-flex">
+                <div class="toast-body">${message}</div>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+            </div>
+        `;
+        
+        document.body.appendChild(toast);
+        
+        // Show toast
+        const bsToast = new window.bootstrap.Toast(toast, { autohide: true, delay: 3000 });
+        bsToast.show();
+        
+        // Remove toast after hiding
+        toast.addEventListener('hidden.bs.toast', () => {
+            toast.remove();
+        });
+    };
 
     const fetchCart = async () => {
         try {
@@ -246,6 +320,15 @@ function CartSection() {
     const [checkoutError, setCheckoutError] = React.useState(null);
     const [showSuccessModal, setShowSuccessModal] = React.useState(false);
     const [successMessage, setSuccessMessage] = React.useState('');
+    
+    // Get user information from localStorage
+    const [userName, setUserName] = React.useState('');
+    React.useEffect(() => {
+        const user = JSON.parse(localStorage.getItem('user') || '{}');
+        if (user.firstName && user.lastName) {
+            setUserName(`${user.firstName} ${user.lastName}`);
+        }
+    }, []);
 
     const handleCheckout = () => {
         if (selectedItems.length === 0) {
@@ -278,7 +361,12 @@ function CartSection() {
                     setPickupLocation(''); // Clear after successful order
                     setNote('');
                     setCheckoutError(null);
-                    fetchCart(); // Refresh cart
+                    
+                    // Refresh cart to reflect the changes
+                    await fetchCart();
+                    
+                    // Clear selected items since they were purchased
+                    setSelectedItems([]);
                 } else {
                     setCheckoutError('No orders were created. Please try again.');
                 }
@@ -606,6 +694,17 @@ function CartSection() {
                 onContactNumberChange={setContactNumber}
                 loading={checkoutLoading}
                 error={checkoutError}
+                itemDetails={{
+                    productName: selectedItems.length === 1 
+                        ? cart.find(item => item._id === selectedItems[0])?.productName || 'Selected Items'
+                        : 'Multiple Items',
+                    quantity: selectedItemsCount,
+                    price: selectedItems.length === 1 
+                        ? cart.find(item => item._id === selectedItems[0])?.productPrice || 0
+                        : 'Varies',
+                    total: selectedItemsTotal
+                }}
+                userName={userName}
             />
 
             {/* Delete Selected Items Modal */}

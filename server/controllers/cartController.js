@@ -67,6 +67,22 @@ const getCart = async (req, res) => {
   }
 };
 
+// Broadcast cart update to user
+const broadcastCartUpdate = (io, userId, cartData) => {
+  try {
+    if (io) {
+      io.to(`user:${userId}`).emit('cart-updated', {
+        success: true,
+        data: cartData,
+        timestamp: new Date().toISOString()
+      });
+      console.log(`Cart update broadcasted to user:${userId}`);
+    }
+  } catch (error) {
+    console.error('Error broadcasting cart update:', error);
+  }
+};
+
 // Add item to cart
 const addToCart = async (req, res) => {
   try {
@@ -182,6 +198,12 @@ const addToCart = async (req, res) => {
       // Return populated cart
       const updatedCart = await Cart.findByUserWithPopulate(userId);
 
+      // Broadcast real-time update to user
+      const io = req.app.get('io');
+      if (io) {
+        broadcastCartUpdate(io, userId, updatedCart);
+      }
+
       res.status(200).json({
         success: true,
         message: 'Item added to cart successfully',
@@ -255,7 +277,7 @@ const validateCartItem = async (item) => {
 const updateCartItem = async (req, res) => {
   try {
     const userId = req.user?.userId;
-    const { itemId } = req.params;
+    const { productId } = req.params;
     const { quantity } = req.body;
 
     if (!userId) {
@@ -265,10 +287,10 @@ const updateCartItem = async (req, res) => {
       });
     }
 
-    if (!itemId) {
+    if (!productId) {
       return res.status(400).json({ 
         success: false,
-        message: 'Item ID is required' 
+        message: 'Product ID is required' 
       });
     }
 
@@ -289,12 +311,13 @@ const updateCartItem = async (req, res) => {
           throw new Error('Cart not found');
         }
 
+        // Find item by product ID instead of item ID
         const itemIndex = cart.items.findIndex(
-          item => item._id.toString() === itemId
+          item => item.product.toString() === productId
         );
 
         if (itemIndex === -1) {
-          throw new Error('Item not found in cart');
+          throw new Error('Product not found in cart. The item may have been removed or the cart has been updated by another process.');
         }
 
         // Get product to check stock
@@ -317,6 +340,12 @@ const updateCartItem = async (req, res) => {
 
       const updatedCart = await Cart.findByUserWithPopulate(userId);
 
+      // Broadcast real-time update to user
+      const io = req.app.get('io');
+      if (io) {
+        broadcastCartUpdate(io, userId, updatedCart);
+      }
+
       res.status(200).json({
         success: true,
         message: 'Cart item updated successfully',
@@ -324,7 +353,6 @@ const updateCartItem = async (req, res) => {
       });
     } catch (error) {
       if (error.message.includes('Cart not found') || 
-          error.message.includes('Item not found') ||
           error.message.includes('Product not found') ||
           error.message.includes('Not enough stock') ||
           error.message.includes('deleted')) {
@@ -389,6 +417,12 @@ const removeFromCart = async (req, res) => {
 
       const updatedCart = await Cart.findByUserWithPopulate(userId);
 
+      // Broadcast real-time update to user
+      const io = req.app.get('io');
+      if (io) {
+        broadcastCartUpdate(io, userId, updatedCart);
+      }
+
       res.status(200).json({
         success: true,
         message: 'Item removed from cart successfully',
@@ -439,6 +473,12 @@ const clearCart = async (req, res) => {
         cart.items = [];
         await cart.save({ session });
       });
+
+      // Broadcast real-time update to user
+      const io = req.app.get('io');
+      if (io) {
+        broadcastCartUpdate(io, userId, { user: userId, items: [] });
+      }
 
       res.status(200).json({
         success: true,
@@ -501,6 +541,12 @@ const removeMultipleItems = async (req, res) => {
       });
 
       const updatedCart = await Cart.findByUserWithPopulate(userId);
+
+      // Broadcast real-time update to user
+      const io = req.app.get('io');
+      if (io) {
+        broadcastCartUpdate(io, userId, updatedCart);
+      }
 
       res.status(200).json({
         success: true,

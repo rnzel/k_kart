@@ -1,8 +1,15 @@
 const mongoose = require('mongoose');
+const validator = require('validator');
 
 /**
  * Validation middleware for cart operations
  */
+
+// Input sanitization helper
+const sanitizeInput = (input) => {
+  if (typeof input !== 'string') return input;
+  return validator.escape(input.trim());
+};
 
 // Validate MongoDB ObjectId
 const validateObjectId = (id, fieldName = 'ID') => {

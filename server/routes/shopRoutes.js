@@ -1,6 +1,6 @@
 const express = require('express')
 const router = express.Router()
-const { createShop, getMyShop, getAllShops, updateShop, deleteShop } = require('../controllers/shopController')
+const { createShop, getMyShop, getAllShops, updateShop, deleteShop, getShopById, getProductsByShopId } = require('../controllers/shopController')
 const { authenticateToken, requireSellerVerified } = require('../middleware/auth')
 const { upload } = require('../config/multerStorage')
 
@@ -36,5 +36,11 @@ router.put('/update-shop', authenticateToken, requireSellerVerified, handleUploa
 
 // Route to delete current user's shop (verified sellers only)
 router.delete('/delete-shop', authenticateToken, requireSellerVerified, deleteShop)
+
+// Route to get shop by ID (public)
+router.get('/:shopId', getShopById)
+
+// Route to get products by shop ID (public)
+router.get('/:shopId/products', getProductsByShopId)
 
 module.exports = router

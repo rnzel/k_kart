@@ -49,7 +49,8 @@ const cartSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
     required: true,
-    unique: true
+    unique: true,
+    index: true
   },
   items: [cartItemSchema]
 }, { 
@@ -62,7 +63,9 @@ const cartSchema = new mongoose.Schema({
       return productIds.length === uniqueProductIds.size;
     },
     message: 'Cannot add duplicate products to cart'
-  }
+  },
+  // Compound index for user queries
+  index: { user: 1 }
 });
 
 // Method to calculate total price

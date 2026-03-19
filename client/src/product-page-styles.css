@@ -1,0 +1,144 @@
+/* Product Page Container Styles */
+
+/* Product Details Section */
+.product-details-section {
+    margin-bottom: 2rem;
+    padding: 1.5rem;
+    background-color: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.product-details-section .card {
+    border: none;
+    box-shadow: none;
+    background: transparent;
+}
+
+.product-details-section .card-body {
+    padding: 0;
+}
+
+/* Reviews Section */
+.reviews-section {
+    margin-bottom: 2rem;
+    padding: 1.5rem;
+    background-color: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.reviews-section .card {
+    border: none;
+    box-shadow: none;
+    background: transparent;
+}
+
+.reviews-section .card-header {
+    background-color: transparent;
+    border-bottom: 1px solid #dee2e6;
+    padding: 0 0 1rem 0;
+}
+
+.reviews-section .card-body {
+    padding: 0;
+}
+
+/* Related Products Section */
+.related-products-section {
+    margin-bottom: 2rem;
+    padding: 1.5rem;
+    background-color: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.related-products-section h4 {
+    margin-bottom: 1.5rem;
+    color: #333;
+    font-weight: 600;
+}
+
+.related-products-section .card {
+    border: 1px solid #e9ecef;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.related-products-section .card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.related-products-section .card-img-top {
+    transition: transform 0.3s ease;
+}
+
+.related-products-section .card:hover .card-img-top {
+    transform: scale(1.05);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .product-details-section,
+    .reviews-section,
+    .related-products-section {
+        padding: 1rem;
+        margin-bottom: 1.5rem;
+    }
+    
+    .product-details-section .row > div {
+        margin-bottom: 1.5rem;
+    }
+    
+    .reviews-section .row > div {
+        margin-bottom: 1.5rem;
+    }
+    
+    .related-products-section h4 {
+        font-size: 1.25rem;
+    }
+}
+
+@media (max-width: 576px) {
+    .product-details-section,
+    .reviews-section,
+    .related-products-section {
+        padding: 0.75rem;
+        margin-bottom: 1rem;
+    }
+    
+    .related-products-section .col-md-3 {
+        flex: 0 0 50%;
+        max-width: 50%;
+    }
+    
+    .related-products-section .card {
+        margin-bottom: 1rem;
+    }
+}
+
+/* Additional Styling for Better Visual Hierarchy */
+.product-details-section {
+    border: 1px solid #e9ecef;
+}
+
+.reviews-section {
+    border: 1px solid #e9ecef;
+}
+
+.related-products-section {
+    border: 1px solid #e9ecef;
+}
+
+/* Smooth transitions for all sections */
+.product-details-section,
+.reviews-section,
+.related-products-section {
+    transition: all 0.3s ease;
+}
+
+.product-details-section:hover,
+.reviews-section:hover,
+.related-products-section:hover {
+    border-color: #007bff;
+}

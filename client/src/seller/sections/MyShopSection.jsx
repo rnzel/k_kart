@@ -12,6 +12,9 @@ function MyShopSection() {
     // Form state for creating/editing shop
     const [shopName, setShopName] = React.useState("");
     const [shopDescription, setShopDescription] = React.useState("");
+    const [shopContact, setShopContact] = React.useState("");
+    const [shopEmail, setShopEmail] = React.useState("");
+    const [shopLocation, setShopLocation] = React.useState("");
     const [shopImage, setShopImage] = React.useState("");
     const [imagePreview, setImagePreview] = React.useState(null);
     const [imageName, setImageName] = React.useState("");
@@ -82,6 +85,9 @@ function MyShopSection() {
         if (shopData && shopData._id) {
             setShopName(shopData.shopName || "");
             setShopDescription(shopData.shopDescription || "");
+            setShopContact(shopData.shopContact || "");
+            setShopEmail(shopData.shopEmail || "");
+            setShopLocation(shopData.shopLocation || "");
             setShopImage("");
             setImagePreview(shopData.shopLogo ? getImageUrl(shopData.shopLogo) : null);
             setImageName("");
@@ -132,11 +138,21 @@ function MyShopSection() {
             return;
         }
 
+        // Validate Philippine phone number format
+        const phoneRegex = /^(?:\+63|0)\d{10}$/;
+        if (!phoneRegex.test(shopContact.trim())) {
+            setError("Invalid Philippine phone number format. Use +63XXXXXXXXXX or 09XXXXXXXXX");
+            return;
+        }
+
         setLoading(true);
 
         const formData = new FormData();
         formData.append("shopName", shopName);
         formData.append("shopDescription", shopDescription);
+        formData.append("shopContact", shopContact);
+        formData.append("shopEmail", shopEmail);
+        formData.append("shopLocation", shopLocation);
         if (shopImage) {
             formData.append("shopLogo", shopImage);
         }
@@ -278,15 +294,6 @@ function MyShopSection() {
                             <p className="text-muted">Create your shop to start receiving orders</p>
                         </div>
                         
-                        <div className="alert alert-info" role="alert">
-                            <h6 className="alert-heading">Before Creating Your Shop:</h6>
-                            <ul className="mb-0">
-                                <li>Ensure your seller application is approved</li>
-                                <li>Have a shop logo ready (optional but recommended)</li>
-                                <li>Prepare a compelling shop description</li>
-                            </ul>
-                        </div>
-                        
                         <button
                             className="btn btn-primary"
                             style={{ width: "100%" }}
@@ -398,6 +405,54 @@ function MyShopSection() {
                                 <small className="text-muted">
                                     {shopDescription.length}/500 characters
                                 </small>
+                            </div>
+                            <div className="mb-3">
+                                <label
+                                    htmlFor="shopContact"
+                                    className="form-label font-weight-semibold"
+                                >
+                                    Shop Contact <span className="text-primary">*</span>
+                                </label>
+                                <input
+                                    type="tel"
+                                    className="form-control"
+                                    id="shopContact"
+                                    value={shopContact}
+                                    placeholder="09XXXXXXXXX"
+                                    onChange={(e) => setShopContact(e.target.value)}
+                                />
+                            </div>
+                            <div className="mb-3">
+                                <label
+                                    htmlFor="shopEmail"
+                                    className="form-label font-weight-semibold"
+                                >
+                                    Shop Email (Optional)
+                                </label>
+                                <input
+                                    type="email"
+                                    className="form-control"
+                                    id="shopEmail"
+                                    value={shopEmail}
+                                    placeholder="shop@example.com"
+                                    onChange={(e) => setShopEmail(e.target.value)}
+                                />
+                            </div>
+                            <div className="mb-3">
+                                <label
+                                    htmlFor="shopLocation"
+                                    className="form-label font-weight-semibold"
+                                >
+                                    Shop Location <span className="text-primary">*</span>
+                                </label>
+                                <input
+                                    type="text"
+                                    className="form-control"
+                                    id="shopLocation"
+                                    value={shopLocation}
+                                    placeholder="Building, Room, Campus"
+                                    onChange={(e) => setShopLocation(e.target.value)}
+                                />
                             </div>
                             <div className="mb-3">
                                 <label

@@ -149,7 +149,7 @@ export const cartAPI = {
   // Update cart item quantity
   updateCartItem: async (itemId, quantity) => {
     try {
-      const response = await api.put(`/api/cart/update/${itemId}`, { quantity })
+      const response = await api.patch(`/api/cart/update/${itemId}`, { quantity })
       return {
         success: true,
         data: response.data.data || response.data,
@@ -290,6 +290,37 @@ export const adminAPI = {
   }
 }
 
+// Shop API methods with enhanced error handling
+export const shopAPI = {
+  // Get shop by ID
+  getShopById: async (shopId) => {
+    try {
+      const response = await api.get(`/api/shops/${shopId}`)
+      return {
+        success: true,
+        data: response.data,
+        message: 'Shop retrieved successfully'
+      }
+    } catch (error) {
+      return handleApiError(error)
+    }
+  },
+  
+  // Get products by shop ID
+  getProductsByShopId: async (shopId, page = 1, limit = 12) => {
+    try {
+      const response = await api.get(`/api/shops/${shopId}/products`, { params: { page, limit } })
+      return {
+        success: true,
+        data: response.data,
+        message: 'Products retrieved successfully'
+      }
+    } catch (error) {
+      return handleApiError(error)
+    }
+  }
+}
+
 // Order API methods with enhanced error handling
 export const orderAPI = {
   // Create orders from cart (checkout)
@@ -307,12 +338,13 @@ export const orderAPI = {
   },
   
   // Get buyer's orders
-  getMyOrders: async () => {
+  getMyOrders: async (page = 1, limit = 10) => {
     try {
-      const response = await api.get('/api/orders/my-orders')
+      const response = await api.get('/api/orders/my-orders', { params: { page, limit } })
       return {
         success: true,
         data: response.data.data || response.data,
+        pagination: response.data.pagination,
         message: 'Orders retrieved successfully'
       }
     } catch (error) {
@@ -321,12 +353,13 @@ export const orderAPI = {
   },
   
   // Get seller's orders
-  getSellerOrders: async () => {
+  getSellerOrders: async (page = 1, limit = 10) => {
     try {
-      const response = await api.get('/api/orders/seller-orders')
+      const response = await api.get('/api/orders/seller-orders', { params: { page, limit } })
       return {
         success: true,
         data: response.data.data || response.data,
+        pagination: response.data.pagination,
         message: 'Orders retrieved successfully'
       }
     } catch (error) {

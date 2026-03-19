@@ -3,6 +3,8 @@ require('dotenv').config()
 const express = require('express')
 const cors = require('cors')
 const mongoose = require('mongoose')
+const { createServer } = require('http')
+const { Server } = require('socket.io')
 // Note: express-rate-limit is used in authRoutes.js for login rate limiting only
 
 // ============================================
@@ -156,8 +158,57 @@ const startServer = async () => {
       console.log('Initializing GridFSBucket...')
       try {
         initGridFSBucket()
-        app.listen(PORT, () => {
+        
+        // Create HTTP server and Socket.IO server
+        const httpServer = createServer(app)
+        const io = new Server(httpServer, {
+          cors: {
+            origin: function (origin, callback) {
+              const allowedOrigins = [
+                'http://localhost:5173',              // Local dev
+                'http://localhost:3000',              // Local test
+                'https://k-kart-mauve.vercel.app',    // Your actual frontend
+                'https://k-kart-7wpp.onrender.com'    // Your backend
+              ]
+              
+              if (!origin || allowedOrigins.includes(origin)) {
+                callback(null, true)
+              } else {
+                console.warn(`Socket.IO CORS blocked unauthorized origin: ${origin}`)
+                callback(new Error('Not allowed by CORS'))
+              }
+            },
+            credentials: true
+          }
+        })
+
+        // Socket.IO connection handling
+        io.on('connection', (socket) => {
+          console.log('User connected:', socket.id)
+
+          // Join user room when authenticated
+          socket.on('join-user-room', (userId) => {
+            socket.join(`user:${userId}`)
+            console.log(`User ${userId} joined room user:${userId}`)
+          })
+
+          // Join shop room for sellers
+          socket.on('join-shop-room', (shopId) => {
+            socket.join(`shop:${shopId}`)
+            console.log(`Shop ${shopId} joined room shop:${shopId}`)
+          })
+
+          socket.on('disconnect', () => {
+            console.log('User disconnected:', socket.id)
+          })
+        })
+
+        // Make io available to routes
+        app.set('io', io)
+
+        httpServer.listen(PORT, () => {
           console.log(`Server is running on port ${PORT}`)
+          console.log(`Socket.IO server is running on port ${PORT}`)
         })
       } catch (err) {
         console.error('Failed to initialize GridFSBucket:', err)

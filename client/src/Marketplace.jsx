@@ -3,9 +3,9 @@ import { useNavigate } from "react-router-dom";
 import Navbar from "./components/Navbar.jsx";
 import ProductCard from "./components/ProductCard.jsx";
 import ShopCard from "./components/ShopCard.jsx";
-import SearchDropdown from "./components/SearchDropdown.jsx";
+import StickySearchBar from "./components/StickySearchBar.jsx";
 import api, { cartAPI } from "./utils/api.js";
-import { FiBox, FiSearch, FiChevronLeft, FiChevronRight, FiShoppingCart, FiMessageCircle } from "react-icons/fi";
+import { FiBox, FiChevronLeft, FiChevronRight } from "react-icons/fi";
 import Toast from "./components/Toast.jsx";
 
 function Marketplace() {
@@ -141,57 +141,18 @@ function Marketplace() {
             <Navbar/>
 
             {/* Sticky Search Bar */}
-            <div style={{ position: 'sticky', top: 0, zIndex: 1000, backgroundColor: 'white', borderBottom: '1px solid #dee2e6' }}>
-                <div className="container py-3">
-                    <div className="row justify-content-center">
-                        <div className="col-md-8">
-                            <div className="position-relative d-flex gap-2">
-                                <div className="input-group flex-grow-1">
-                                    <span className="input-group-text bg-white border-end-0">
-                                        <FiSearch className="text-muted" />
-                                    </span>
-                                    <input
-                                        type="text"
-                                        className="form-control border-start-0"
-                                        placeholder="Search shops and products..."
-                                        value={searchTerm}
-                                        onChange={handleSearchChange}
-                                        onFocus={() => searchTerm.trim() && setShowDropdown(true)}
-                                    />
-                                </div>
-                                <button 
-                                    className="btn btn-outline-primary position-relative" 
-                                    type="button"
-                                    onClick={handleCartClick}
-                                >
-                                    <FiShoppingCart size={20} />
-                                    {cartCount > 0 && (
-                                        <span className="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
-                                            {cartCount}
-                                        </span>
-                                    )}
-                                </button>
-                                <button 
-                                    className="btn btn-outline-primary position-relative" 
-                                    type="button"
-                                    onClick={handleMessagesClick}
-                                >
-                                    <FiMessageCircle size={20} />
-                                </button>
-                                {showDropdown && (
-                                    <SearchDropdown 
-                                        shops={shops}
-                                        products={products}
-                                        searchTerm={searchTerm}
-                                        onSelect={handleSelectResult}
-                                        onClickOutside={handleDropdownClose}
-                                    />
-                                )}
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
+            <StickySearchBar
+                placeholder="Search shops and products..."
+                shops={shops}
+                products={products}
+                searchTerm={searchTerm}
+                onSearchChange={handleSearchChange}
+                onSelectResult={handleSelectResult}
+                onClickOutside={handleDropdownClose}
+                showDropdown={showDropdown}
+                onCartClick={handleCartClick}
+                onMessagesClick={handleMessagesClick}
+            />
 
             {/* Shops Section */}
             <div className="container mt-4">

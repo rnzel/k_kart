@@ -299,26 +299,133 @@ const getAllProducts = async (req, res) => {
     const limit = parseInt(req.query.limit) || 12;
     const skip = (page - 1) * limit;
 
-    const products = await Product.find()
-      .populate('shop', 'shopName shopLogo shopDescription')
+    console.log('getAllProducts called with:', { page, limit, skip });
+
+    // First, let's check what products exist in the database
+    const allProductsCount = await Product.countDocuments();
+    const activeProductsCount = await Product.countDocuments({ isDeleted: false });
+    console.log('Database stats:', { allProductsCount, activeProductsCount });
+
+    // Check what shops exist
+    const allShopsCount = await Shop.countDocuments();
+    const activeShopsCount = await Shop.countDocuments({ isDeleted: false });
+    console.log('Shop stats:', { allShopsCount, activeShopsCount });
+
+    // Get all shop IDs that exist and are not deleted (including shops without isDeleted field)
+    const activeShopIds = await Shop.find({ 
+      $or: [
+        { isDeleted: false },
+        { isDeleted: { $exists: false } }
+      ]
+    }).select('_id').lean();
+    const activeShopIdSet = new Set(activeShopIds.map(s => s._id.toString()));
+    console.log('Active shop IDs:', activeShopIdSet);
+
+    // Get products and their shop IDs
+    const productsWithShopIds = await Product.find({ isDeleted: false })
+      .select('shop')
+      .lean();
+    
+    console.log('Product shop IDs:', productsWithShopIds.map(p => p.shop?.toString()));
+    
+    // Check which products have valid shops
+    const productsWithValidShops = productsWithShopIds.filter(p => 
+      p.shop && activeShopIdSet.has(p.shop.toString())
+    );
+    console.log('Products with valid shops:', productsWithValidShops.length);
+
+    // Get products that have active shops
+    const products = await Product.find({ 
+      isDeleted: false,
+      shop: { $in: Array.from(activeShopIdSet) }
+    })
+      .select('productName productDescription productPrice productStock productImages featuredImageIndex shop createdAt')
+      .populate({
+        path: 'shop',
+        select: 'shopName shopLogo shopDescription',
+        match: { 
+          $or: [
+            { isDeleted: false },
+            { isDeleted: { $exists: false } }
+          ]
+        }
+      })
       .sort({ createdAt: -1 })
       .skip(skip)
-      .limit(limit);
+      .limit(limit)
+      .lean();
 
-    const total = await Product.countDocuments();
+    console.log('Raw products from DB:', products.length);
+    console.log('Products details:', products.map(p => ({ 
+      id: p._id, 
+      shop: p.shop?._id, 
+      shopName: p.shop?.shopName,
+      isDeleted: p.isDeleted 
+    })));
+
+    // Filter out products with deleted shops or no shop (shouldn't happen with the query above, but just in case)
+    const validProducts = products.filter(product => product.shop);
+
+    console.log('Valid products after filtering:', validProducts.length);
+
+    // Get the actual count of products that would be returned
+    const validProductsCount = await Product.countDocuments({ 
+      isDeleted: false,
+      shop: { $in: Array.from(activeShopIdSet) }
+    });
+
+    console.log('Final response:', { 
+      productsCount: validProducts.length, 
+      totalCount: validProductsCount,
+      totalPages: Math.ceil(validProductsCount / limit)
+    });
 
     res.status(200).json({
-      products,
+      products: validProducts,
       pagination: {
-        total,
+        total: validProductsCount,
         page,
         limit,
-        totalPages: Math.ceil(total / limit)
+        totalPages: Math.ceil(validProductsCount / limit)
       }
     });
   } catch (error) {
+    console.error('Error in getAllProducts:', error);
     res.status(500).json({ message: error.message });
   } 
+};
+
+// Get product by ID
+const getProductById = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const product = await Product.findById(id).populate('shop', 'shopName shopLogo shopDescription shopLocation shopContact');
+
+    if (!product) {
+      return res.status(404).json({ 
+        success: false,
+        message: 'Product not found' 
+      });
+    }
+
+    if (product.isDeleted) {
+      return res.status(404).json({ 
+        success: false,
+        message: 'Product not found' 
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      data: product
+    });
+  } catch (error) {
+    console.error('Error getting product:', error);
+    res.status(500).json({ 
+      success: false,
+      message: 'Failed to get product. Please try again.' 
+    });
+  }
 };
 
 // Get product stock by ID
@@ -355,4 +462,4 @@ const getProductStock = async (req, res) => {
   }
 };
 
-module.exports = { addProduct, getMyProducts, updateProduct, deleteProduct, getAllProducts, getProductStock };
+module.exports = { addProduct, getMyProducts, updateProduct, deleteProduct, getAllProducts, getProductStock, getProductById };

@@ -35,6 +35,8 @@ export default function MyProfileSection() {
 
     const fetchUserProfile = async () => {
         try {
+            setLoading(true);
+            setError("");
             const token = localStorage.getItem("token");
             const response = await api.get("/api/auth/me", {
                 headers: { Authorization: `Bearer ${token}` }
@@ -43,6 +45,9 @@ export default function MyProfileSection() {
             setUser(userData);
         } catch (err) {
             console.error("Error fetching profile:", err);
+            setError(err.response?.data?.error?.message || "Failed to load profile data");
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -201,20 +206,33 @@ export default function MyProfileSection() {
             <div className="container border border-black rounded p-4">
                 <h2 className="text-primary mb-4">My Profile</h2>
 
-                {message.text && (
+                {/* Loading State */}
+                {loading && (
+                    <div className="d-flex justify-content-center align-items-center py-4">
+                        <div className="spinner-border text-primary" role="status">
+                            <span className="visually-hidden">Loading profile...</span>
+                        </div>
+                    </div>
+                )}
+
+                {/* Error State */}
+                {error && !loading && (
+                    <div className="alert alert-danger" role="alert">
+                        {error}
+                    </div>
+                )}
+
+                {/* Success/Error Messages */}
+                {message.text && !loading && (
                     <div className={`alert alert-${message.type} alert-dismissible`} role="alert">
                         {message.text}
                         <button type="button" className="btn-close" onClick={() => setMessage({ type: "", text: "" })}></button>
                     </div>
                 )}
 
-                <form onSubmit={showPasswordForm ? handlePasswordChange : handleSave}>
-                    {error && (
-                        <div className="alert alert-danger" role="alert">
-                            {error}
-                        </div>
-                    )}
-
+                {/* Form Content */}
+                {!loading && !error && (
+                    <form onSubmit={showPasswordForm ? handlePasswordChange : handleSave}>
                     {!showPasswordForm && (
                         <>
                             <div className="row">
@@ -328,7 +346,8 @@ export default function MyProfileSection() {
                             </button>
                         )}
                     </div>
-                </form>
+                    </form>
+                )}
             </div>
 
             {/* Seller Application Section - Conditional Rendering */}

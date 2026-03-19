@@ -10,8 +10,8 @@ router.get('/', auth.auth, cartController.getCart);
 // POST /api/cart/add - Add item to cart
 router.post('/add', auth.auth, validation.validateCartItem, cartController.addToCart);
 
-// PATCH /api/cart/update/:itemId - Update cart item quantity
-router.patch('/update/:itemId', auth.auth, validation.validateCartItem, cartController.updateCartItem);
+// PATCH /api/cart/update/:productId - Update cart item quantity
+router.patch('/update/:productId', auth.auth, validation.validateCartItem, cartController.updateCartItem);
 
 // DELETE /api/cart/remove/:itemId - Remove item from cart
 router.delete('/remove/:itemId', auth.auth, cartController.removeFromCart);

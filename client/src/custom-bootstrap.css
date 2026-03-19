@@ -286,6 +286,21 @@ h1 {
   font-size: 0.9rem !important;
 }
 
+/* Shop Card Hover Effect */
+.shop-card-container:hover {
+  border: 1px solid #db4444 !important;
+}
+
+/* Product Card Hover Effect */
+.product-card-hover {
+  cursor: pointer !important;
+  transition: border-color 0.2s ease !important;
+}
+
+.product-card-hover:hover {
+  border-color: #db4444 !important;
+}
+
 /* Admin Users Section Responsive Styles */
 .user-list-container {
   width: 100%;

@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "./utils/api";
+import { validateRegistrationForm, validateLoginForm, sanitizeInput } from "./utils/validation";
 
 function Auth() {
     // General states
@@ -33,16 +34,12 @@ function Auth() {
         // Clear previous errors
         setLoginError('');
         
-        // Basic validation
-        if (!loginEmail || !loginPassword) {
-            setLoginError('Please enter both email and password.');
-            return;
-        }
+        // Use validation utility
+        const loginData = { email: loginEmail, password: loginPassword };
+        const validation = validateLoginForm(loginData);
         
-        // Email format validation
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        if (!emailRegex.test(loginEmail)) {
-            setLoginError('Please enter a valid email address.');
+        if (!validation.isValid) {
+            setLoginError(Object.values(validation.errors)[0]);
             return;
         }
         
@@ -90,32 +87,20 @@ function Auth() {
         // Clear previous errors
         setError('');
         
-        // Basic validation
-        if (!firstName || !lastName || !email || !password || !confirmPassword) {
-            setError('Please fill in all required fields.');
-            return;
-        }
+        // Use validation utility
+        const registerData = { 
+            firstName, 
+            lastName, 
+            email, 
+            password, 
+            confirmPassword, 
+            accountType,
+            studentIdPicture 
+        };
+        const validation = validateRegistrationForm(registerData);
         
-        // Email format validation
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        if (!emailRegex.test(email)) {
-            setError('Please enter a valid email address.');
-            return;
-        }
-        
-        // Password validation
-        if (password !== confirmPassword) {
-            setError('Passwords do not match');
-            return;
-        }
-        
-        if (password.length < 6) {
-            setError('Password must be at least 6 characters');
-            return;
-        }
-
-        if (accountType === 'seller' && !studentIdPicture) {
-            setError('Please upload your ID picture');
+        if (!validation.isValid) {
+            setError(Object.values(validation.errors)[0]);
             return;
         }
 

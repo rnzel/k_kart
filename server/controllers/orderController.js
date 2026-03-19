@@ -32,11 +32,11 @@ const createOrder = async (req, res) => {
       });
     }
 
-    // Validate Philippine phone number format (10 digits)
-    if (!/^[0-9]{10}$/.test(contactNumber)) {
+    // Validate Philippine phone number format (11 digits starting with 09)
+    if (!/^09[0-9]{9}$/.test(contactNumber)) {
       return res.status(400).json({ 
         success: false,
-        message: 'Contact number must be a 10-digit Philippine number (e.g., 09123456789)' 
+        message: 'Contact number must be an 11-digit Philippine number starting with 09 (e.g., 09123456789)' 
       });
     }
 
@@ -204,22 +204,31 @@ const createOrder = async (req, res) => {
 
         // Third pass: Remove purchased items from cart
         if (createdOrders.length > 0) {
-          // Get all cart item IDs that were successfully purchased
-          const purchasedCartItemIds = createdOrders.flatMap(order => 
-            order.items.map(item => item.product.toString())
-          );
+          console.log('Attempting to remove purchased items from cart...');
+          console.log('Selected items to remove:', selectedItems);
+          console.log('Cart items before removal:', cart.items.map(item => ({
+            id: item._id.toString(),
+            productId: item.product ? item.product.toString() : 'null',
+            quantity: item.quantity
+          })));
 
-          // Remove only the successfully purchased items from the cart
+          // Simple approach: Remove all selected items from cart since they were successfully purchased
+          const originalCartLength = cart.items.length;
           cart.items = cart.items.filter(item => {
-            const wasSelected = selectedItems.includes(item._id.toString());
-            const wasPurchased = purchasedCartItemIds.includes(item.product.toString());
-            
-            // Remove the item if it was selected AND successfully purchased
-            // Keep the item if it wasn't selected OR if it was selected but failed to purchase
-            return !(wasSelected && wasPurchased);
+            const shouldRemove = selectedItems.includes(item._id.toString());
+            console.log(`Cart item ${item._id}: selected=${shouldRemove}`);
+            return !shouldRemove;
           });
           
-          await cart.save({ session });
+          const itemsRemoved = originalCartLength - cart.items.length;
+          console.log(`Items removed from cart: ${itemsRemoved} (original: ${originalCartLength}, remaining: ${cart.items.length})`);
+          
+          if (itemsRemoved > 0) {
+            await cart.save({ session });
+            console.log(`Successfully removed ${itemsRemoved} purchased items from cart`);
+          } else {
+            console.log('No items were removed from cart - this indicates a matching issue');
+          }
         }
 
         // Prepare response
@@ -266,6 +275,9 @@ const createOrder = async (req, res) => {
 const getMyOrders = async (req, res) => {
   try {
     const userId = req.user?.userId;
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const skip = (page - 1) * limit;
 
     if (!userId) {
       return res.status(401).json({ 
@@ -274,15 +286,27 @@ const getMyOrders = async (req, res) => {
       });
     }
 
+    // Get total count for pagination
+    const totalOrders = await Order.countDocuments({ buyer: userId });
+    const totalPages = Math.ceil(totalOrders / limit);
+
     const orders = await Order.find({ buyer: userId })
       .populate('seller', 'firstName lastName email')
       .populate('items.product', 'productName productImages productStock')
       .populate('items.seller', 'firstName lastName')
-      .sort({ createdAt: -1 });
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit);
 
     res.status(200).json({
       success: true,
-      data: orders
+      data: orders,
+      pagination: {
+        page,
+        limit,
+        totalPages,
+        totalOrders
+      }
     });
   } catch (error) {
     console.error('Error getting my orders:', error);
@@ -297,6 +321,9 @@ const getMyOrders = async (req, res) => {
 const getSellerOrders = async (req, res) => {
   try {
     const userId = req.user?.userId;
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const skip = (page - 1) * limit;
 
     if (!userId) {
       return res.status(401).json({ 
@@ -305,15 +332,27 @@ const getSellerOrders = async (req, res) => {
       });
     }
 
+    // Get total count for pagination
+    const totalOrders = await Order.countDocuments({ seller: userId });
+    const totalPages = Math.ceil(totalOrders / limit);
+
     const orders = await Order.find({ seller: userId })
       .populate('buyer', 'firstName lastName email')
       .populate('items.product', 'productName productImages productStock')
       .populate('items.seller', 'firstName lastName')
-      .sort({ createdAt: -1 });
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit);
 
     res.status(200).json({
       success: true,
-      data: orders
+      data: orders,
+      pagination: {
+        page,
+        limit,
+        totalPages,
+        totalOrders
+      }
     });
   } catch (error) {
     console.error('Error getting seller orders:', error);

@@ -1,6 +1,6 @@
 const express = require("express")
 const router = express.Router()
-const { addProduct, getMyProducts, updateProduct, deleteProduct, getAllProducts } = require("../controllers/productController")
+const { addProduct, getMyProducts, updateProduct, deleteProduct, getAllProducts, getProductById } = require("../controllers/productController")
 const { authenticateToken, requireSellerVerified } = require("../middleware/auth")
 const { upload } = require("../config/multerStorage")
 
@@ -25,11 +25,14 @@ const handleUpload = (fieldName, maxCount) => {
 // Route to get all products (public)
 router.get("/", getAllProducts)
 
-// Route to create a new product (verified sellers only)
-router.post("/", authenticateToken, requireSellerVerified, handleUpload("productImages", 3), addProduct)
-
 // Route to get all products for the authenticated seller (verified sellers only)
 router.get("/my-products", authenticateToken, requireSellerVerified, getMyProducts)
+
+// Route to get a single product by ID (public)
+router.get("/:id", getProductById)
+
+// Route to create a new product (verified sellers only)
+router.post("/", authenticateToken, requireSellerVerified, handleUpload("productImages", 3), addProduct)
 
 // Route to update a product (verified sellers only)
 router.put("/update-product/:id", authenticateToken, requireSellerVerified, handleUpload("productImages", 3), updateProduct)

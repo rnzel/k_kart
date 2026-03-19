@@ -1,10 +1,17 @@
 import React from "react";
+import { useNavigate } from "react-router-dom";
 import { getImageUrl } from "../utils/imageUrl.js";
 import { FiShoppingBag } from "react-icons/fi";
 
 function ShopCard({ shop }) {
+    const navigate = useNavigate();
+
+    const handleShopClick = () => {
+        navigate(`/shop/${shop._id}`);
+    };
+
     return (
-        <div className="shop-card-container border p-2 rounded">
+        <div className="shop-card-container border p-2 rounded" style={{ cursor: 'pointer' }} onClick={handleShopClick}>
             <div className="card-body d-flex flex-column align-items-center justify-content-center">
                 {/* Shop Logo - Circular with border */}
                 <div 
@@ -32,7 +39,7 @@ function ShopCard({ shop }) {
                     )}
                 </div>
                 {/* Shop Name */}
-                <h6 className="card-title text-center mb-0 shop-card-name" style={{ fontSize: "0.9rem" }}>
+                <h6 className="card-title text-center mb-0 shop-card-name" style={{ fontSize: "0.9rem", color: "#db4444", fontWeight: "bold" }}>
                     {shop.shopName}
                 </h6>
             </div>

@@ -34,8 +34,8 @@ const orderItemSchema = new mongoose.Schema({
     type: String,
     required: true,
     trim: true,
-    match: [/^[0-9]{10}$/, 'Contact number must be a 10-digit Philippine number'],
-    maxlength: 10
+    match: [/^09[0-9]{9}$/, 'Contact number must be an 11-digit Philippine number starting with 09'],
+    maxlength: 11
   }
 });
 
@@ -44,23 +44,27 @@ const orderSchema = new mongoose.Schema({
     type: String,
     unique: true,
     required: true,
-    uppercase: true
+    uppercase: true,
+    index: true
   },
   buyer: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
-    required: true
+    required: true,
+    index: true
   },
   seller: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
-    required: true
+    required: true,
+    index: true
   },
   items: [orderItemSchema],
   totalAmount: {
     type: Number,
     required: true,
-    min: 0
+    min: 0,
+    index: true
   },
   pickupLocation: {
     type: String,
@@ -72,8 +76,9 @@ const orderSchema = new mongoose.Schema({
     type: String,
     required: true,
     trim: true,
-    match: [/^[0-9]{10}$/, 'Contact number must be a 10-digit Philippine number'],
-    maxlength: 10
+    match: [/^09[0-9]{9}$/, 'Contact number must be an 11-digit Philippine number starting with 09'],
+    maxlength: 11,
+    index: true
   },
   note: {
     type: String,
@@ -88,15 +93,18 @@ const orderSchema = new mongoose.Schema({
   status: {
     type: String,
     enum: ['Pending', 'Confirmed', 'On-Delivery', 'Completed', 'Cancelled'],
-    default: 'Pending'
+    default: 'Pending',
+    index: true
   },
   createdAt: {
     type: Date,
-    default: Date.now
+    default: Date.now,
+    index: true
   },
   updatedAt: {
     type: Date,
-    default: Date.now
+    default: Date.now,
+    index: true
   }
 });
 
