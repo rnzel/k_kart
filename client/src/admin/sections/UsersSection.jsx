@@ -1,6 +1,6 @@
 import React from "react";
 import { adminAPI } from "../../utils/api.js";
-import { FiTrash2, FiClock, FiCheck, FiX, FiChevronLeft, FiChevronRight, FiUsers, FiSearch } from "react-icons/fi";
+import { FiTrash2, FiClock, FiCheck, FiX, FiChevronLeft, FiChevronRight, FiUsers, FiSearch, FiRefreshCw } from "react-icons/fi";
 import DangerModal from "../../components/DangerModal";
 
 // Custom debounce hook
@@ -130,7 +130,16 @@ function UsersSection() {
 
     return (
         <div className="container border border-black rounded p-4">
-            <h2 className="text-primary mb-4">Users</h2>
+            <div className="d-flex justify-content-between align-items-center mb-4">
+                <h2 className="text-primary mb-0">Users</h2>
+                <button 
+                    className="btn btn-outline-primary btn-sm"
+                    onClick={() => fetchUsers(1)}
+                >
+                    <FiRefreshCw className="me-2" />
+                    Refresh
+                </button>
+            </div>
             
             {/* Tabs with Search Bar */}
             <div className="row mb-4">

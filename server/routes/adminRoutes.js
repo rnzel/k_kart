@@ -2,7 +2,12 @@ const express = require('express')
 const router = express.Router()
 const User = require('../models/User')
 const Shop = require('../models/Shop')
+const Product = require('../models/Product')
+const Order = require('../models/Order')
 const { authenticateToken, requireAdmin } = require('../middleware/auth')
+const { createShop, updateShop, deleteShop, getAllShops } = require('../controllers/shopController')
+const { addProduct, updateProduct, deleteProduct, getAllProducts } = require('../controllers/productController')
+const { getSellerOrders, updateOrderStatus, cancelOrder } = require('../controllers/orderController')
 
 // Get all users with pagination (admin only)
 router.get('/users', authenticateToken, requireAdmin, async (req, res) => {
@@ -292,6 +297,216 @@ router.post('/apply-seller', authenticateToken, async (req, res) => {
             message: 'Failed to submit application',
             error: err.message 
         })
+    }
+})
+
+// Get all shops with pagination (admin only)
+router.get('/shops', authenticateToken, requireAdmin, async (req, res) => {
+    try {
+        const page = parseInt(req.query.page) || 1
+        const limit = parseInt(req.query.limit) || 10
+        const skip = (page - 1) * limit
+        
+        const [shops, total] = await Promise.all([
+            Shop.find()
+                .populate('owner', 'firstName lastName email sellerStatus')
+                .sort({ createdAt: -1 })
+                .skip(skip)
+                .limit(limit),
+            Shop.countDocuments()
+        ])
+
+        // Add shop status based on isDeleted field
+        const shopsWithStatus = shops.map(shop => ({
+            ...shop.toObject(),
+            status: shop.isDeleted ? 'deleted' : 'active'
+        }))
+
+        res.json({
+            success: true,
+            data: shopsWithStatus,
+            pagination: {
+                page,
+                limit,
+                total,
+                totalPages: Math.ceil(total / limit)
+            }
+        })
+    } catch (err) {
+        res.status(500).json({ 
+            success: false,
+            message: err.message 
+        })
+    }
+})
+
+// Delete shop (admin only)
+router.delete('/shops/:id', authenticateToken, requireAdmin, async (req, res) => {
+    try {
+        const shop = await Shop.findById(req.params.id)
+        
+        if (!shop) {
+            return res.status(404).json({ message: 'Shop not found' })
+        }
+        
+        // Delete all products associated with this shop
+        await Product.deleteMany({ shop: shop._id })
+        
+        await Shop.findByIdAndDelete(req.params.id)
+        
+        res.json({ message: 'Shop deleted successfully' })
+    } catch (err) {
+        res.status(500).json({ message: err.message })
+    }
+})
+
+// Get all products with pagination (admin only)
+router.get('/products', authenticateToken, requireAdmin, async (req, res) => {
+    try {
+        const page = parseInt(req.query.page) || 1
+        const limit = parseInt(req.query.limit) || 10
+        const skip = (page - 1) * limit
+        
+        const [products, total] = await Promise.all([
+            Product.find()
+                .populate('shop', 'shopName shopLogo shopDescription')
+                .sort({ createdAt: -1 })
+                .skip(skip)
+                .limit(limit),
+            Product.countDocuments()
+        ])
+
+        res.json({
+            success: true,
+            data: products,
+            pagination: {
+                page,
+                limit,
+                total,
+                totalPages: Math.ceil(total / limit)
+            }
+        })
+    } catch (err) {
+        res.status(500).json({ 
+            success: false,
+            message: err.message 
+        })
+    }
+})
+
+// Delete product (admin only)
+router.delete('/products/:id', authenticateToken, requireAdmin, async (req, res) => {
+    try {
+        const product = await Product.findById(req.params.id)
+        
+        if (!product) {
+            return res.status(404).json({ message: 'Product not found' })
+        }
+        
+        await Product.findByIdAndDelete(req.params.id)
+        
+        res.json({ message: 'Product deleted successfully' })
+    } catch (err) {
+        res.status(500).json({ message: err.message })
+    }
+})
+
+// Get all orders with pagination (admin only)
+router.get('/orders', authenticateToken, requireAdmin, async (req, res) => {
+    try {
+        const page = parseInt(req.query.page) || 1
+        const limit = parseInt(req.query.limit) || 10
+        const skip = (page - 1) * limit
+        
+        const [orders, total] = await Promise.all([
+            Order.find()
+                .populate('buyer', 'firstName lastName email')
+                .populate('seller', 'firstName lastName email')
+                .populate('items.product', 'productName productImages productStock')
+                .sort({ createdAt: -1 })
+                .skip(skip)
+                .limit(limit),
+            Order.countDocuments()
+        ])
+
+        res.json({
+            success: true,
+            data: orders,
+            pagination: {
+                page,
+                limit,
+                total,
+                totalPages: Math.ceil(total / limit)
+            }
+        })
+    } catch (err) {
+        res.status(500).json({ 
+            success: false,
+            message: err.message 
+        })
+    }
+})
+
+// Update order status (admin only)
+router.patch('/orders/:id', authenticateToken, requireAdmin, async (req, res) => {
+    try {
+        const { status } = req.body
+        
+        if (!status) {
+            return res.status(400).json({ message: 'Status is required' })
+        }
+
+        const order = await Order.findById(req.params.id)
+        if (!order) {
+            return res.status(404).json({ message: 'Order not found' })
+        }
+
+        // Check if status transition is valid
+        const validTransitions = Order.getValidTransitions()
+        const allowedStatuses = validTransitions[order.status] || []
+        if (!allowedStatuses.includes(status)) {
+            return res.status(400).json({ message: `Invalid status transition from ${order.status} to ${status}` })
+        }
+
+        order.status = status
+        await order.save()
+
+        res.status(200).json({
+            message: 'Order status updated successfully',
+            data: order
+        })
+    } catch (err) {
+        res.status(500).json({ message: err.message })
+    }
+})
+
+// Cancel order (admin only)
+router.delete('/orders/:id', authenticateToken, requireAdmin, async (req, res) => {
+    try {
+        const order = await Order.findById(req.params.id)
+        if (!order) {
+            return res.status(404).json({ message: 'Order not found' })
+        }
+
+        // Restore product stock for each item in the order
+        for (const item of order.items) {
+            const product = await Product.findById(item.product)
+            if (product) {
+                product.productStock += item.quantity
+                await product.save()
+            }
+        }
+
+        // Update order status to cancelled
+        order.status = 'Cancelled'
+        await order.save()
+
+        res.status(200).json({
+            message: 'Order cancelled successfully and stock has been restored.',
+            data: order
+        })
+    } catch (err) {
+        res.status(500).json({ message: err.message })
     }
 })
 

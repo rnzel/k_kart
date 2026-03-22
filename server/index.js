@@ -26,6 +26,7 @@ const productRoutes = require('./routes/productRoutes')
 const cartRoutes = require('./routes/cartRoutes')
 const adminRoutes = require('./routes/adminRoutes')
 const orderRoutes = require('./routes/orderRoutes')
+const searchRoutes = require('./routes/searchRoutes')
 
 // Import middleware
 const { errorHandler, notFound } = require('./middleware/errorHandler')
@@ -124,6 +125,7 @@ app.use('/api/products', productRoutes)
 app.use('/api/cart', cartRoutes)
 app.use('/api/admin', adminRoutes)
 app.use('/api/orders', orderRoutes)
+app.use('/api/search', searchRoutes)
 
 // ============================================
 // Health Check Route

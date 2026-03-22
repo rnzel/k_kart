@@ -1,6 +1,6 @@
 import React from "react";
 import { adminAPI } from "../../utils/api.js";
-import { FiCheck, FiX, FiClock, FiUsers, FiChevronLeft, FiChevronRight, FiEye } from "react-icons/fi";
+import { FiCheck, FiX, FiClock, FiUsers, FiChevronLeft, FiChevronRight, FiEye, FiRefreshCw } from "react-icons/fi";
 import { getImageUrl } from "../../utils/imageUrl.js";
 import IDViewModal from "../../components/IDViewModal.jsx";
 import DangerModal from "../../components/DangerModal.jsx";
@@ -138,7 +138,16 @@ function SellerApplicationsSection() {
 
     return (
         <div className="container border border-black rounded p-4">
-            <h2 className="text-primary mb-4">Seller Applications</h2>
+            <div className="d-flex justify-content-between align-items-center mb-4">
+                <h2 className="text-primary mb-0">Seller Applications</h2>
+                <button 
+                    className="btn btn-outline-primary btn-sm"
+                    onClick={() => fetchApplications(1)}
+                >
+                    <FiRefreshCw className="me-2" />
+                    Refresh
+                </button>
+            </div>
             
             {error && (
                 <div className="alert alert-danger" role="alert">

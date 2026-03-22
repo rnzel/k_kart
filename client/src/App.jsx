@@ -9,6 +9,8 @@ import CheckoutPage from './CheckoutPage.jsx'
 import SellerDashboard from './seller/SellerDashboard.jsx'
 import UserDashboard from './user/UserDashboard.jsx'
 import AdminDashboard from './admin/AdminDashboard.jsx'
+import SearchPage from './SearchPage.jsx'
+import ShopSearchPage from './ShopSearchPage.jsx'
 import RoleProtectedRoute from './components/RoleProtectedRoute.jsx'
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 
@@ -66,6 +68,20 @@ function App() {
         <Route path="/checkout" element={
           <RoleProtectedRoute allowedRoles={['buyer', 'seller']}>
             <CheckoutPage />
+          </RoleProtectedRoute>
+        } />
+
+        {/* Search Page - accessible to buyers and verified sellers only */}
+        <Route path="/search/:query?" element={
+          <RoleProtectedRoute allowedRoles={['buyer', 'seller']}>
+            <SearchPage />
+          </RoleProtectedRoute>
+        } />
+
+        {/* Shop Search Page - accessible to buyers and verified sellers only */}
+        <Route path="/shop-search/:query?" element={
+          <RoleProtectedRoute allowedRoles={['buyer', 'seller']}>
+            <ShopSearchPage />
           </RoleProtectedRoute>
         } />
       </Routes>

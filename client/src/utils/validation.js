@@ -337,3 +337,21 @@ export const sanitizeInput = (input) => {
   if (typeof input !== 'string') return input;
   return input.trim();
 };
+
+// Utility to handle undefined isDeleted values
+// Treats undefined as false for consistency with backend logic
+export const normalizeIsDeleted = (isDeleted) => {
+  return isDeleted ?? false;
+};
+
+// Utility to check if a shop is active (not deleted)
+export const isShopActive = (shop) => {
+  if (!shop) return false;
+  return normalizeIsDeleted(shop.isDeleted) === false;
+};
+
+// Utility to check if a product is active (not deleted)
+export const isProductActive = (product) => {
+  if (!product) return false;
+  return normalizeIsDeleted(product.isDeleted) === false;
+};

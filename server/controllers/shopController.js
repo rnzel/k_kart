@@ -64,7 +64,14 @@ const updateShop = async (req, res) => {
         shop.shopContact = shopContact.trim();
         shop.shopLocation = shopLocation.trim();
 
-        if (req.file) {
+        // Check if user wants to remove the logo
+        const removeLogo = req.body.removeLogo === "true";
+        
+        if (removeLogo && shop.shopLogo) {
+            await deleteFileFromGridFS(shop.shopLogo);
+            shop.shopLogo = null;
+        } else if (req.file) {
+            // If uploading a new image, delete the old one first
             if (shop.shopLogo) {
                 await deleteFileFromGridFS(shop.shopLogo);
             }

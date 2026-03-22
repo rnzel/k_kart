@@ -1,5 +1,5 @@
 import React from "react";
-import { FiShoppingBag, FiUser, FiCheckCircle, FiXCircle, FiClock, FiEye, FiRefreshCw } from "react-icons/fi";
+import { FiShoppingBag, FiUser, FiCheckCircle, FiXCircle, FiClock, FiEye, FiRefreshCw, FiSearch } from "react-icons/fi";
 import { shopAPI } from "../../utils/api.js";
 import { getImageUrl } from "../../utils/imageUrl.js";
 
@@ -141,57 +141,20 @@ function ShopManagementSection() {
 
             {/* Search Bar */}
             <div className="mb-4">
-                <input
-                    type="text"
-                    className="form-control"
-                    placeholder="Search shops by name, owner, or description..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                />
+                <div className="input-group">
+                    <span className="input-group-text bg-white border-end-0">
+                        <FiSearch className="text-muted" />
+                    </span>
+                    <input
+                        type="text"
+                        className="form-control border-start-0"
+                        placeholder="Search shops by name, owner, or description..."
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                    />
+                </div>
             </div>
 
-            {/* Stats Summary */}
-            <div className="row mb-4">
-                <div className="col-md-4">
-                    <div className="card bg-primary text-white">
-                        <div className="card-body">
-                            <div className="d-flex justify-content-between">
-                                <div>
-                                    <h6 className="card-title">Total Shops</h6>
-                                    <h3 className="mb-0">{totalShops}</h3>
-                                </div>
-                                <FiShoppingBag size={32} />
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div className="col-md-4">
-                    <div className="card bg-success text-white">
-                        <div className="card-body">
-                            <div className="d-flex justify-content-between">
-                                <div>
-                                    <h6 className="card-title">Approved</h6>
-                                    <h3 className="mb-0">{shops.filter(s => s.status === 'approved').length}</h3>
-                                </div>
-                                <FiCheckCircle size={32} />
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div className="col-md-4">
-                    <div className="card bg-warning text-white">
-                        <div className="card-body">
-                            <div className="d-flex justify-content-between">
-                                <div>
-                                    <h6 className="card-title">Pending</h6>
-                                    <h3 className="mb-0">{shops.filter(s => s.status === 'pending').length}</h3>
-                                </div>
-                                <FiClock size={32} />
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
 
             {/* Shops Table */}
             <div className="table-responsive">

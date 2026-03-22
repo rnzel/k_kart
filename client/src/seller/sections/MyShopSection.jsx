@@ -156,6 +156,11 @@ function MyShopSection() {
         if (shopImage) {
             formData.append("shopLogo", shopImage);
         }
+        
+        // Check if user removed the existing image (no new image, but had previous image)
+        if (!shopImage && imagePreview === null && shopData?.shopLogo) {
+            formData.append("removeLogo", "true");
+        }
 
         if (isEditing && shopData && shopData._id) {
             // Update existing shop - use ID from shopData

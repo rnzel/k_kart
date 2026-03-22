@@ -444,4 +444,37 @@ export const orderAPI = {
   }
 }
 
+// Search API methods
+export const searchAPI = {
+  // Get search suggestions (for autocomplete dropdown)
+  getSuggestions: async (query) => {
+    try {
+      const response = await api.get('/api/search/suggestions', { params: { q: query } });
+      return {
+        success: true,
+        data: response.data.data || response.data,
+        message: 'Search suggestions retrieved successfully'
+      };
+    } catch (error) {
+      return handleApiError(error);
+    }
+  },
+
+  // Get search results (for main search results page)
+  searchProducts: async (query, page = 1, limit = 12) => {
+    try {
+      const response = await api.get('/api/search/products', { 
+        params: { q: query, page, limit } 
+      });
+      return {
+        success: true,
+        data: response.data.data || response.data,
+        message: 'Search results retrieved successfully'
+      };
+    } catch (error) {
+      return handleApiError(error);
+    }
+  }
+};
+
 export default api

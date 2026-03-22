@@ -124,12 +124,12 @@ function ProductManagementSection() {
             {/* Search Bar */}
             <div className="mb-4">
                 <div className="input-group">
-                    <span className="input-group-text">
-                        <FiSearch />
+                    <span className="input-group-text bg-white border-end-0">
+                        <FiSearch className="text-muted" />
                     </span>
                     <input
                         type="text"
-                        className="form-control"
+                        className="form-control border-start-0"
                         placeholder="Search products by name, shop, description, or category..."
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
@@ -137,61 +137,6 @@ function ProductManagementSection() {
                 </div>
             </div>
 
-            {/* Stats Summary */}
-            <div className="row mb-4">
-                <div className="col-md-3">
-                    <div className="card bg-primary text-white">
-                        <div className="card-body">
-                            <div className="d-flex justify-content-between">
-                                <div>
-                                    <h6 className="card-title">Total Products</h6>
-                                    <h3 className="mb-0">{totalProducts}</h3>
-                                </div>
-                                <FiPackage size={32} />
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div className="col-md-3">
-                    <div className="card bg-success text-white">
-                        <div className="card-body">
-                            <div className="d-flex justify-content-between">
-                                <div>
-                                    <h6 className="card-title">Active Products</h6>
-                                    <h3 className="mb-0">{products.filter(p => !p.isDeleted).length}</h3>
-                                </div>
-                                <FiShoppingBag size={32} />
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div className="col-md-3">
-                    <div className="card bg-warning text-white">
-                        <div className="card-body">
-                            <div className="d-flex justify-content-between">
-                                <div>
-                                    <h6 className="card-title">Total Stock</h6>
-                                    <h3 className="mb-0">{products.reduce((sum, p) => sum + p.productStock, 0)}</h3>
-                                </div>
-                                <FiTag size={32} />
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div className="col-md-3">
-                    <div className="card bg-info text-white">
-                        <div className="card-body">
-                            <div className="d-flex justify-content-between">
-                                <div>
-                                    <h6 className="card-title">Total Value</h6>
-                                    <h3 className="mb-0">₱{products.reduce((sum, p) => sum + (p.productPrice * p.productStock), 0).toLocaleString()}</h3>
-                                </div>
-                                <FiDollarSign size={32} />
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
 
             {/* Products Table */}
             <div className="table-responsive">

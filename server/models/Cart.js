@@ -79,7 +79,7 @@ cartSchema.methods.calculateTotal = function() {
 cartSchema.statics.findByUserWithPopulate = function(userId) {
   return this.findOne({ user: userId })
     .populate('items.product', 'productStock productName productPrice')
-    .populate('items.shop', 'shopName shopLogo');
+    .populate('items.shop', 'shopName shopLogo isDeleted');
 };
 
 // Instance method to validate cart items

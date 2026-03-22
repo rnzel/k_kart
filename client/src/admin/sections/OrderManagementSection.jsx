@@ -148,12 +148,12 @@ function OrderManagementSection() {
             {/* Search Bar */}
             <div className="mb-4">
                 <div className="input-group">
-                    <span className="input-group-text">
-                        <FiSearch />
+                    <span className="input-group-text bg-white border-end-0">
+                        <FiSearch className="text-muted"/>
                     </span>
                     <input
                         type="text"
-                        className="form-control"
+                        className="form-control border-start-0"
                         placeholder="Search orders by order number, buyer, seller, or location..."
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
@@ -161,61 +161,6 @@ function OrderManagementSection() {
                 </div>
             </div>
 
-            {/* Stats Summary */}
-            <div className="row mb-4">
-                <div className="col-md-3">
-                    <div className="card bg-primary text-white">
-                        <div className="card-body">
-                            <div className="d-flex justify-content-between">
-                                <div>
-                                    <h6 className="card-title">Total Orders</h6>
-                                    <h3 className="mb-0">{totalOrders}</h3>
-                                </div>
-                                <FiPackage size={32} />
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div className="col-md-3">
-                    <div className="card bg-success text-white">
-                        <div className="card-body">
-                            <div className="d-flex justify-content-between">
-                                <div>
-                                    <h6 className="card-title">Completed</h6>
-                                    <h3 className="mb-0">{orders.filter(o => o.status === 'completed').length}</h3>
-                                </div>
-                                <FiCheckCircle size={32} />
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div className="col-md-3">
-                    <div className="card bg-warning text-white">
-                        <div className="card-body">
-                            <div className="d-flex justify-content-between">
-                                <div>
-                                    <h6 className="card-title">Pending</h6>
-                                    <h3 className="mb-0">{orders.filter(o => o.status === 'pending').length}</h3>
-                                </div>
-                                <FiClock size={32} />
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div className="col-md-3">
-                    <div className="card bg-info text-white">
-                        <div className="card-body">
-                            <div className="d-flex justify-content-between">
-                                <div>
-                                    <h6 className="card-title">Total Value</h6>
-                                    <h3 className="mb-0">₱{orders.reduce((sum, o) => sum + o.totalAmount, 0).toLocaleString()}</h3>
-                                </div>
-                                <FiDollarSign size={32} />
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
 
             {/* Orders Table */}
             <div className="table-responsive">

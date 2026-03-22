@@ -126,49 +126,71 @@ function ShopPage() {
         setShowDropdown(false);
     };
 
+    // Loading state - show Navbar and StickySearchBar like ProductPage
     if (loading) {
         return (
-            <div className="min-vh-100 d-flex flex-column">
-                <div className="container py-4">
-                    <div className="text-center">
+            <div>
+                <Navbar />
+                <StickySearchBar 
+                    showBackButton={true}
+                    onBackClick={handleBackClick}
+                />
+                <div className="container py-5">
+                    <div className="d-flex justify-content-center align-items-center py-5">
                         <div className="spinner-border text-primary" role="status">
-                            <span className="visually-hidden">Loading...</span>
+                            <span className="visually-hidden">Loading shop...</span>
                         </div>
-                        <p className="mt-2">Loading shop...</p>
                     </div>
                 </div>
             </div>
         );
     }
 
+    // Error state - show Navbar and StickySearchBar like ProductPage
     if (error) {
         return (
-            <div className="min-vh-100 d-flex flex-column">
-                <div className="container py-4">
-                    <div className="text-center">
-                        <FiBox size={64} className="text-secondary mb-3" />
-                        <h4 className="text-danger">Error</h4>
-                        <p className="text-muted">{error}</p>
-                        <button className="btn btn-primary" onClick={handleBackClick}>
-                            Back to Marketplace
-                        </button>
+            <div>
+                <Navbar />
+                <StickySearchBar 
+                    showBackButton={true}
+                    onBackClick={handleBackClick}
+                />
+                <div className="container py-5">
+                    <div className="row justify-content-center">
+                        <div className="col-md-8">
+                            <div className="alert alert-danger" role="alert">
+                                {error}
+                            </div>
+                            <div className="text-center">
+                                <button className="btn btn-primary" onClick={handleBackClick}>
+                                    Back to Marketplace
+                                </button>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
         );
     }
 
+    // Shop not found state - show Navbar and StickySearchBar like ProductPage
     if (!shop) {
         return (
-            <div className="min-vh-100 d-flex flex-column">
-                <div className="container py-4">
-                    <div className="text-center">
-                        <FiBox size={64} className="text-secondary mb-3" />
-                        <h4 className="text-muted">Shop Not Found</h4>
-                        <p className="text-muted">The shop you're looking for doesn't exist.</p>
-                        <button className="btn btn-primary" onClick={handleBackClick}>
-                            Back to Marketplace
-                        </button>
+            <div>
+                <Navbar />
+                <StickySearchBar 
+                    showBackButton={true}
+                    onBackClick={handleBackClick}
+                />
+                <div className="container py-5">
+                    <div className="row justify-content-center">
+                        <div className="col-md-8 text-center">
+                            <h2 className="text-danger">Shop Not Found</h2>
+                            <p className="text-muted">The shop you're looking for doesn't exist or has been removed.</p>
+                            <button className="btn btn-primary" onClick={handleBackClick}>
+                                Back to Marketplace
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>

@@ -85,11 +85,20 @@ function Marketplace() {
         setShowDropdown(value.trim().length > 0);
     };
 
-    const handleSelectResult = (type, item) => {
+    const handleKeyDown = (e) => {
+        if (e.key === 'Enter' && searchTerm.trim()) {
+            // Navigate to search page when Enter is pressed
+            navigate(`/search/${encodeURIComponent(searchTerm.trim())}`);
+            setShowDropdown(false);
+        }
+    };
+
+    const handleSelectResult = (item, type) => {
         setShowDropdown(false);
         setSearchTerm("");
-        // For now, just close the dropdown - you can add navigation here
-        console.log(`Selected ${type}:`, item);
+        // Navigate to search page with the selected item
+        const searchQuery = item.name || item.searchTerm || item.shopName || item;
+        navigate(`/search/${encodeURIComponent(searchQuery)}`);
     };
 
     const handleDropdownClose = () => {
@@ -152,6 +161,7 @@ function Marketplace() {
                 showDropdown={showDropdown}
                 onCartClick={handleCartClick}
                 onMessagesClick={handleMessagesClick}
+                onKeyDown={handleKeyDown}
             />
 
             {/* Shops Section */}
