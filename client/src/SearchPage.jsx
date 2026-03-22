@@ -143,6 +143,40 @@ const SearchPage = () => {
 
     const sortedResults = getSortedResults();
 
+    // Loading state - show Navbar and StickySearchBar like ShopPage
+    if (isLoading) {
+        return (
+            <div>
+                <Navbar />
+                <StickySearchBar 
+                    placeholder="Search products, shops, and categories..."
+                    searchTerm={inputValue}
+                    onSearchChange={(e) => handleSearch(e.target.value)}
+                    onSelectResult={(item, type) => {
+                        if (type === 'product') {
+                            navigate(`/product/${item._id}`);
+                        } else if (type === 'shop') {
+                            navigate(`/shop/${item._id}`);
+                        }
+                    }}
+                    onCartClick={() => navigate('/cart')}
+                    onMessagesClick={() => navigate('/messages')}
+                    showBackButton={true}
+                    showSuggestions={false}
+                    onKeyDown={handleKeyDown}
+                />
+                <div className="container py-5">
+                    <div className="d-flex justify-content-center align-items-center py-5">
+                        <div className="spinner-border text-primary" role="status">
+                            <span className="visually-hidden">Loading...</span>
+                        </div>
+                        <p className="ms-3 mb-0">Searching for "{searchQuery}"...</p>
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
     return (
         <div className="search-page">
             {/* Navbar - hide when loading */}

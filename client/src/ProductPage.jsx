@@ -189,10 +189,11 @@ function ProductPage() {
         return (
             <div>
                 <Navbar />
-                <StickySearchBar 
-                    showBackButton={true}
-                    onBackClick={handleGoBack}
-                />
+            <StickySearchBar 
+                showBackButton={true}
+                onBackClick={handleGoBack}
+                showSuggestions={false}
+            />
                 <div className="container py-5">
                     <div className="d-flex justify-content-center align-items-center py-5">
                         <div className="spinner-border text-primary" role="status">
@@ -209,7 +210,7 @@ function ProductPage() {
         return (
             <div>
                 <Navbar />
-                <StickySearchBar />
+                <StickySearchBar showSuggestions={false} />
                 <div className="container py-5">
                     <div className="row justify-content-center">
                         <div className="col-md-8">
@@ -236,7 +237,7 @@ function ProductPage() {
         return (
             <div>
                 <Navbar />
-                <StickySearchBar />
+                <StickySearchBar showSuggestions={false} />
                 <div className="container py-5">
                     <div className="row justify-content-center">
                         <div className="col-md-8 text-center">
@@ -271,6 +272,7 @@ function ProductPage() {
             <StickySearchBar 
                 showBackButton={true}
                 onBackClick={handleGoBack}
+                showSuggestions={false}
             />
             
             <div className="container mt-4">

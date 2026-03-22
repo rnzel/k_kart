@@ -134,6 +134,7 @@ function ShopPage() {
                 <StickySearchBar 
                     showBackButton={true}
                     onBackClick={handleBackClick}
+                    showSuggestions={false}
                 />
                 <div className="container py-5">
                     <div className="d-flex justify-content-center align-items-center py-5">
@@ -154,6 +155,7 @@ function ShopPage() {
                 <StickySearchBar 
                     showBackButton={true}
                     onBackClick={handleBackClick}
+                    showSuggestions={false}
                 />
                 <div className="container py-5">
                     <div className="row justify-content-center">
@@ -181,6 +183,7 @@ function ShopPage() {
                 <StickySearchBar 
                     showBackButton={true}
                     onBackClick={handleBackClick}
+                    showSuggestions={false}
                 />
                 <div className="container py-5">
                     <div className="row justify-content-center">
@@ -223,6 +226,7 @@ function ShopPage() {
                 cartCount={cartCount}
                 showBackButton={true}
                 onBackClick={handleBackClick}
+                showSuggestions={false}
             />
             
             {/* Shop Content */}
@@ -233,22 +237,7 @@ function ShopPage() {
                 <div className="container mt-4 mb-4">
                     <h2 className="text-primary mb-4">Shop Products</h2>
 
-                    {loading && (
-                        <div className="text-center mt-4">
-                            <div className="spinner-border text-primary" role="status">
-                                <span className="visually-hidden">Loading...</span>
-                            </div>
-                            <p className="mt-2">Loading products...</p>
-                        </div>
-                    )}
-
-                    {error && (
-                        <div className="alert alert-danger mt-3" role="alert">
-                            {error}
-                        </div>
-                    )}
-
-                    {!loading && !error && products.length === 0 && (
+                    {products.length === 0 && (
                         <div className="text-center mt-5">
                             <FiBox size={64} className="text-secondary" />
                             <h4 className="mt-3 text-muted">No products found</h4>
@@ -256,7 +245,7 @@ function ShopPage() {
                         </div>
                     )}
 
-                    {!loading && products.length > 0 && (
+                    {products.length > 0 && (
                         <ShopProductsGrid 
                             products={products}
                             loading={loading}

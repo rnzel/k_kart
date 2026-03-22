@@ -1,6 +1,6 @@
 import React from "react";
 import { getImageUrl } from "../utils/imageUrl.js";
-import { FiUser, FiMapPin, FiPhone } from "react-icons/fi";
+import { FiUser, FiMapPin, FiPhone, FiShoppingBag } from "react-icons/fi";
 
 function ShopHeader({ shop }) {
     return (
@@ -31,7 +31,7 @@ function ShopHeader({ shop }) {
                             />
                         ) : (
                             <div className="d-flex align-items-center justify-content-center h-100">
-                                <FiUser size={48} className="text-secondary" />
+                                <FiShoppingBag size={48} className="text-secondary" />
                             </div>
                         )}
                     </div>

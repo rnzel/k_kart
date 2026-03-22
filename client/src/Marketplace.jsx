@@ -137,8 +137,31 @@ function Marketplace() {
         navigate('/dashboard?section=messages');
     };
 
+    // Initial loading state - show Navbar and StickySearchBar like SearchPage
+    const isInitialLoad = loading && shopsLoading && shops.length === 0 && products.length === 0;
     
-    return ( 
+    if (isInitialLoad) {
+        return (
+            <div>
+                <Navbar />
+                <StickySearchBar 
+                    onCartClick={handleCartClick}
+                    onMessagesClick={handleMessagesClick}
+                />
+                <div className="container py-5">
+                    <div className="d-flex justify-content-center align-items-center py-5">
+                        <div className="spinner-border text-primary" role="status">
+                            <span className="visually-hidden">Loading...</span>
+                        </div>
+                        <p className="ms-3 mb-0">Loading marketplace...</p>
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
+    
+    return (
         <div>
             <Toast 
                 show={toast.show} 
