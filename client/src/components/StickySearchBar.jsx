@@ -401,7 +401,7 @@ function StickySearchBar({
 
         return (
             <div 
-                className="position-absolute w-100 rounded border border-black bg-white shadow-lg"
+                className="position-absolute w-100 rounded border border-black bg-white"
                 style={{ 
                     zIndex: 1050,
                     left: 0,

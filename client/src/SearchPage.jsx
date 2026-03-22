@@ -1,12 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
-import { FiSearch, FiFilter, FiArrowLeft } from 'react-icons/fi';
-import { searchAPI } from './utils/api';
+import { FiSearch, FiArrowUp, FiArrowDown } from 'react-icons/fi';
+import { searchAPI, cartAPI } from './utils/api';
 import { saveRecentSearch } from './utils/searchUtils';
 import StickySearchBar from './components/StickySearchBar';
 import ProductCard from './components/ProductCard';
-import ShopCard from './components/ShopCard';
 import Navbar from './components/Navbar';
+import Toast from './components/Toast';
 import './SearchPage.css';
 
 const SearchPage = () => {
@@ -28,14 +28,14 @@ const SearchPage = () => {
     });
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState(null);
-    const [activeTab, setActiveTab] = useState('products');
+    
+    // Sorting state
     const [sortBy, setSortBy] = useState('relevance');
-    const [showPricesDropdown, setShowPricesDropdown] = useState(true);
-    const [filters, setFilters] = useState({
-        priceRange: [0, 10000],
-        categories: [],
-        shops: []
-    });
+    const [priceSortOrder, setPriceSortOrder] = useState('asc');
+    
+    // Cart state
+    const [addingProducts, setAddingProducts] = useState({});
+    const [toast, setToast] = useState({ show: false, message: "" });
     
     // Track the last searched query to prevent duplicate searches
     const lastSearchedQuery = useRef('');
@@ -51,6 +51,13 @@ const SearchPage = () => {
         }
     }, [searchQuery]);
 
+    // Re-run search when sort option changes
+    useEffect(() => {
+        if (searchQuery) {
+            performSearch(searchQuery);
+        }
+    }, [sortBy, priceSortOrder]);
+
     const performSearch = async (query) => {
         if (!query.trim()) return;
         
@@ -61,8 +68,15 @@ const SearchPage = () => {
         setError(null);
         
         try {
-            console.log('Performing search for:', query);
-            const response = await searchAPI.searchProducts(query);
+            console.log('Performing search for:', query, 'with sort:', sortBy, priceSortOrder);
+            
+            // Determine the actual sort parameter to send
+            let sortParam = sortBy;
+            if (sortBy === 'price') {
+                sortParam = priceSortOrder === 'asc' ? 'price_asc' : 'price_desc';
+            }
+            
+            const response = await searchAPI.searchProducts(query, 1, 12, sortParam);
             console.log('Search response:', response);
             
             if (response.success) {
@@ -79,8 +93,6 @@ const SearchPage = () => {
     };
 
     const handleSearch = (newQuery) => {
-        // Don't navigate immediately - just update local input
-        // Navigation will happen on Enter key or form submit
         setInputValue(newQuery);
     };
 
@@ -91,59 +103,27 @@ const SearchPage = () => {
         }
     };
 
-    const handleBack = () => {
-        navigate(-1);
+    // Handle sort option change
+    const handleSortChange = (newSort) => {
+        setSortBy(newSort);
     };
 
-    const getFilteredResults = () => {
-        const results = searchResults[activeTab] || [];
+    // Add to cart function
+    const addToCart = async (product) => {
+        setAddingProducts(prev => ({ ...prev, [product._id]: true }));
         
-        // Apply filters based on active tab
-        return results.filter(item => {
-            // Price filter for products
-            if (activeTab === 'products' && item.productPrice) {
-                const price = item.productPrice;
-                if (price < filters.priceRange[0] || price > filters.priceRange[1]) {
-                    return false;
-                }
-            }
-            
-            // Category filter
-            if (filters.categories.length > 0) {
-                if (activeTab === 'products' && item.category) {
-                    if (!filters.categories.includes(item.category)) return false;
-                }
-                if (activeTab === 'shops' && item.categories) {
-                    if (!item.categories.some(cat => filters.categories.includes(cat))) return false;
-                }
-            }
-            
-            return true;
-        });
+        try {
+            await cartAPI.addToCart(product._id, 1);
+            setToast({ show: true, message: `${product.productName} added to cart!` });
+        } catch (err) {
+            console.error('Failed to add to cart:', err);
+            setToast({ show: true, message: err.response?.data?.message || 'Failed to add to cart' });
+        } finally {
+            setAddingProducts(prev => ({ ...prev, [product._id]: false }));
+        }
     };
 
-    const getSortedResults = () => {
-        const results = getFilteredResults();
-        
-        return [...results].sort((a, b) => {
-            switch (sortBy) {
-                case 'price-low':
-                    return (a.productPrice || 0) - (b.productPrice || 0);
-                case 'price-high':
-                    return (b.productPrice || 0) - (a.productPrice || 0);
-                case 'name':
-                    return (a.name || a.shopName || '').localeCompare(b.name || b.shopName || '');
-                case 'newest':
-                    return new Date(b.createdAt || b.updatedAt || 0) - new Date(a.createdAt || a.updatedAt || 0);
-                default:
-                    return 0;
-            }
-        });
-    };
-
-    const sortedResults = getSortedResults();
-
-    // Loading state - show Navbar and StickySearchBar like ShopPage
+    // Loading state
     if (isLoading) {
         return (
             <div>
@@ -179,6 +159,13 @@ const SearchPage = () => {
 
     return (
         <div className="search-page">
+            <Toast 
+                show={toast.show} 
+                message={toast.message} 
+                type="success"
+                onClose={() => setToast({ ...toast, show: false })} 
+            />
+            
             {/* Navbar - hide when loading */}
             {!isLoading && <Navbar />}
             
@@ -214,40 +201,60 @@ const SearchPage = () => {
                             Search Results for "<span className='text-primary'>{searchQuery}</span>"
                         </h2>
                     </div>
-                    <div className="d-flex flex-wrap gap-3 align-items-center">
-                        <div className='text-muted'>
-                            Sort by
-                        </div>
-                        {/* Sort Options */}
-                        <div>
-                            <button 
-                                className={`btn ${sortBy === 'relevance' ? 'btn-primary' : 'btn-outline-secondary'}`}
-                                onClick={() => setSortBy('relevance')}
-                            >
-                                Relevance
-                            </button>
+                    
+                    {/* Sort Options */}
+                    <div className="d-flex flex-wrap gap-2 align-items-center">
+                        <span className='text-muted fw-medium me-1'>Sort by:</span>
+                        
+                        {/* Relevance Button */}
+                        <button 
+                            className={`btn btn-sm ${sortBy === 'relevance' ? 'btn-primary' : 'btn-outline-secondary'}`}
+                            onClick={() => handleSortChange('relevance')}
+                        >
+                            Relevance
+                        </button>
 
+                        {/* Latest Button */}
+                        <button 
+                            className={`btn btn-sm ${sortBy === 'latest' ? 'btn-primary' : 'btn-outline-secondary'}`}
+                            onClick={() => handleSortChange('latest')}
+                        >
+                            Latest
+                        </button>
+
+                        {/* Price Dropdown */}
+                        <div className="btn-group">
                             <button 
-                                className={`btn ${sortBy === 'newest' ? 'btn-primary' : 'btn-outline-secondary'}`}
-                                onClick={() => setSortBy('newest')}
-                            >
-                                Latest
-                            </button>
-                        </div>
-                        <div className="dropdown">
-                            <button 
-                                className="btn btn-outline-secondary dropdown-toggle"
+                                className={`btn btn-sm ${sortBy === 'price' ? 'btn-primary' : 'btn-outline-secondary'} dropdown-toggle`}
                                 type="button"
                                 data-bs-toggle="dropdown"
+                                aria-expanded="false"
                             >
-                                {sortBy === 'relevance' ? 'Prices' : 
-                                        sortBy === 'price-low' ? 'Price: Low to High' :
-                                        sortBy === 'price-high' ? 'Price: High to Low' :
-                                        'Prices'}
+                                Price
                             </button>
-                            <ul className="dropdown-menu">
-                                <li><button className="dropdown-item" onClick={() => setSortBy('price-low')}>Price: Low to High</button></li>
-                                <li><button className="dropdown-item" onClick={() => setSortBy('price-high')}>Price: High to Low</button></li>
+                            <ul className="dropdown-menu dropdown-menu-end">
+                                <li>
+                                    <button 
+                                        className={`dropdown-item ${sortBy === 'price' && priceSortOrder === 'asc' ? 'active' : ''}`}
+                                        onClick={() => {
+                                            handleSortChange('price');
+                                            setPriceSortOrder('asc');
+                                        }}
+                                    >
+                                        Price: Low to High
+                                    </button>
+                                </li>
+                                <li>
+                                    <button 
+                                        className={`dropdown-item ${sortBy === 'price' && priceSortOrder === 'desc' ? 'active' : ''}`}
+                                        onClick={() => {
+                                            handleSortChange('price');
+                                            setPriceSortOrder('desc');
+                                        }}
+                                    >
+                                        Price: High to Low
+                                    </button>
+                                </li>
                             </ul>
                         </div>
                     </div>
@@ -260,33 +267,21 @@ const SearchPage = () => {
                     </div>
                 )}
 
-                {/* Loading State */}
-                {isLoading && (
-                    <div className="text-center py-5">
-                        <div className="spinner-border text-primary" role="status">
-                            <span className="visually-hidden">Loading...</span>
-                        </div>
-                        <p className="mt-3">Searching for "{searchQuery}"...</p>
-                    </div>
-                )}
-
                 {/* Search Results */}
                 {!isLoading && !error && (
                     <div className="search-results">
-                        {/* Products Only Section */}
                         <div className="mb-5">
                             
                             {(searchResults.products && searchResults.products.length > 0) ? (
                                 <>
                                     <div className="row g-3">
                                         {searchResults.products.map((product) => (
-                                            <div key={product._id}>
-                                                <ProductCard 
-                                                    product={product}
-                                                    showShopInfo={true}
-                                                    showCategory={true}
-                                                />
-                                            </div>
+                                            <ProductCard 
+                                                key={product._id} 
+                                                product={product}
+                                                onAddToCart={addToCart}
+                                                isAddingToCart={addingProducts[product._id] || false}
+                                            />
                                         ))}
                                     </div>
                                     

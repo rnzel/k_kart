@@ -317,8 +317,7 @@
 
 /* Dropdown Styles */
 .dropdown-menu {
-    border: 1px solid #e9ecef;
-    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    border: 1px solid black;
 }
 
 .dropdown-item:hover {

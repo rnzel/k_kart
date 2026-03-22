@@ -461,10 +461,10 @@ export const searchAPI = {
   },
 
   // Get search results (for main search results page)
-  searchProducts: async (query, page = 1, limit = 12) => {
+  searchProducts: async (query, page = 1, limit = 12, sort = 'relevance') => {
     try {
       const response = await api.get('/api/search/products', { 
-        params: { q: query, page, limit } 
+        params: { q: query, page, limit, sort } 
       });
       return {
         success: true,
