@@ -24,6 +24,7 @@ function Auth() {
     const [studentIdPicture, setStudentIdPicture] = useState(null);
     const [successMessage, setSuccessMessage] = useState('');
     const [error, setError] = useState('');
+    const [passwordError, setPasswordError] = useState('');
     
     const [loading, setLoading] = useState(false);
     
@@ -166,6 +167,30 @@ function Auth() {
         }
     };
 
+    // Handle password input with real-time validation
+    const handlePasswordChange = (e) => {
+        const newPassword = e.target.value;
+        setPassword(newPassword);
+        
+        // Clear password error when user starts typing
+        if (passwordError) {
+            setPasswordError('');
+        }
+    };
+
+    // Handle confirm password input with real-time validation
+    const handleConfirmPasswordChange = (e) => {
+        const newConfirmPassword = e.target.value;
+        setConfirmPassword(newConfirmPassword);
+        
+        // Real-time password match validation
+        if (newConfirmPassword && password !== newConfirmPassword) {
+            setPasswordError('Passwords do not match');
+        } else if (newConfirmPassword && password === newConfirmPassword) {
+            setPasswordError('');
+        }
+    };
+
     return (
         <div className="d-flex justify-content-center align-items-center vh-100">
             <div className="bg-white p-4 rounded w-100 w-md-50 w-lg-25 border border-black" style={{ maxWidth: '345px' }}>
@@ -211,11 +236,12 @@ function Auth() {
                             <input type="email" className="form-control" id="email" placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} required/>
                         </div>
                         <div className="mb-3">
-                            <input type="password" className="form-control" id="password" placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} required/>
+                            <input type="password" className="form-control" id="password" placeholder="Password" value={password} onChange={handlePasswordChange} required/>
                         </div>
                         <div className="mb-3">
-                            <input type="password" className="form-control" id="confirmPassword" placeholder="Confirm Password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} required/>
+                            <input type="password" className="form-control" id="confirmPassword" placeholder="Confirm Password" value={confirmPassword} onChange={handleConfirmPasswordChange} required/>
                         </div>
+                        {passwordError && <div className="alert alert-danger py-2 mb-3 small">{passwordError}</div>}
                         {error && <div className="alert alert-danger py-2 mb-3 small">{error}</div>}
                         <div className="mb-3">
                             <p className="small">Account Type</p>

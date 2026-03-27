@@ -14,6 +14,11 @@ export default function MyProfileSection() {
         lastName: "",
         email: ""
     });
+    const [initialUser, setInitialUser] = React.useState({
+        firstName: "",
+        lastName: "",
+        email: ""
+    });
 
     const [passwordData, setPasswordData] = React.useState({
         currentPassword: "",
@@ -42,7 +47,23 @@ export default function MyProfileSection() {
                 headers: { Authorization: `Bearer ${token}` }
             });
             const userData = response.data;
-            setUser(userData);
+            
+            console.log("Fetched user data:", userData); // Debug log
+            
+            // Set both current and initial user data
+            // Handle different possible response structures
+            const userObj = userData.data || userData; // API returns { success: true, data: user } or just the user object
+            
+            setUser({
+                firstName: userObj.firstName || "",
+                lastName: userObj.lastName || "",
+                email: userObj.email || ""
+            });
+            setInitialUser({
+                firstName: userObj.firstName || "",
+                lastName: userObj.lastName || "",
+                email: userObj.email || ""
+            });
         } catch (err) {
             console.error("Error fetching profile:", err);
             setError(err.response?.data?.error?.message || "Failed to load profile data");
@@ -111,8 +132,18 @@ export default function MyProfileSection() {
     const handlePasswordChange = async (e) => {
         e.preventDefault();
         
-        if (passwordData.newPassword !== passwordData.confirmPassword) {
-            setMessage({ type: "danger", text: "New passwords do not match!" });
+        // Clear previous messages
+        setMessage({ type: "", text: "" });
+        
+        // Validate current password is provided
+        if (!passwordData.currentPassword.trim()) {
+            setMessage({ type: "danger", text: "Current password is required!" });
+            return;
+        }
+
+        // Validate new password
+        if (!passwordData.newPassword.trim()) {
+            setMessage({ type: "danger", text: "New password is required!" });
             return;
         }
 
@@ -121,8 +152,25 @@ export default function MyProfileSection() {
             return;
         }
 
+        // Validate password contains at least one letter and one number
+        if (!/^(?=.*[a-zA-Z])(?=.*\d)/.test(passwordData.newPassword)) {
+            setMessage({ type: "danger", text: "Password must contain at least one letter and one number!" });
+            return;
+        }
+
+        // Validate password confirmation
+        if (passwordData.newPassword !== passwordData.confirmPassword) {
+            setMessage({ type: "danger", text: "New passwords do not match!" });
+            return;
+        }
+
+        // Check if new password is different from current password
+        if (passwordData.currentPassword === passwordData.newPassword) {
+            setMessage({ type: "danger", text: "New password must be different from current password!" });
+            return;
+        }
+
         setLoading(true);
-        setMessage({ type: "", text: "" });
 
         try {
             const token = localStorage.getItem("token");
@@ -137,7 +185,14 @@ export default function MyProfileSection() {
             setPasswordData({ currentPassword: "", newPassword: "", confirmPassword: "" });
             setMessage({ type: "success", text: "Password changed successfully!" });
         } catch (err) {
-            setMessage({ type: "danger", text: err.response?.data?.error?.message || "Error changing password" });
+            // Handle specific error messages
+            if (err.response?.data?.error?.code === 'INVALID_PASSWORD') {
+                setMessage({ type: "danger", text: "Current password do not match your password" });
+            } else if (err.response?.data?.error?.message) {
+                setMessage({ type: "danger", text: err.response.data.error.message });
+            } else {
+                setMessage({ type: "danger", text: "Current password do not match your password" });
+            }
         } finally {
             setLoading(false);
         }
@@ -148,7 +203,31 @@ export default function MyProfileSection() {
     };
 
     const handlePasswordInputChange = (e) => {
-        setPasswordData({ ...passwordData, [e.target.name]: e.target.value });
+        const { name, value } = e.target;
+        setPasswordData({ ...passwordData, [name]: value });
+    };
+
+    // Password validation helper functions
+    const isPasswordValid = (password) => {
+        return password.length >= 6 && /^(?=.*[a-zA-Z])(?=.*\d)/.test(password);
+    };
+
+    const getPasswordStrength = (password) => {
+        if (!password) return { level: 0, text: '', color: '' };
+        
+        const hasLetters = /[a-zA-Z]/.test(password);
+        const hasNumbers = /\d/.test(password);
+        const lengthValid = password.length >= 6;
+        
+        if (lengthValid && hasLetters && hasNumbers) {
+            return { level: 3, text: 'Strong', color: 'success' };
+        } else if (lengthValid && (hasLetters || hasNumbers)) {
+            return { level: 2, text: 'Medium', color: 'warning' };
+        } else if (password.length > 0) {
+            return { level: 1, text: 'Weak', color: 'danger' };
+        }
+        
+        return { level: 0, text: '', color: '' };
     };
 
     const getStatusBadge = (status) => {

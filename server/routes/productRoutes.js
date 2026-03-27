@@ -3,6 +3,8 @@ const router = express.Router()
 const { addProduct, getMyProducts, updateProduct, deleteProduct, getAllProducts, getProductById } = require("../controllers/productController")
 const { authenticateToken, requireSellerVerified } = require("../middleware/auth")
 const { upload } = require("../config/multerStorage")
+const { validateProduct, handleValidationErrors } = require('../middleware/inputValidation')
+const PerformanceService = require('../services/performance')
 
 // Middleware to handle multer errors
 const handleUpload = (fieldName, maxCount) => {
@@ -32,10 +34,24 @@ router.get("/my-products", authenticateToken, requireSellerVerified, getMyProduc
 router.get("/:id", getProductById)
 
 // Route to create a new product (verified sellers only)
-router.post("/", authenticateToken, requireSellerVerified, handleUpload("productImages", 3), addProduct)
+router.post("/", 
+  authenticateToken, 
+  requireSellerVerified, 
+  validateProduct,
+  handleValidationErrors,
+  handleUpload("productImages", 3), 
+  addProduct
+)
 
 // Route to update a product (verified sellers only)
-router.put("/update-product/:id", authenticateToken, requireSellerVerified, handleUpload("productImages", 3), updateProduct)
+router.put("/update-product/:id", 
+  authenticateToken, 
+  requireSellerVerified, 
+  validateProduct,
+  handleValidationErrors,
+  handleUpload("productImages", 3), 
+  updateProduct
+)
 
 // Route to delete a product (verified sellers only)
 router.delete("/delete-product/:id", authenticateToken, requireSellerVerified, deleteProduct)

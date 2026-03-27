@@ -4,6 +4,17 @@ const rateLimit = require('express-rate-limit')
 const User = require('../models/User')
 const bcrypt = require('bcryptjs')
 const jwt = require('jsonwebtoken')
+const RoleManagementService = require('../services/roleManagement')
+
+// Import new security middleware
+const { 
+  validateUserRegistration, 
+  validateUserLogin, 
+  validateUserProfile, 
+  validatePasswordChange,
+  handleValidationErrors 
+} = require('../middleware/inputValidation')
+const { authenticateToken, requireAuth } = require('../middleware/auth')
 
 // ============================================
 // Rate Limiter for Login Route
@@ -17,44 +28,24 @@ const loginLimiter = rateLimit({
   legacyHeaders: false,
 })
 
-// Register
-router.post('/register', async (req, res) => {
-  try {
-    const { firstName, lastName, email, password, role, studentIdPicture } = req.body
-    
-    // For seller registration, keep role as buyer but set sellerStatus to pending
-    let userRole = role || 'buyer'
-    let sellerStatus = null
-    
-    if (role === 'seller') {
-      userRole = 'buyer' // Keep as buyer until approved
-      sellerStatus = 'pending'
+// Register with enhanced security
+router.post('/register', 
+  validateUserRegistration, 
+  handleValidationErrors,
+  async (req, res) => {
+    try {
+      const result = await RoleManagementService.registerUser(req.body);
+      res.status(201).json(result);
+    } catch (err) {
+      console.error('Registration error:', err);
+      res.status(err.statusCode || 500).json({ 
+        success: false,
+        message: err.message || 'Registration failed',
+        ...(process.env.NODE_ENV === 'development' && { error: err })
+      });
     }
-    
-    const userData = {
-      firstName,
-      lastName,
-      email,
-      password,
-      role: userRole,
-      sellerStatus: sellerStatus,
-      studentIdPicture: studentIdPicture
-    }
-    
-    const user = await User.create(userData)
-
-    const userResponse = user.toObject()
-    delete userResponse.password
-    res.status(201).json({ 
-      message: userRole === 'buyer' && sellerStatus === 'pending' 
-        ? 'Seller application submitted successfully. Please wait for admin approval.'
-        : 'User registered successfully',
-      user: userResponse
-    })
-  } catch (err) {
-    res.status(400).json({ error: err.message })
   }
-})
+)
 
 // Check if email exists
 router.post('/check-email', async (req, res) => {
@@ -67,138 +58,207 @@ router.post('/check-email', async (req, res) => {
   }
 })
 
-// Login - with rate limiting (5 requests per 15 minutes)
-router.post('/login', loginLimiter, async (req, res) => {
-  try {
-    const { email, password } = req.body
-    
-    const user = await User.findOne({ email })
-    if (!user) {
-      return res.status(401).json({ error: 'Invalid email or password' })
-    }
-    
-    // Compare hashed password
-    const isMatch = await bcrypt.compare(password, user.password)
-    if (!isMatch) {
-      return res.status(401).json({ error: 'Invalid email or password' })
-    }
-    
-    // Generate JWT token with sellerStatus
-    const token = jwt.sign(
-      { 
-        userId: user.id, 
-        role: user.role, 
-        isVerified: user.isVerified,
-        sellerStatus: user.sellerStatus 
-      },
-      process.env.JWT_SECRET,
-      { expiresIn: '7d' }
-    )
-    
-    res.json({ 
-      message: 'Login successful',
-      token,
-      user: {
-        id: user._id,
-        firstName: user.firstName,
-        lastName: user.lastName,
-        email: user.email,
-        role: user.role,
-        isVerified: user.isVerified,
-        sellerStatus: user.sellerStatus
+// Login - with rate limiting (5 requests per 15 minutes) and enhanced security
+router.post('/login', 
+  loginLimiter,
+  validateUserLogin,
+  handleValidationErrors,
+  async (req, res) => {
+    try {
+      const { email, password } = req.body
+      
+      const user = await User.findOne({ email })
+      if (!user) {
+        return res.status(401).json({ 
+          success: false,
+          message: 'Invalid email or password',
+          code: 'INVALID_CREDENTIALS'
+        })
       }
-    })
-  } catch (err) {
-    res.status(500).json({ error: err.message })
+      
+      // Check if user account is deleted
+      if (user.isDeleted) {
+        return res.status(403).json({
+          success: false,
+          message: 'Account has been deactivated',
+          code: 'ACCOUNT_DEACTIVATED'
+        })
+      }
+      
+      // Compare hashed password
+      const isMatch = await bcrypt.compare(password, user.password)
+      if (!isMatch) {
+        return res.status(401).json({ 
+          success: false,
+          message: 'Invalid email or password',
+          code: 'INVALID_CREDENTIALS'
+        })
+      }
+      
+      // Generate JWT token with enhanced payload
+      const token = jwt.sign(
+        { 
+          userId: user.id, 
+          role: user.role, 
+          isVerified: user.isVerified,
+          sellerStatus: user.sellerStatus,
+          email: user.email
+        },
+        process.env.JWT_SECRET,
+        { expiresIn: '7d' }
+      )
+      
+      res.json({ 
+        success: true,
+        message: 'Login successful',
+        token,
+        user: {
+          id: user._id,
+          firstName: user.firstName,
+          lastName: user.lastName,
+          email: user.email,
+          role: user.role,
+          isVerified: user.isVerified,
+          sellerStatus: user.sellerStatus
+        }
+      })
+    } catch (err) {
+      console.error('Login error:', err);
+      res.status(500).json({ 
+        success: false,
+        message: 'Login failed',
+        ...(process.env.NODE_ENV === 'development' && { error: err })
+      })
+    }
   }
-})
+)
 
-// Get current user profile
-router.get('/me', async (req, res) => {
-  try {
-    const token = req.headers.authorization?.split(' ')[1]
-    if (!token) {
-      return res.status(401).json({ error: 'No token provided' })
+// Get current user profile with authentication
+router.get('/me', 
+  authenticateToken,
+  async (req, res) => {
+    try {
+      const user = await User.findById(req.user.userId).select('-password')
+      
+      if (!user) {
+        return res.status(404).json({ 
+          success: false,
+          message: 'User not found',
+          code: 'USER_NOT_FOUND'
+        })
+      }
+
+      res.json({
+        success: true,
+        data: user
+      })
+    } catch (err) {
+      console.error('Profile fetch error:', err);
+      res.status(500).json({ 
+        success: false,
+        message: 'Failed to fetch profile',
+        ...(process.env.NODE_ENV === 'development' && { error: err })
+      })
     }
-
-    const decoded = jwt.verify(token, process.env.JWT_SECRET)
-    const user = await User.findById(decoded.userId).select('-password')
-    
-    if (!user) {
-      return res.status(404).json({ error: 'User not found' })
-    }
-
-    res.json(user)
-  } catch (err) {
-    res.status(401).json({ error: 'Invalid token' })
   }
-})
+)
 
-// Update user profile
-router.put('/profile', async (req, res) => {
-  try {
-    const token = req.headers.authorization?.split(' ')[1]
-    if (!token) {
-      return res.status(401).json({ error: 'No token provided' })
+// Update user profile with validation
+router.put('/profile', 
+  authenticateToken,
+  validateUserProfile,
+  handleValidationErrors,
+  async (req, res) => {
+    try {
+      const result = await RoleManagementService.updateUserProfile(req.user.userId, req.body);
+      res.json(result);
+    } catch (err) {
+      console.error('Profile update error:', err);
+      res.status(err.statusCode || 500).json({ 
+        success: false,
+        message: err.message || 'Profile update failed',
+        ...(process.env.NODE_ENV === 'development' && { error: err })
+      })
     }
-
-    const decoded = jwt.verify(token, process.env.JWT_SECRET)
-    const { firstName, lastName, email } = req.body
-
-    // Check if email is already taken by another user
-    const existingUser = await User.findOne({ email, _id: { $ne: decoded.userId } })
-    if (existingUser) {
-      return res.status(400).json({ error: { message: 'Email already in use' } })
-    }
-
-    const user = await User.findByIdAndUpdate(
-      decoded.userId,
-      { firstName, lastName, email },
-      { new: true }
-    ).select('-password')
-
-    if (!user) {
-      return res.status(404).json({ error: 'User not found' })
-    }
-
-    res.json({ message: 'Profile updated successfully', user })
-  } catch (err) {
-    res.status(500).json({ error: err.message })
   }
-})
+)
 
-// Change password
-router.put('/change-password', async (req, res) => {
-  try {
-    const token = req.headers.authorization?.split(' ')[1]
-    if (!token) {
-      return res.status(401).json({ error: 'No token provided' })
+// Change password with validation
+router.put('/change-password', 
+  authenticateToken,
+  validatePasswordChange,
+  handleValidationErrors,
+  async (req, res) => {
+    try {
+      const result = await RoleManagementService.changePassword(req.user.userId, req.body.currentPassword, req.body.newPassword);
+      res.json(result);
+    } catch (err) {
+      console.error('Password change error:', err);
+      res.status(err.statusCode || 500).json({ 
+        success: false,
+        message: err.message || 'Password change failed',
+        ...(process.env.NODE_ENV === 'development' && { error: err })
+      })
     }
-
-    const decoded = jwt.verify(token, process.env.JWT_SECRET)
-    const { currentPassword, newPassword } = req.body
-
-    const user = await User.findById(decoded.userId)
-    if (!user) {
-      return res.status(404).json({ error: 'User not found' })
-    }
-
-    // Verify current password
-    const isMatch = await bcrypt.compare(currentPassword, user.password)
-    if (!isMatch) {
-      return res.status(401).json({ error: { message: 'Current password is incorrect' } })
-    }
-
-    // Hash new password
-    const salt = await bcrypt.genSalt(10)
-    const hashedPassword = await bcrypt.hash(newPassword, salt)
-
-    await User.findByIdAndUpdate(decoded.userId, { password: hashedPassword })
-
-    res.json({ message: 'Password changed successfully' })
-  } catch (err) {
-    res.status(500).json({ error: err.message })
   }
-})
+)
+
+// Validate current password for real-time validation
+router.post('/validate-password', 
+  authenticateToken,
+  async (req, res) => {
+    try {
+      const { currentPassword } = req.body;
+      
+      if (!currentPassword) {
+        return res.status(400).json({ 
+          success: false,
+          message: 'Current password is required',
+          code: 'MISSING_PASSWORD'
+        });
+      }
+      
+      const user = await User.findById(req.user.userId);
+      if (!user) {
+        return res.status(404).json({ 
+          success: false,
+          message: 'User not found',
+          code: 'USER_NOT_FOUND'
+        });
+      }
+      
+      // Check if user account is deleted
+      if (user.isDeleted) {
+        return res.status(403).json({
+          success: false,
+          message: 'Account has been deactivated',
+          code: 'ACCOUNT_DEACTIVATED'
+        });
+      }
+      
+      // Compare hashed password
+      const isMatch = await bcrypt.compare(currentPassword, user.password);
+      if (!isMatch) {
+        return res.status(401).json({ 
+          success: false,
+          message: 'Current password is incorrect',
+          code: 'INVALID_PASSWORD'
+        });
+      }
+      
+      res.json({
+        success: true,
+        message: 'Current password is valid'
+      });
+    } catch (err) {
+      console.error('Password validation error:', err);
+      res.status(500).json({ 
+        success: false,
+        message: 'Password validation failed',
+        ...(process.env.NODE_ENV === 'development' && { error: err })
+      });
+    }
+  }
+)
 
 module.exports = router

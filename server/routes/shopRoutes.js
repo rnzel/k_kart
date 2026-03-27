@@ -3,6 +3,8 @@ const router = express.Router()
 const { createShop, getMyShop, getAllShops, updateShop, deleteShop, getShopById, getProductsByShopId } = require('../controllers/shopController')
 const { authenticateToken, requireSellerVerified } = require('../middleware/auth')
 const { upload } = require('../config/multerStorage')
+const { validateShop, handleValidationErrors } = require('../middleware/inputValidation')
+const PerformanceService = require('../services/performance')
 
 // Middleware to handle multer errors
 const handleUpload = (fieldName) => {
@@ -26,13 +28,27 @@ const handleUpload = (fieldName) => {
 router.get('/', getAllShops)
 
 // Route to create a new shop (verified sellers only)
-router.post('/', authenticateToken, requireSellerVerified, handleUpload('shopLogo'), createShop)
+router.post('/', 
+  authenticateToken, 
+  requireSellerVerified, 
+  validateShop,
+  handleValidationErrors,
+  handleUpload('shopLogo'), 
+  createShop
+)
 
 // Route to get current user's shop (verified sellers only)
 router.get('/my-shop', authenticateToken, requireSellerVerified, getMyShop)
 
 // Route to update shop details (verified sellers only)
-router.put('/update-shop', authenticateToken, requireSellerVerified, handleUpload('shopLogo'), updateShop)
+router.put('/update-shop', 
+  authenticateToken, 
+  requireSellerVerified, 
+  validateShop,
+  handleValidationErrors,
+  handleUpload('shopLogo'), 
+  updateShop
+)
 
 // Route to delete current user's shop (verified sellers only)
 router.delete('/delete-shop', authenticateToken, requireSellerVerified, deleteShop)
