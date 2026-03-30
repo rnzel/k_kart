@@ -128,6 +128,7 @@ function MyShopSection() {
 
         setError("");
 
+        // Validate required fields
         if (!shopName.trim()) {
             setError("Shop name is required.");
             return;
@@ -138,10 +139,26 @@ function MyShopSection() {
             return;
         }
 
+        if (!shopContact.trim()) {
+            setError("Shop contact is required.");
+            return;
+        }
+
+        if (!shopLocation.trim()) {
+            setError("Shop location is required.");
+            return;
+        }
+
         // Validate Philippine phone number format
         const phoneRegex = /^(?:\+63|0)\d{10}$/;
         if (!phoneRegex.test(shopContact.trim())) {
             setError("Invalid Philippine phone number format. Use +63XXXXXXXXXX or 09XXXXXXXXX");
+            return;
+        }
+
+        // Validate email format if provided (only if not empty)
+        if (shopEmail.trim() !== '' && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(shopEmail.trim())) {
+            setError("Invalid email format.");
             return;
         }
 
@@ -163,13 +180,9 @@ function MyShopSection() {
         }
 
         if (isEditing && shopData && shopData._id) {
-            // Update existing shop - use ID from shopData
+            // Update existing shop - use correct endpoint without ID
             api
-                .put(`/api/shops/update-shop`, formData, {
-                    headers: {
-                        "Content-Type": "multipart/form-data",
-                    },
-                })
+                .put(`/api/shops/update-shop`, formData)
                 .then((response) => {
                     setShopData(response.data);
                     setShowForm(false);
@@ -186,13 +199,24 @@ function MyShopSection() {
                 });
         } else {
             // Create new shop
+            console.log('Creating shop with data:', {
+                shopName,
+                shopDescription,
+                shopContact,
+                shopEmail,
+                shopLocation,
+                hasImage: !!shopImage,
+                imagePreview: !!imagePreview
+            });
+
             api
                 .post("/api/shops", formData, {
                     headers: {
                         "Content-Type": "multipart/form-data",
                     },
                 })
-                .then(() => {
+                .then((response) => {
+                    console.log('Shop created successfully:', response.data);
                     api
                         .get("/api/shops/my-shop")
                         .then((res) => {
@@ -207,7 +231,33 @@ function MyShopSection() {
                     setLoading(false);
                 })
                 .catch((err) => {
-                    setError(err.response?.data?.message || "Error creating shop");
+                    console.error('Shop creation error details:', {
+                        status: err.response?.status,
+                        statusText: err.response?.statusText,
+                        message: err.response?.data?.message,
+                        errors: err.response?.data?.errors,
+                        data: err.response?.data
+                    });
+                    
+                    // Provide more specific error messages
+                    if (err.response?.status === 400) {
+                        if (err.response?.data?.errors && err.response.data.errors.length > 0) {
+                            const firstError = err.response.data.errors[0];
+                            setError(`${firstError.message} (${firstError.field || 'Field'})`);
+                        } else if (err.response?.data?.message) {
+                            setError(err.response.data.message);
+                        } else {
+                            setError("Invalid data. Please check all required fields.");
+                        }
+                    } else if (err.response?.status === 401) {
+                        setError("Authentication failed. Please log in again.");
+                    } else if (err.response?.status === 403) {
+                        setError("Access denied. You must be an approved seller to create a shop.");
+                    } else if (err.response?.status === 409) {
+                        setError("You already have a shop. You can only have one shop per account.");
+                    } else {
+                        setError(err.response?.data?.message || "Error creating shop. Please try again.");
+                    }
                     setLoading(false);
                 });
         }

@@ -31,9 +31,9 @@ router.get('/', getAllShops)
 router.post('/', 
   authenticateToken, 
   requireSellerVerified, 
+  handleUpload('shopLogo'),
   validateShop,
   handleValidationErrors,
-  handleUpload('shopLogo'), 
   createShop
 )
 
@@ -44,9 +44,9 @@ router.get('/my-shop', authenticateToken, requireSellerVerified, getMyShop)
 router.put('/update-shop', 
   authenticateToken, 
   requireSellerVerified, 
+  handleUpload('shopLogo'),
   validateShop,
   handleValidationErrors,
-  handleUpload('shopLogo'), 
   updateShop
 )
 

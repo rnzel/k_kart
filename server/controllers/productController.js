@@ -27,54 +27,122 @@ const updateProduct = async (req, res) => {
     const { id } = req.params;
 
     if (!owner) {
-      return res.status(401).json({ message: "Unauthorized" });
+      return res.status(401).json({ 
+        success: false,
+        message: "Unauthorized" 
+      });
     }
 
     const shop = await Shop.findOne({ owner });
     if (!shop) {
-      return res.status(404).json({ message: "Shop not found" });
+      return res.status(404).json({ 
+        success: false,
+        message: "Shop not found" 
+      });
     }
 
     const product = await Product.findById(id);
     if (!product) {
-      return res.status(404).json({ message: "Product not found" });
+      return res.status(404).json({ 
+        success: false,
+        message: "Product not found" 
+      });
     }
 
     if (product.shop.toString() !== shop._id.toString()) {
-      return res.status(403).json({ message: "Not authorized to update this product" });
+      return res.status(403).json({ 
+        success: false,
+        message: "Not authorized to update this product" 
+      });
     }
 
     const { productName, productDescription, productPrice, productStock, featuredImageIndex } = req.body;
 
+    // Validate and update product name
     if (productName !== undefined) {
-      if (!productName.trim()) {
-        return res.status(400).json({ message: "Product name cannot be empty" });
+      const trimmedName = productName.trim();
+      if (!trimmedName) {
+        return res.status(400).json({ 
+          success: false,
+          message: "Product name cannot be empty",
+          errors: [{ field: 'productName', message: 'Product name is required' }]
+        });
       }
-      product.productName = productName.trim();
+      if (trimmedName.length < 2 || trimmedName.length > 50) {
+        return res.status(400).json({ 
+          success: false,
+          message: "Product name must be between 2 and 50 characters",
+          errors: [{ field: 'productName', message: 'Product name must be between 2 and 50 characters' }]
+        });
+      }
+      product.productName = trimmedName;
     }
 
+    // Update product description
     if (productDescription !== undefined) {
-      product.productDescription = productDescription.trim();
+      const trimmedDesc = productDescription.trim();
+      if (trimmedDesc.length > 500) {
+        return res.status(400).json({ 
+          success: false,
+          message: "Product description cannot exceed 500 characters",
+          errors: [{ field: 'productDescription', message: 'Description too long' }]
+        });
+      }
+      product.productDescription = trimmedDesc;
     }
 
+    // Validate and update product price
     if (productPrice !== undefined) {
-      if (Number.isNaN(Number(productPrice))) {
-        return res.status(400).json({ message: "Invalid product price" });
+      const price = Number(productPrice);
+      if (Number.isNaN(price)) {
+        return res.status(400).json({ 
+          success: false,
+          message: "Invalid product price",
+          errors: [{ field: 'productPrice', message: 'Price must be a valid number' }]
+        });
       }
-      if (Number(productPrice) < 0) {
-        return res.status(400).json({ message: "Product price cannot be negative" });
+      if (price < 0) {
+        return res.status(400).json({ 
+          success: false,
+          message: "Product price cannot be negative",
+          errors: [{ field: 'productPrice', message: 'Price cannot be negative' }]
+        });
       }
-      product.productPrice = Number(productPrice);
+      if (price > 999999) {
+        return res.status(400).json({ 
+          success: false,
+          message: "Product price cannot exceed 999,999",
+          errors: [{ field: 'productPrice', message: 'Price too high' }]
+        });
+      }
+      product.productPrice = price;
     }
 
+    // Validate and update product stock
     if (productStock !== undefined) {
-      if (Number.isNaN(Number(productStock))) {
-        return res.status(400).json({ message: "Invalid product stock" });
+      const stock = Number(productStock);
+      if (Number.isNaN(stock)) {
+        return res.status(400).json({ 
+          success: false,
+          message: "Invalid product stock",
+          errors: [{ field: 'productStock', message: 'Stock must be a valid number' }]
+        });
       }
-      if (Number(productStock) < 0) {
-        return res.status(400).json({ message: "Product stock cannot be negative" });
+      if (stock < 0) {
+        return res.status(400).json({ 
+          success: false,
+          message: "Product stock cannot be negative",
+          errors: [{ field: 'productStock', message: 'Stock cannot be negative' }]
+        });
       }
-      product.productStock = Number(productStock);
+      if (stock > 999999) {
+        return res.status(400).json({ 
+          success: false,
+          message: "Product stock cannot exceed 999,999",
+          errors: [{ field: 'productStock', message: 'Stock too high' }]
+        });
+      }
+      product.productStock = stock;
     }
 
     // ===== IMAGE HANDLING: Preserve existing images, add new ones, enforce 3-image limit =====
@@ -86,75 +154,61 @@ const updateProduct = async (req, res) => {
       ? [...product.productImages] 
       : [];
 
-    // Parse removal/keep directives from form data
-    let keepImages = null;
-    let removeImages = null;
-    let keepImagesProvided = false;  // Track if keepImages was explicitly sent
-
+    // Parse keepImages directive from form data
+    let keepImages = currentImages; // Default to keeping all current images
     if (req.body.keepImages !== undefined) {
-      keepImagesProvided = true;
       try {
-        keepImages = Array.isArray(req.body.keepImages)
+        const parsedKeepImages = Array.isArray(req.body.keepImages)
           ? req.body.keepImages
           : JSON.parse(req.body.keepImages);
-        if (!Array.isArray(keepImages)) {
-          keepImages = [];  // Default to empty array if not a valid array
+        if (Array.isArray(parsedKeepImages)) {
+          keepImages = parsedKeepImages.filter((filename) => currentImages.includes(filename));
         }
       } catch (err) {
-        keepImages = [];
+        // If parsing fails, keep all current images
+        console.warn('Failed to parse keepImages, keeping all current images:', err);
       }
     }
-
-    if (req.body.removeImages) {
-      try {
-        removeImages = Array.isArray(req.body.removeImages)
-          ? req.body.removeImages
-          : JSON.parse(req.body.removeImages);
-        if (!Array.isArray(removeImages)) {
-          removeImages = null;
-        }
-      } catch (err) {
-        removeImages = null;
-      }
-    }
-
-    // Determine which images to keep based on removal/keep directives
-    let imagesToKeep = currentImages;
-
-    if (removeImages && removeImages.length > 0) {
-      // If removeImages provided, keep all EXCEPT those in removeImages
-      imagesToKeep = currentImages.filter((filename) => !removeImages.includes(filename));
-    } else if (keepImagesProvided) {
-      // If keepImages was explicitly sent (even if empty), keep only those in keepImages
-      imagesToKeep = keepImages.filter((filename) => currentImages.includes(filename));
-    }
-    // else: if neither is provided, keep all current images (default behavior)
 
     // Calculate how many new images we can add (max 3 total)
-    const availableSlots = Math.max(0, 3 - imagesToKeep.length);
+    const availableSlots = Math.max(0, 3 - keepImages.length);
     const newImagesToAdd = newImageFilenames.slice(0, availableSlots);
 
     // Determine which images to delete from GridFS
-    const finalImageList = [...imagesToKeep, ...newImagesToAdd];
+    const finalImageList = [...keepImages, ...newImagesToAdd];
     const imagesToDelete = currentImages.filter((filename) => !finalImageList.includes(filename));
 
     // Update product images
     product.productImages = finalImageList;
 
-    // Ensure featuredImageIndex stays valid
-    if (product.productImages.length === 0) {
-      product.featuredImageIndex = 0;
-    } else if (product.featuredImageIndex >= product.productImages.length) {
-      product.featuredImageIndex = 0;
-    }
-
-    // Handle explicit featuredImageIndex update
+    // Validate and update featured image index
+    let newFeaturedIndex = product.featuredImageIndex || 0;
     if (featuredImageIndex !== undefined) {
       const newIndex = Number(featuredImageIndex);
+      if (Number.isNaN(newIndex)) {
+        return res.status(400).json({ 
+          success: false,
+          message: "Invalid featured image index",
+          errors: [{ field: 'featuredImageIndex', message: 'Featured image index must be a valid number' }]
+        });
+      }
       if (newIndex >= 0 && newIndex < product.productImages.length) {
-        product.featuredImageIndex = newIndex;
+        newFeaturedIndex = newIndex;
+      } else if (product.productImages.length > 0) {
+        return res.status(400).json({ 
+          success: false,
+          message: "Featured image index is out of range",
+          errors: [{ field: 'featuredImageIndex', message: 'Index must be between 0 and ' + (product.productImages.length - 1) }]
+        });
       }
     }
+    
+    // Ensure featuredImageIndex stays valid
+    if (product.productImages.length === 0) {
+      newFeaturedIndex = 0;
+    }
+    
+    product.featuredImageIndex = newFeaturedIndex;
 
     // Save product FIRST to ensure data is persisted before deleting old images
     // This prevents data loss if save fails
@@ -166,9 +220,18 @@ const updateProduct = async (req, res) => {
       await deleteFileFromGridFS(filename);
     }
 
-    res.status(200).json(updatedProduct);
+    res.status(200).json({
+      success: true,
+      data: updatedProduct,
+      message: "Product updated successfully"
+    });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error('Error updating product:', error);
+    res.status(500).json({ 
+      success: false,
+      message: "Failed to update product. Please try again.",
+      errors: [{ field: 'server', message: 'Internal server error' }]
+    });
   }
 };
 
@@ -179,21 +242,33 @@ const deleteProduct = async (req, res) => {
     const { id } = req.params;
 
     if (!owner) {
-      return res.status(401).json({ message: "Unauthorized" });
+      return res.status(401).json({ 
+        success: false,
+        message: "Unauthorized" 
+      });
     }
 
     const shop = await Shop.findOne({ owner });
     if (!shop) {
-      return res.status(404).json({ message: "Shop not found" });
+      return res.status(404).json({ 
+        success: false,
+        message: "Shop not found" 
+      });
     }
 
     const product = await Product.findById(id);
     if (!product) {
-      return res.status(404).json({ message: "Product not found" });
+      return res.status(404).json({ 
+        success: false,
+        message: "Product not found" 
+      });
     }
 
     if (product.shop.toString() !== shop._id.toString()) {
-      return res.status(403).json({ message: "Not authorized to delete this product" });
+      return res.status(403).json({ 
+        success: false,
+        message: "Not authorized to delete this product" 
+      });
     }
 
     if (product.productImages && product.productImages.length > 0) {
@@ -203,9 +278,16 @@ const deleteProduct = async (req, res) => {
     }
 
     await Product.findByIdAndDelete(id);
-    res.status(200).json({ message: "Product deleted successfully" });
+    res.status(200).json({
+      success: true,
+      message: "Product deleted successfully"
+    });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error('Error deleting product:', error);
+    res.status(500).json({ 
+      success: false,
+      message: "Failed to delete product. Please try again." 
+    });
   }
 };
 
@@ -215,59 +297,122 @@ const addProduct = async (req, res) => {
     const owner = req.user?.userId;
 
     if (!owner) {
-      return res.status(401).json({ message: "Unauthorized" });
+      return res.status(401).json({ 
+        success: false,
+        message: "Unauthorized" 
+      });
     }
+    
     const { productName, productDescription, productPrice, productStock, featuredImageIndex } = req.body;
+    const files = Array.isArray(req.files) ? req.files : [];
+    const imageFilenames = files.slice(0, 3).map((file) => file.filename);
 
-    if (!productName || !productName.trim()) {
-      return res.status(400).json({ message: "Product name is required" });
+    // Validate product name
+    const trimmedName = productName ? productName.trim() : '';
+    if (!trimmedName) {
+      return res.status(400).json({ 
+        success: false,
+        message: "Product name is required",
+        errors: [{ field: 'productName', message: 'Product name is required' }]
+      });
+    }
+    if (trimmedName.length < 2 || trimmedName.length > 50) {
+      return res.status(400).json({ 
+        success: false,
+        message: "Product name must be between 2 and 50 characters",
+        errors: [{ field: 'productName', message: 'Product name must be between 2 and 50 characters' }]
+      });
     }
 
-    // Validate productPrice
-    if (productPrice === undefined || productPrice === "") {
-      return res.status(400).json({ message: "Product price is required" });
-    }
+    // Validate product price
     const priceNum = Number(productPrice);
     if (Number.isNaN(priceNum)) {
-      return res.status(400).json({ message: "Invalid product price" });
+      return res.status(400).json({ 
+        success: false,
+        message: "Product price is required and must be a valid number",
+        errors: [{ field: 'productPrice', message: 'Product price is required' }]
+      });
     }
     if (priceNum < 0) {
-      return res.status(400).json({ message: "Product price cannot be negative" });
+      return res.status(400).json({ 
+        success: false,
+        message: "Product price cannot be negative",
+        errors: [{ field: 'productPrice', message: 'Price cannot be negative' }]
+      });
+    }
+    if (priceNum > 999999) {
+      return res.status(400).json({ 
+        success: false,
+        message: "Product price cannot exceed 999,999",
+        errors: [{ field: 'productPrice', message: 'Price too high' }]
+      });
     }
 
-    // Validate productStock (allow 0 but not negative)
-    const stockNum = productStock ? Number(productStock) : 0;
-    if (productStock !== undefined && productStock !== "") {
-      if (Number.isNaN(stockNum)) {
-        return res.status(400).json({ message: "Invalid product stock" });
-      }
-      if (stockNum < 0) {
-        return res.status(400).json({ message: "Product stock cannot be negative" });
-      }
+    // Validate product stock
+    const stockNum = productStock !== undefined ? Number(productStock) : 0;
+    if (Number.isNaN(stockNum)) {
+      return res.status(400).json({ 
+        success: false,
+        message: "Product stock must be a valid number",
+        errors: [{ field: 'productStock', message: 'Stock must be a valid number' }]
+      });
+    }
+    if (stockNum < 0) {
+      return res.status(400).json({ 
+        success: false,
+        message: "Product stock cannot be negative",
+        errors: [{ field: 'productStock', message: 'Stock cannot be negative' }]
+      });
+    }
+    if (stockNum > 999999) {
+      return res.status(400).json({ 
+        success: false,
+        message: "Product stock cannot exceed 999,999",
+        errors: [{ field: 'productStock', message: 'Stock too high' }]
+      });
+    }
+
+    // Validate featured image index
+    const featuredIndex = featuredImageIndex !== undefined ? Number(featuredImageIndex) : 0;
+    if (Number.isNaN(featuredIndex)) {
+      return res.status(400).json({ 
+        success: false,
+        message: "Featured image index must be a valid number",
+        errors: [{ field: 'featuredImageIndex', message: 'Featured image index must be a valid number' }]
+      });
     }
 
     const shop = await Shop.findOne({ owner });
     if (!shop) {
-      return res.status(404).json({ message: "Shop not found" });
+      return res.status(404).json({ 
+        success: false,
+        message: "Shop not found" 
+      });
     }
 
-    const files = Array.isArray(req.files) ? req.files : [];
-    const imageFilenames = files.slice(0, 3).map((file) => file.filename);
-
     const newProduct = new Product({
-      productName: productName.trim(),
+      productName: trimmedName,
       productDescription: productDescription ? productDescription.trim() : "",
-      productPrice: Number(productPrice),
-      productStock: productStock ? Number(productStock) : 0,
+      productPrice: priceNum,
+      productStock: stockNum,
       productImages: imageFilenames,
-      featuredImageIndex: featuredImageIndex ? Number(featuredImageIndex) : 0,
+      featuredImageIndex: featuredIndex,
       shop: shop._id,
     });
 
     const savedProduct = await newProduct.save();
-    res.status(201).json(savedProduct);
+    res.status(201).json({
+      success: true,
+      data: savedProduct,
+      message: "Product created successfully"
+    });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error('Error creating product:', error);
+    res.status(500).json({ 
+      success: false,
+      message: "Failed to create product. Please try again.",
+      errors: [{ field: 'server', message: 'Internal server error' }]
+    });
   }
 };
 
@@ -277,18 +422,32 @@ const getMyProducts = async (req, res) => {
     const owner = req.user?.userId;
 
     if (!owner) {
-      return res.status(401).json({ message: "Unauthorized" });
+      return res.status(401).json({ 
+        success: false,
+        message: "Unauthorized" 
+      });
     }
 
     const shop = await Shop.findOne({ owner });
     if (!shop) {
-      return res.status(404).json({ message: "Shop not found" });
+      return res.status(404).json({ 
+        success: false,
+        message: "Shop not found" 
+      });
     }
 
     const products = await Product.find({ shop: shop._id }).sort({ createdAt: -1 });
-    res.status(200).json(products);
+    res.status(200).json({
+      success: true,
+      data: products,
+      message: "Products retrieved successfully"
+    });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error('Error getting my products:', error);
+    res.status(500).json({ 
+      success: false,
+      message: "Failed to retrieve products. Please try again." 
+    });
   }
 };
 
@@ -299,45 +458,19 @@ const getAllProducts = async (req, res) => {
     const limit = parseInt(req.query.limit) || 12;
     const skip = (page - 1) * limit;
 
-    console.log('getAllProducts called with:', { page, limit, skip });
-
-    // First, let's check what products exist in the database
-    const allProductsCount = await Product.countDocuments();
-    const activeProductsCount = await Product.countDocuments({ isDeleted: false });
-    console.log('Database stats:', { allProductsCount, activeProductsCount });
-
-    // Check what shops exist
-    const allShopsCount = await Shop.countDocuments();
-    const activeShopsCount = await Shop.countDocuments({ isDeleted: false });
-    console.log('Shop stats:', { allShopsCount, activeShopsCount });
-
-    // Get all shop IDs that exist and are not deleted (including shops without isDeleted field)
-    const activeShopIds = await Shop.find({ 
+    // Get all shop IDs that exist and are not deleted
+    const activeShops = await Shop.find({ 
       $or: [
         { isDeleted: false },
         { isDeleted: { $exists: false } }
       ]
     }).select('_id').lean();
-    const activeShopIdSet = new Set(activeShopIds.map(s => s._id.toString()));
-    console.log('Active shop IDs:', activeShopIdSet);
-
-    // Get products and their shop IDs
-    const productsWithShopIds = await Product.find({ isDeleted: false })
-      .select('shop')
-      .lean();
-    
-    console.log('Product shop IDs:', productsWithShopIds.map(p => p.shop?.toString()));
-    
-    // Check which products have valid shops
-    const productsWithValidShops = productsWithShopIds.filter(p => 
-      p.shop && activeShopIdSet.has(p.shop.toString())
-    );
-    console.log('Products with valid shops:', productsWithValidShops.length);
+    const activeShopIds = activeShops.map(s => s._id);
 
     // Get products that have active shops
     const products = await Product.find({ 
       isDeleted: false,
-      shop: { $in: Array.from(activeShopIdSet) }
+      shop: { $in: activeShopIds }
     })
       .select('productName productDescription productPrice productStock productImages featuredImageIndex shop createdAt')
       .populate({
@@ -355,43 +488,33 @@ const getAllProducts = async (req, res) => {
       .limit(limit)
       .lean();
 
-    console.log('Raw products from DB:', products.length);
-    console.log('Products details:', products.map(p => ({ 
-      id: p._id, 
-      shop: p.shop?._id, 
-      shopName: p.shop?.shopName,
-      isDeleted: p.isDeleted 
-    })));
-
-    // Filter out products with deleted shops or no shop (shouldn't happen with the query above, but just in case)
+    // Filter out products with deleted shops or no shop
     const validProducts = products.filter(product => product.shop);
-
-    console.log('Valid products after filtering:', validProducts.length);
 
     // Get the actual count of products that would be returned
     const validProductsCount = await Product.countDocuments({ 
       isDeleted: false,
-      shop: { $in: Array.from(activeShopIdSet) }
-    });
-
-    console.log('Final response:', { 
-      productsCount: validProducts.length, 
-      totalCount: validProductsCount,
-      totalPages: Math.ceil(validProductsCount / limit)
+      shop: { $in: activeShopIds }
     });
 
     res.status(200).json({
-      products: validProducts,
+      success: true,
+      data: validProducts,
       pagination: {
         total: validProductsCount,
         page,
         limit,
         totalPages: Math.ceil(validProductsCount / limit)
-      }
+      },
+      message: "Products retrieved successfully"
     });
   } catch (error) {
     console.error('Error in getAllProducts:', error);
-    res.status(500).json({ message: error.message });
+    res.status(500).json({ 
+      success: false,
+      message: "Failed to retrieve products. Please try again.",
+      errors: [{ field: 'server', message: 'Internal server error' }]
+    });
   } 
 };
 
@@ -423,7 +546,8 @@ const getProductById = async (req, res) => {
     console.error('Error getting product:', error);
     res.status(500).json({ 
       success: false,
-      message: 'Failed to get product. Please try again.' 
+      message: 'Failed to get product. Please try again.',
+      errors: [{ field: 'server', message: 'Internal server error' }]
     });
   }
 };
@@ -457,9 +581,94 @@ const getProductStock = async (req, res) => {
     console.error('Error getting product stock:', error);
     res.status(500).json({ 
       success: false,
-      message: 'Failed to get product stock. Please try again.' 
+      message: 'Failed to get product stock. Please try again.',
+      errors: [{ field: 'server', message: 'Internal server error' }]
     });
   }
 };
 
-module.exports = { addProduct, getMyProducts, updateProduct, deleteProduct, getAllProducts, getProductStock, getProductById };
+// Get products by shop ID (public)
+const getProductsByShopId = async (req, res) => {
+  try {
+    const { shopId } = req.params;
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 12;
+    const skip = (page - 1) * limit;
+
+    // Validate shop ID format
+    if (!shopId || !mongoose.Types.ObjectId.isValid(shopId)) {
+      return res.status(400).json({ 
+        success: false,
+        message: 'Invalid shop ID format',
+        errors: [{ field: 'shopId', message: 'Invalid shop ID format' }]
+      });
+    }
+
+    // Check if shop exists and is not deleted
+    const shop = await Shop.findById(shopId);
+    if (!shop) {
+      return res.status(404).json({ 
+        success: false,
+        message: 'Shop not found' 
+      });
+    }
+
+    if (shop.isDeleted) {
+      return res.status(404).json({ 
+        success: false,
+        message: 'Shop not found' 
+      });
+    }
+
+    // Get products for this shop
+    const products = await Product.find({ 
+      shop: shopId,
+      isDeleted: false
+    })
+      .select('productName productDescription productPrice productStock productImages featuredImageIndex shop createdAt')
+      .populate({
+        path: 'shop',
+        select: 'shopName shopLogo shopDescription',
+        match: { 
+          $or: [
+            { isDeleted: false },
+            { isDeleted: { $exists: false } }
+          ]
+        }
+      })
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit)
+      .lean();
+
+    // Filter out products with deleted shops (shouldn't happen with the query above, but just in case)
+    const validProducts = products.filter(product => product.shop);
+
+    // Get the actual count of products that would be returned
+    const validProductsCount = await Product.countDocuments({ 
+      shop: shopId,
+      isDeleted: false
+    });
+
+    res.status(200).json({
+      success: true,
+      data: validProducts,
+      pagination: {
+        total: validProductsCount,
+        page,
+        limit,
+        totalPages: Math.ceil(validProductsCount / limit)
+      },
+      message: "Products retrieved successfully"
+    });
+  } catch (error) {
+    console.error('Error getting products by shop ID:', error);
+    res.status(500).json({ 
+      success: false,
+      message: 'Failed to retrieve products. Please try again.',
+      errors: [{ field: 'server', message: 'Internal server error' }]
+    });
+  }
+};
+
+module.exports = { addProduct, getMyProducts, updateProduct, deleteProduct, getAllProducts, getProductStock, getProductById, getProductsByShopId };

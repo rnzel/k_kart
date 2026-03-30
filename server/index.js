@@ -47,9 +47,9 @@ const corsOptions = {
       'http://localhost:5173',              // Local dev
       'http://localhost:3000',              // Local test
       'https://k-kart-mauve.vercel.app',    // Your actual frontend
-      'https://k-kart-7wpp.onrender.com'    // Your backend
+      'https://k-kart-c3ip.onrender.com'    // Your backend
     ]
-    
+
     if (!origin || allowedOrigins.includes(origin)) {
       callback(null, true)
     } else {
@@ -92,24 +92,32 @@ app.use(express.json({ limit: '10mb' }))
 app.use(express.urlencoded({ extended: true }))
 
 // ============================================
-// Rate Limiting Configuration
-// ============================================
-// Note: Rate limiting is applied only to the login route via authRoutes.js
-// No global rate limiting applied to other routes
-
-// ============================================
 // Image Streaming Route
 // GET /api/images/:filename
 // ============================================
 app.get('/api/images/:filename', async (req, res) => {
   try {
-    if (!isGridFSReady()) {
-      return res.status(503).json({ 
-        message: 'Service temporarily unavailable. Please retry.' 
+    // Wait for GridFS to be ready with retry logic
+    const maxRetries = 3
+    let retryCount = 0
+    let bucket = null
+
+    while (retryCount < maxRetries) {
+      if (isGridFSReady()) {
+        bucket = getGridFSBucket()
+        break
+      }
+      await new Promise(resolve => setTimeout(resolve, 500))
+      retryCount++
+    }
+
+    if (!bucket) {
+      return res.status(503).json({
+        message: 'Service temporarily unavailable. Please retry.',
+        retryAfter: 1
       })
     }
 
-    const bucket = getGridFSBucket()
     const filename = req.params.filename
 
     // Use mongoose.connection.db to access collections
@@ -157,8 +165,8 @@ app.use('/api/search', searchRoutes)
 // Health Check Route
 // ============================================
 app.get('/api/health', (req, res) => {
-  res.json({ 
-    status: 'ok', 
+  res.json({
+    status: 'ok',
     mongodb: mongoose.connection.readyState === 1 ? 'connected' : 'disconnected',
     gridfs: isGridFSReady() ? 'ready' : 'not ready'
   })
@@ -182,84 +190,65 @@ const startServer = async () => {
     await mongoose.connect(process.env.MONGO_URI)
     console.log('Connected to MongoDB')
 
-    const initializeAndStart = () => {
-      console.log('Initializing GridFSBucket...')
-      try {
-        initGridFSBucket()
-        
-        // Create HTTP server and Socket.IO server
-        const httpServer = createServer(app)
-        const io = new Server(httpServer, {
-          cors: {
-            origin: function (origin, callback) {
-              const allowedOrigins = [
-                'http://localhost:5173',              // Local dev
-                'http://localhost:3000',              // Local test
-                'https://k-kart-mauve.vercel.app',    // Your actual frontend
-                'https://k-kart-7wpp.onrender.com'    // Your backend
-              ]
-              
-              if (!origin || allowedOrigins.includes(origin)) {
-                callback(null, true)
-              } else {
-                console.warn(`Socket.IO CORS blocked unauthorized origin: ${origin}`)
-                callback(new Error('Not allowed by CORS'))
-              }
-            },
-            credentials: true
+    // Initialize GridFSBucket before starting the server
+    console.log('Initializing GridFSBucket...')
+    await initGridFSBucket()
+    console.log('GridFSBucket initialized successfully')
+
+    // Create HTTP server and Socket.IO server
+    const httpServer = createServer(app)
+    const io = new Server(httpServer, {
+      cors: {
+        origin: function (origin, callback) {
+          const allowedOrigins = [
+            'http://localhost:5173',              // Local dev
+            'http://localhost:3000',              // Local test
+            'https://k-kart-mauve.vercel.app',    // Your actual frontend
+            'https://k-kart-c3ip.onrender.com'    // Your backend
+          ]
+
+          if (!origin || allowedOrigins.includes(origin)) {
+            callback(null, true)
+          } else {
+            console.warn(`Socket.IO CORS blocked unauthorized origin: ${origin}`)
+            callback(new Error('Not allowed by CORS'))
           }
-        })
-
-        // Socket.IO connection handling
-        io.on('connection', (socket) => {
-          console.log('User connected:', socket.id)
-
-          // Join user room when authenticated
-          socket.on('join-user-room', (userId) => {
-            socket.join(`user:${userId}`)
-            console.log(`User ${userId} joined room user:${userId}`)
-          })
-
-          // Join shop room for sellers
-          socket.on('join-shop-room', (shopId) => {
-            socket.join(`shop:${shopId}`)
-            console.log(`Shop ${shopId} joined room shop:${shopId}`)
-          })
-
-          socket.on('disconnect', () => {
-            console.log('User disconnected:', socket.id)
-          })
-        })
-
-        // Make io available to routes
-        app.set('io', io)
-
-        httpServer.listen(PORT, () => {
-          console.log(`Server is running on port ${PORT}`)
-          console.log(`Socket.IO server is running on port ${PORT}`)
-        })
-      } catch (err) {
-        console.error('Failed to initialize GridFSBucket:', err)
-        process.exit(1)
+        },
+        credentials: true
       }
-    }
+    })
 
-    if (mongoose.connection.readyState === 1) {
-      console.log('Connection already open, initializing...')
-      initializeAndStart()
-    } else {
-      mongoose.connection.once('open', () => {
-        console.log('MongoDB connection open, initializing GridFSBucket...')
-        initializeAndStart()
+    // Socket.IO connection handling
+    io.on('connection', (socket) => {
+      console.log('User connected:', socket.id)
+
+      // Join user room when authenticated
+      socket.on('join-user-room', (userId) => {
+        socket.join(`user:${userId}`)
+        console.log(`User ${userId} joined room user:${userId}`)
       })
-    }
 
-    mongoose.connection.on('error', (err) => {
-      console.error('MongoDB connection error:', err)
+      // Join shop room for sellers
+      socket.on('join-shop-room', (shopId) => {
+        socket.join(`shop:${shopId}`)
+        console.log(`Shop ${shopId} joined room shop:${shopId}`)
+      })
+
+      socket.on('disconnect', () => {
+        console.log('User disconnected:', socket.id)
+      })
+    })
+
+    // Make io available to routes
+    app.set('io', io)
+
+    httpServer.listen(PORT, () => {
+      console.log(`Server is running on port ${PORT}`)
+      console.log(`Socket.IO server is running on port ${PORT}`)
     })
 
   } catch (err) {
-    console.error('Error connecting to MongoDB:', err)
+    console.error('Error connecting to MongoDB or initializing GridFS:', err)
     process.exit(1)
   }
 }

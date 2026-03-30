@@ -1,6 +1,7 @@
 const Order = require('../models/Order');
 const Cart = require('../models/Cart');
 const Product = require('../models/Product');
+const Shop = require('../models/Shop');
 const { generateOrderNumber } = require('../utils/orderNumberGenerator');
 
 // Create orders from cart items (checkout)
@@ -67,73 +68,125 @@ const createOrder = async (req, res) => {
     
     try {
       await session.withTransaction(async () => {
-        // Get user's cart with session
-        const cart = await Cart.findOne({ user: userId }).session(session)
-          .populate('items.product', 'productStock productName productPrice isDeleted')
-          .populate('items.shop', 'shopName owner isDeleted');
-
-        if (!cart || cart.items.length === 0) {
-          throw new Error('Cart is empty');
-        }
-
-        // Filter cart items to only include selected items
-        const selectedCartItems = cart.items.filter(item => 
-          selectedItems.includes(item._id.toString())
+        // Check if this is a direct checkout (product IDs) or cart checkout (cart item IDs)
+        const isDirectCheckout = selectedItems.some(item => 
+          item.productId && typeof item.productId === 'string'
         );
 
-        if (selectedCartItems.length === 0) {
-          throw new Error('No selected items found in cart');
+        let itemsToProcess = [];
+
+        if (isDirectCheckout) {
+          // Direct checkout: items are { productId, quantity }
+          itemsToProcess = selectedItems;
+        } else {
+          // Cart checkout: items are cart item IDs
+          // Get user's cart with session
+          const cart = await Cart.findOne({ user: userId }).session(session)
+            .populate('items.product', 'productStock productName productPrice isDeleted')
+            .populate('items.shop', 'shopName owner isDeleted');
+
+          if (!cart || cart.items.length === 0) {
+            throw new Error('Cart is empty');
+          }
+
+          // Filter cart items to only include selected items
+          itemsToProcess = cart.items.filter(item => 
+            selectedItems.includes(item._id.toString())
+          );
+
+          if (itemsToProcess.length === 0) {
+            throw new Error('No selected items found in cart');
+          }
         }
 
-        // Group selected cart items by seller
+        // Group items by seller
         const itemsBySeller = {};
         const validationErrors = [];
 
         // First pass: Validate all items and reserve stock
-        for (const item of selectedCartItems) {
+        for (const item of itemsToProcess) {
+          let product, shop, quantity, productName;
+
+          if (isDirectCheckout) {
+            // Direct checkout format
+            const productData = await Product.findById(item.productId).session(session);
+            const shopData = await Shop.findOne({ _id: productData.shop }).session(session);
+            
+            if (!productData) {
+              validationErrors.push(`Product not found: ${item.productId}`);
+              continue;
+            }
+
+            if (productData.isDeleted) {
+              validationErrors.push(`Cannot order deleted product: ${item.productId}`);
+              continue;
+            }
+
+            if (!shopData) {
+              validationErrors.push(`Shop not found for product: ${item.productId}`);
+              continue;
+            }
+
+            if (shopData.isDeleted) {
+              validationErrors.push(`Cannot order from deleted shop: ${shopData.shopName}`);
+              continue;
+            }
+
+            product = productData;
+            shop = shopData;
+            quantity = item.quantity;
+            productName = productData.productName;
+          } else {
+            // Cart item format
+            product = item.product;
+            shop = item.shop;
+            quantity = item.quantity;
+            productName = item.productName;
+          }
+
           // Validate product and shop
-          if (!item.product) {
-            validationErrors.push(`Product not found for item: ${item.productName}`);
+          if (!product) {
+            validationErrors.push(`Product not found for item: ${productName}`);
             continue;
           }
 
-          if (item.product.isDeleted) {
-            validationErrors.push(`Cannot order deleted product: ${item.productName}`);
+          if (product.isDeleted) {
+            validationErrors.push(`Cannot order deleted product: ${productName}`);
             continue;
           }
 
-          if (!item.shop) {
-            validationErrors.push(`Shop not found for product: ${item.productName}`);
+          if (!shop) {
+            validationErrors.push(`Shop not found for product: ${productName}`);
             continue;
           }
 
-          if (item.shop.isDeleted) {
-            validationErrors.push(`Cannot order from deleted shop: ${item.shop.shopName}`);
+          if (shop.isDeleted) {
+            validationErrors.push(`Cannot order from deleted shop: ${shop.shopName}`);
             continue;
           }
 
           // Validate stock with additional safety margin
-          if (item.product.productStock < item.quantity) {
-            validationErrors.push(`Insufficient stock for ${item.productName}. Available: ${item.product.productStock}, Requested: ${item.quantity}`);
+          if (product.productStock < quantity) {
+            validationErrors.push(`Insufficient stock for ${productName}. Available: ${product.productStock}, Requested: ${quantity}`);
             continue;
           }
 
           // Use the shop owner's user ID as the seller ID
-          const sellerId = item.shop.owner.toString();
+          const sellerId = shop.owner.toString();
           if (!itemsBySeller[sellerId]) {
             itemsBySeller[sellerId] = {
-              seller: item.shop.owner,
-              sellerName: item.shop.shopName,
+              seller: shop.owner,
+              sellerName: shop.shopName,
               items: []
             };
           }
           itemsBySeller[sellerId].items.push({
-            product: item.product._id,
-            productName: item.product.productName,
-            quantity: item.quantity,
-            price: item.product.productPrice,
-            seller: item.shop.owner,
-            sellerName: item.shop.shopName,
+            product: product._id,
+            productName: productName,
+            quantity: quantity,
+            price: product.productPrice,
+            seller: shop.owner,
+            sellerName: shop.shopName,
             contactNumber: contactNumber.trim()
           });
         }
@@ -143,7 +196,7 @@ const createOrder = async (req, res) => {
         }
 
         if (Object.keys(itemsBySeller).length === 0) {
-          throw new Error('No valid items found in cart');
+          throw new Error('No valid items found');
         }
 
         const createdOrders = [];
@@ -202,32 +255,36 @@ const createOrder = async (req, res) => {
           }
         }
 
-        // Third pass: Remove purchased items from cart
-        if (createdOrders.length > 0) {
-          console.log('Attempting to remove purchased items from cart...');
-          console.log('Selected items to remove:', selectedItems);
-          console.log('Cart items before removal:', cart.items.map(item => ({
-            id: item._id.toString(),
-            productId: item.product ? item.product.toString() : 'null',
-            quantity: item.quantity
-          })));
+        // Third pass: Remove purchased items from cart (only for cart checkout)
+        if (!isDirectCheckout && createdOrders.length > 0) {
+          // Get cart again to ensure we have the latest version
+          const cart = await Cart.findOne({ user: userId }).session(session);
+          if (cart) {
+            console.log('Attempting to remove purchased items from cart...');
+            console.log('Selected items to remove:', selectedItems);
+            console.log('Cart items before removal:', cart.items.map(item => ({
+              id: item._id.toString(),
+              productId: item.product ? item.product.toString() : 'null',
+              quantity: item.quantity
+            })));
 
-          // Simple approach: Remove all selected items from cart since they were successfully purchased
-          const originalCartLength = cart.items.length;
-          cart.items = cart.items.filter(item => {
-            const shouldRemove = selectedItems.includes(item._id.toString());
-            console.log(`Cart item ${item._id}: selected=${shouldRemove}`);
-            return !shouldRemove;
-          });
-          
-          const itemsRemoved = originalCartLength - cart.items.length;
-          console.log(`Items removed from cart: ${itemsRemoved} (original: ${originalCartLength}, remaining: ${cart.items.length})`);
-          
-          if (itemsRemoved > 0) {
-            await cart.save({ session });
-            console.log(`Successfully removed ${itemsRemoved} purchased items from cart`);
-          } else {
-            console.log('No items were removed from cart - this indicates a matching issue');
+            // Remove all selected items from cart since they were successfully purchased
+            const originalCartLength = cart.items.length;
+            cart.items = cart.items.filter(item => {
+              const shouldRemove = selectedItems.includes(item._id.toString());
+              console.log(`Cart item ${item._id}: selected=${shouldRemove}`);
+              return !shouldRemove;
+            });
+            
+            const itemsRemoved = originalCartLength - cart.items.length;
+            console.log(`Items removed from cart: ${itemsRemoved} (original: ${originalCartLength}, remaining: ${cart.items.length})`);
+            
+            if (itemsRemoved > 0) {
+              await cart.save({ session });
+              console.log(`Successfully removed ${itemsRemoved} purchased items from cart`);
+            } else {
+              console.log('No items were removed from cart - this indicates a matching issue');
+            }
           }
         }
 

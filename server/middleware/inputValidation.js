@@ -142,10 +142,9 @@ const validateShop = [
     .customSanitizer(sanitizeString),
 
   body('shopDescription')
-    .optional()
     .trim()
-    .isLength({ max: 500 })
-    .withMessage('Shop description cannot exceed 500 characters')
+    .isLength({ min: 2, max: 500 })
+    .withMessage('Shop description must be between 2 and 500 characters')
     .customSanitizer(sanitizeString),
 
   body('shopContact')
@@ -155,7 +154,7 @@ const validateShop = [
     .customSanitizer(sanitizePhoneNumber),
 
   body('shopEmail')
-    .optional()
+    .optional({ checkFalsy: true })
     .isEmail()
     .withMessage('Please provide a valid email address')
     .customSanitizer(sanitizeEmail),

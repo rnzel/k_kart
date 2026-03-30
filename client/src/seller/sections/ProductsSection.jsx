@@ -1,7 +1,7 @@
 import React from "react";
 import { FiBox } from "react-icons/fi";
 import { FaStar } from "react-icons/fa";
-import api from "../../utils/api";
+import { productAPI } from "../../utils/api";
 import { getImageUrl } from "../../utils/imageUrl.js";
 import DangerModal from "../../components/DangerModal.jsx";
 
@@ -28,6 +28,83 @@ function ProductsSection() {
 
     const token = localStorage.getItem("token");
 
+    // Helper function to validate product data
+    const validateProductData = () => {
+        if (!productName.trim()) {
+            return "Product name is required.";
+        }
+
+        if (!productPrice || Number.isNaN(Number(productPrice)) || Number(productPrice) < 0) {
+            return "Valid product price is required (must be a non-negative number).";
+        }
+
+        if (!productStock || Number.isNaN(Number(productStock)) || Number(productStock) < 0) {
+            return "Valid product stock is required (must be a non-negative number).";
+        }
+
+        if (featuredImageIndex < 0 || featuredImageIndex >= (productImagePreviews.length || 1)) {
+            return "Invalid featured image selection.";
+        }
+
+        return null;
+    };
+
+    // Helper function to validate image files
+    const validateImageFiles = (files) => {
+        if (!files || files.length === 0) {
+            return "No files selected.";
+        }
+
+        for (const file of files) {
+            // Check file type
+            if (!file.type.startsWith('image/')) {
+                return "Only image files are allowed.";
+            }
+
+            // Check file size (5MB limit)
+            if (file.size > 5 * 1024 * 1024) {
+                return "File size too large. Maximum allowed size is 5MB.";
+            }
+
+            // Check filename for security
+            if (file.name.includes('..') || file.name.includes('/') || file.name.includes('\\')) {
+                return "Invalid filename. Please use a different file name.";
+            }
+        }
+
+        return null;
+    };
+
+    // Helper function to fix featured image index when removing images
+    const fixFeaturedImageIndex = (newPreviewLength, removedIndex) => {
+        if (newPreviewLength === 0) {
+            setFeaturedImageIndex(0);
+        } else if (removedIndex === featuredImageIndex) {
+            // Removed the featured image, select the first one
+            setFeaturedImageIndex(0);
+        } else if (removedIndex < featuredImageIndex) {
+            // Removed an image before the featured one, adjust index
+            setFeaturedImageIndex(featuredImageIndex - 1);
+        }
+        // If removedIndex > featuredImageIndex, no change needed
+    };
+
+    // Helper function to reset form state
+    const resetFormState = () => {
+        setShowForm(false);
+        setIsEditing(false);
+        setEditingProductId(null);
+        setProductName("");
+        setProductDescription("");
+        setProductPrice("");
+        setProductStock("");
+        setProductImages([]);
+        setProductImagePreviews([]);
+        setProductImageNames([]);
+        setKeepImages([]);
+        setError("");
+    };
+
     // Cleanup object URLs to prevent memory leaks
     React.useEffect(() => {
         return () => {
@@ -44,11 +121,15 @@ function ProductsSection() {
                 return;
             }
             try {
-                const response = await api.get("/api/products/my-products");
-                // Ensure response.data is an array
-                const productsData = Array.isArray(response.data) ? response.data : [];
-                setProducts(productsData);
-                setProductExists(productsData.length > 0);
+                const result = await productAPI.getMyProducts();
+                if (result.success) {
+                    setProducts(result.data || []);
+                    setProductExists((result.data || []).length > 0);
+                } else {
+                    console.error("Error fetching products:", result.message);
+                    setProducts([]);
+                    setProductExists(false);
+                }
             } catch (err) {
                 console.error("Error fetching products", err);
                 setProducts([]);
@@ -92,6 +173,13 @@ function ProductsSection() {
     const handleImageChange = (e) => {
         const files = Array.from(e.target.files || []);
         
+        // Validate files before processing
+        const validationError = validateImageFiles(files);
+        if (validationError) {
+            setError(validationError);
+            return;
+        }
+        
         const remainingSlots = 3 - productImages.length;
         
         if (remainingSlots <= 0) {
@@ -122,52 +210,34 @@ function ProductsSection() {
     };
 
     const handleRemoveImage = (index) => {
-        // Check if this is an existing image (productImageNames[index] is empty) or a new one
-        const isExistingImage = productImageNames[index] === "";
-        
-        if (isExistingImage && isEditing) {
-            // Remove from keepImages - marks it for deletion on server
+        // Handle keepImages for existing images during edit mode
+        if (isEditing && productImageNames[index] === "") {
+            // This is an existing image, remove from keepImages
             const removedImageName = productImagePreviews[index];
-            const filenameFromUrl = removedImageName.split('/').pop(); // Extract filename from URL
+            const filenameFromUrl = removedImageName.split('/').pop();
             setKeepImages(prev => prev.filter(img => img !== filenameFromUrl));
         }
         
+        // Remove from state arrays
         const newImages = productImages.filter((_, i) => i !== index);
         const newPreviews = productImagePreviews.filter((_, i) => i !== index);
         const newNames = productImageNames.filter((_, i) => i !== index);
+        
         setProductImages(newImages);
         setProductImagePreviews(newPreviews);
         setProductImageNames(newNames);
         
-        // Fix: Ensure featuredImageIndex stays valid after removing images
-        if (newPreviews.length === 0) {
-            // No images left, reset to 0
-            setFeaturedImageIndex(0);
-        } else if (index === featuredImageIndex) {
-            // Removed the featured image, select the first one
-            setFeaturedImageIndex(0);
-        } else if (index < featuredImageIndex) {
-            // Removed an image before the featured one, adjust index
-            setFeaturedImageIndex(featuredImageIndex - 1);
-        }
-        // If index > featuredImageIndex, no change needed
+        // Fix featuredImageIndex to stay valid
+        fixFeaturedImageIndex(newPreviews.length, index);
     };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
 
-        if (!productName.trim()) {
-            setError("Product name is required.");
-            return;
-        }
-
-        if (!productPrice || Number.isNaN(Number(productPrice))) {
-            setError("Valid product price is required.");
-            return;
-        }
-
-        if (!productStock || Number.isNaN(Number(productStock))) {
-            setError("Valid product stock is required.");
+        // Enhanced validation
+        const validationError = validateProductData();
+        if (validationError) {
+            setError(validationError);
             return;
         }
 
@@ -180,36 +250,27 @@ function ProductsSection() {
         setError("");
 
         try {
-            const formData = new FormData();
-            formData.append("productName", productName.trim());
-            formData.append("productDescription", productDescription.trim());
-            formData.append("productPrice", productPrice);
-            formData.append("productStock", productStock);
-            formData.append("featuredImageIndex", featuredImageIndex);
+            const productData = {
+                productName: productName.trim(),
+                productDescription: productDescription.trim(),
+                productPrice: Number(productPrice),
+                productStock: Number(productStock),
+                featuredImageIndex: featuredImageIndex
+            };
 
-            productImages.forEach((file) => {
-                formData.append("productImages", file);
-            });
-            // NOTE: keepImages is NOT sent on product create - only on update
+            const result = await productAPI.createProduct(productData, productImages);
 
-            const response = await api.post("/api/products", formData, {
-                headers: {
-                    "Content-Type": "multipart/form-data",
-                },
-            });
-
-            setProducts((prev) => [response.data, ...prev]);
-            setProductExists(true);
-            setShowForm(false);
-            setProductName("");
-            setProductDescription("");
-            setProductPrice("");
-            setProductStock("");
-            setProductImages([]);
-            setProductImagePreviews([]);
-            setProductImageNames([]);
+            if (result.success) {
+                setProducts((prev) => [result.data, ...prev]);
+                setProductExists(true);
+                setShowForm(false);
+                resetFormState();
+            } else {
+                setError(result.message);
+            }
         } catch (err) {
-            setError(err.response?.data?.message || "Error adding product.");
+            console.error('Error adding product:', err);
+            setError(err.response?.data?.message || "Error adding product. Please try again.");
         } finally {
             setLoading(false);
         }
@@ -227,7 +288,10 @@ function ProductsSection() {
         setProductImagePreviews(imagesArray.map(img => getImageUrl(img)));
         setProductImageNames(imagesArray.map(() => ""));
         
-        setFeaturedImageIndex(product.featuredImageIndex || 0);
+        // Validate featuredImageIndex bounds
+        const validFeaturedIndex = Math.max(0, Math.min(imagesArray.length - 1, product.featuredImageIndex || 0));
+        setFeaturedImageIndex(validFeaturedIndex);
+        
         setIsEditing(true);
         setEditingProductId(product._id);
         setShowForm(true);
@@ -250,16 +314,21 @@ function ProductsSection() {
         setError("");
 
         try {
-            await api.delete(`/api/products/delete-product/${deletingProductId}`);
+            const result = await productAPI.deleteProduct(deletingProductId);
 
-            setProducts(products.filter(p => p._id !== deletingProductId));
-            setShowDeleteModal(false);
-            setDeletingProductId(null);
-            
-            const updatedProducts = products.filter(p => p._id !== deletingProductId);
-            setProductExists(updatedProducts.length > 0);
+            if (result.success) {
+                setProducts(products.filter(p => p._id !== deletingProductId));
+                setShowDeleteModal(false);
+                setDeletingProductId(null);
+                
+                const updatedProducts = products.filter(p => p._id !== deletingProductId);
+                setProductExists(updatedProducts.length > 0);
+            } else {
+                setError(result.message);
+            }
         } catch (err) {
-            setError(err.response?.data?.message || "Error deleting product.");
+            console.error('Error deleting product:', err);
+            setError(err.response?.data?.message || "Error deleting product. Please try again.");
         } finally {
             setLoading(false);
         }
@@ -268,18 +337,10 @@ function ProductsSection() {
     const handleUpdateSubmit = async (e) => {
         e.preventDefault();
 
-        if (!productName.trim()) {
-            setError("Product name is required.");
-            return;
-        }
-
-        if (!productPrice || Number.isNaN(Number(productPrice))) {
-            setError("Valid product price is required.");
-            return;
-        }
-
-        if (!productStock || Number.isNaN(Number(productStock))) {
-            setError("Valid product stock is required.");
+        // Enhanced validation
+        const validationError = validateProductData();
+        if (validationError) {
+            setError(validationError);
             return;
         }
 
@@ -292,37 +353,26 @@ function ProductsSection() {
         setError("");
 
         try {
-            const formData = new FormData();
-            formData.append("productName", productName.trim());
-            formData.append("productDescription", productDescription.trim());
-            formData.append("productPrice", productPrice);
-            formData.append("productStock", productStock);
-            formData.append("featuredImageIndex", featuredImageIndex);
-            formData.append("keepImages", JSON.stringify(keepImages));
+            const productData = {
+                productName: productName.trim(),
+                productDescription: productDescription.trim(),
+                productPrice: Number(productPrice),
+                productStock: Number(productStock),
+                featuredImageIndex: featuredImageIndex
+            };
 
-            productImages.forEach((file) => {
-                formData.append("productImages", file);
-            });
+            const result = await productAPI.updateProduct(editingProductId, productData, productImages, keepImages);
 
-            const response = await api.put(`/api/products/update-product/${editingProductId}`, formData, {
-                headers: {
-                    "Content-Type": "multipart/form-data",
-                },
-            });
-
-            setProducts(products.map(p => p._id === editingProductId ? response.data : p));
-            setShowForm(false);
-            setIsEditing(false);
-            setEditingProductId(null);
-            setProductName("");
-            setProductDescription("");
-            setProductPrice("");
-            setProductStock("");
-            setProductImages([]);
-            setProductImagePreviews([]);
-            setProductImageNames([]);
+            if (result.success) {
+                setProducts(products.map(p => p._id === editingProductId ? result.data : p));
+                setShowForm(false);
+                resetFormState();
+            } else {
+                setError(result.message);
+            }
         } catch (err) {
-            setError(err.response?.data?.message || "Error updating product.");
+            console.error('Error updating product:', err);
+            setError(err.response?.data?.message || "Error updating product. Please try again.");
         } finally {
             setLoading(false);
         }
@@ -580,7 +630,7 @@ function ProductsSection() {
                             {productImageNames.length > 0 ? (
                                 <div className="d-flex flex-wrap gap-2 align-items-center">
                                     {productImageNames.map((name, index) => (
-                                        <div key={index} className="d-flex align-items-center gap-1 border border-primary rounded p-2">
+                                        <div key={`image-name-${index}`} className="d-flex align-items-center gap-1 border border-primary rounded p-2">
                                             <span style={{ fontSize: "14px" }}>
                                             {name.length > 10 ? `${name.slice(0, 12)}....` : name}
                                         </span>
@@ -600,6 +650,7 @@ function ProductsSection() {
                                     ))}
                                     {productImageNames.length < 3 && (
                                         <div
+                                            key="add-image-button"
                                             className="dashed-border"
                                             style={{
                                                 width: "80px",

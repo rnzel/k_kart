@@ -86,6 +86,39 @@ const handleApiError = (error) => {
   }
 }
 
+// Enhanced error handler specifically for product operations
+const handleProductApiError = (error) => {
+  const baseError = handleApiError(error);
+  
+  // Add specific error messages for product operations
+  if (error.response) {
+    const { status, data } = error.response;
+    
+    // Check for specific validation errors
+    if (status === 400 && data && data.errors) {
+      const fieldErrors = data.errors.map(err => `${err.field}: ${err.message}`).join(', ');
+      return {
+        ...baseError,
+        message: `Validation Error: ${fieldErrors}`,
+        errors: data.errors
+      };
+    }
+    
+    // Check for file upload errors
+    if (status === 400 && data && data.message) {
+      const message = data.message.toLowerCase();
+      if (message.includes('file') || message.includes('image')) {
+        return {
+          ...baseError,
+          message: `Image Upload Error: ${data.message}`
+        };
+      }
+    }
+  }
+  
+  return baseError;
+}
+
 // Stock validation helper
 const validateStockBeforeAction = async (productId, quantity = 1) => {
   try {
@@ -336,23 +369,6 @@ export const shopAPI = {
   }
 }
 
-// Product API methods with enhanced error handling
-export const productAPI = {
-  // Get all products (admin only)
-  getAllProducts: async (page = 1, limit = 10) => {
-    try {
-      const response = await api.get('/api/admin/products', { params: { page, limit } })
-      return {
-        success: true,
-        data: response.data.data || response.data,
-        pagination: response.data.pagination,
-        message: 'Products retrieved successfully'
-      }
-    } catch (error) {
-      return handleApiError(error)
-    }
-  }
-}
 
 // Order API methods with enhanced error handling
 export const orderAPI = {
@@ -470,6 +486,169 @@ export const searchAPI = {
         success: true,
         data: response.data.data || response.data,
         message: 'Search results retrieved successfully'
+      };
+    } catch (error) {
+      return handleApiError(error);
+    }
+  }
+};
+
+// Product-specific API methods with enhanced error handling
+export const productAPI = {
+  // Create a new product
+  createProduct: async (productData, images) => {
+    try {
+      const formData = new FormData();
+      
+      // Add product data
+      Object.keys(productData).forEach(key => {
+        if (productData[key] !== null && productData[key] !== undefined) {
+          formData.append(key, productData[key]);
+        }
+      });
+      
+      // Add images
+      if (images && images.length > 0) {
+        images.forEach((file) => {
+          formData.append('productImages', file);
+        });
+      }
+      
+      const response = await api.post('/api/products', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data'
+        }
+      });
+      
+      return {
+        success: true,
+        data: response.data.data || response.data,
+        message: response.data.message || 'Product created successfully'
+      };
+    } catch (error) {
+      return handleProductApiError(error);
+    }
+  },
+  
+  // Update an existing product
+  updateProduct: async (productId, productData, images, keepImages = []) => {
+    try {
+      const formData = new FormData();
+      
+      // Add product data
+      Object.keys(productData).forEach(key => {
+        if (productData[key] !== null && productData[key] !== undefined) {
+          formData.append(key, productData[key]);
+        }
+      });
+      
+      // Add images
+      if (images && images.length > 0) {
+        images.forEach((file) => {
+          formData.append('productImages', file);
+        });
+      }
+      
+      // Add keepImages array
+      formData.append('keepImages', JSON.stringify(keepImages));
+      
+      const response = await api.put(`/api/products/update-product/${productId}`, formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data'
+        }
+      });
+      
+      return {
+        success: true,
+        data: response.data.data || response.data,
+        message: response.data.message || 'Product updated successfully'
+      };
+    } catch (error) {
+      return handleProductApiError(error);
+    }
+  },
+  
+  // Delete a product
+  deleteProduct: async (productId) => {
+    try {
+      const response = await api.delete(`/api/products/delete-product/${productId}`);
+      return {
+        success: true,
+        data: response.data.data || response.data,
+        message: response.data.message || 'Product deleted successfully'
+      };
+    } catch (error) {
+      return handleProductApiError(error);
+    }
+  },
+  
+  // Get my products (seller)
+  getMyProducts: async (page = 1, limit = 10) => {
+    try {
+      const response = await api.get('/api/products/my-products', { params: { page, limit } });
+      return {
+        success: true,
+        data: response.data.data || response.data,
+        pagination: response.data.pagination,
+        message: 'Products retrieved successfully'
+      };
+    } catch (error) {
+      return handleApiError(error);
+    }
+  },
+  
+  // Get all products (public)
+  getAllProducts: async (page = 1, limit = 12) => {
+    try {
+      const response = await api.get('/api/products', { params: { page, limit } });
+      return {
+        success: true,
+        data: response.data.data || response.data,
+        pagination: response.data.pagination,
+        message: 'Products retrieved successfully'
+      };
+    } catch (error) {
+      return handleApiError(error);
+    }
+  },
+  
+  // Get product by ID
+  getProductById: async (productId) => {
+    try {
+      const response = await api.get(`/api/products/${productId}`);
+      return {
+        success: true,
+        data: response.data.data || response.data,
+        message: 'Product retrieved successfully'
+      };
+    } catch (error) {
+      return handleApiError(error);
+    }
+  },
+  
+  // Get products by shop ID
+  getProductsByShopId: async (shopId, page = 1, limit = 12) => {
+    try {
+      const response = await api.get(`/api/products/shop/${shopId}`, { params: { page, limit } });
+      return {
+        success: true,
+        data: response.data.data || response.data,
+        pagination: response.data.pagination,
+        message: 'Products retrieved successfully'
+      };
+    } catch (error) {
+      return handleApiError(error);
+    }
+  },
+  
+  // Get product stock
+  getProductStock: async (productId) => {
+    try {
+      const response = await api.get(`/api/products/${productId}/stock`);
+      return {
+        success: true,
+        data: response.data.data || response.data,
+        message: 'Stock retrieved successfully'
       };
     } catch (error) {
       return handleApiError(error);

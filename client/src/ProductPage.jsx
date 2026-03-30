@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { FiShoppingCart, FiEye, FiPlus, FiMinus, FiArrowLeft, FiShoppingBag, FiChevronLeft, FiChevronRight } from "react-icons/fi";
+import { FiShoppingCart, FiBox, FiPlus, FiMinus, FiArrowLeft, FiShoppingBag, FiChevronLeft, FiChevronRight } from "react-icons/fi";
 import { getImageUrl } from "./utils/imageUrl.js";
 import { cartAPI, orderAPI } from "./utils/api.js";
 import DangerModal from "./components/DangerModal.jsx";
@@ -134,41 +134,43 @@ function ProductPage() {
             return;
         }
         
+        // Validate contact number
+        if (!contactNumber.trim()) {
+            setCheckoutError('Please enter a contact number before placing your order.');
+            return;
+        }
+        
+        // Validate Philippine phone number format
+        if (!/^09[0-9]{9}$/.test(contactNumber)) {
+            setCheckoutError('Contact number must be an 11-digit Philippine number starting with 09 (e.g., 09123456789)');
+            return;
+        }
+        
         setCheckoutLoading(true);
         setCheckoutError(null);
         
         try {
-            // Add product to cart first
-            const addToCartResponse = await cartAPI.addToCart(product._id, quantity);
+            // Create order directly without adding to cart first
+            const response = await orderAPI.createOrder(pickupLocation, note, [{
+                productId: product._id,
+                quantity: quantity
+            }], contactNumber);
             
-            if (addToCartResponse.success) {
-                // Get the cart item ID
-                const cartItemId = addToCartResponse.data.items.find(item => item.product.toString() === product._id)?._id;
-                
-                if (cartItemId) {
-                    // Create order from cart
-                    const response = await orderAPI.createOrder(pickupLocation, note, [cartItemId], contactNumber);
-                    
-                    if (response.success) {
-                        if (response.data.createdOrders && response.data.createdOrders.length > 0) {
-                            const successMsg = `Successfully created ${response.data.createdOrders.length} order(s)!`;
-                            setSuccessMessage(successMsg);
-                            setShowSuccessModal(true);
-                            setShowCheckoutModal(false);
-                            setPickupLocation(''); // Clear after successful order
-                            setNote('');
-                            setCheckoutError(null);
-                        } else {
-                            setCheckoutError('No orders were created. Please try again.');
-                        }
-                    } else {
-                        setCheckoutError(response.message || 'Checkout failed. Please try again.');
-                    }
+            if (response.success) {
+                if (response.data.createdOrders && response.data.createdOrders.length > 0) {
+                    const successMsg = `Successfully created ${response.data.createdOrders.length} order(s)!`;
+                    setSuccessMessage(successMsg);
+                    setShowSuccessModal(true);
+                    setShowCheckoutModal(false);
+                    setPickupLocation(''); // Clear after successful order
+                    setNote('');
+                    setContactNumber('');
+                    setCheckoutError(null);
                 } else {
-                    setCheckoutError('Failed to find cart item. Please try again.');
+                    setCheckoutError('No orders were created. Please try again.');
                 }
             } else {
-                setCheckoutError(addToCartResponse.message || 'Failed to add item to cart.');
+                setCheckoutError(response.message || 'Checkout failed. Please try again.');
             }
         } catch (err) {
             console.error('Checkout failed:', err);
@@ -192,7 +194,10 @@ function ProductPage() {
             <StickySearchBar 
                 showBackButton={true}
                 onBackClick={handleGoBack}
-                showSuggestions={false}
+                showSuggestions={loading || error || !product ? false : true}
+                placeholder="Search for products, shops, or categories..."
+                onCartClick={() => navigate('/dashboard?section=cart')}
+                onMessagesClick={() => navigate('/dashboard?section=messages')}
             />
                 <div className="container py-5">
                     <div className="d-flex justify-content-center align-items-center py-5">
@@ -272,7 +277,10 @@ function ProductPage() {
             <StickySearchBar 
                 showBackButton={true}
                 onBackClick={handleGoBack}
-                showSuggestions={false}
+                showSuggestions={loading || error || !product ? false : true}
+                placeholder="Search for products, shops, or categories..."
+                onCartClick={() => navigate('/dashboard?section=cart')}
+                onMessagesClick={() => navigate('/dashboard?section=messages')}
             />
             
             <div className="container mt-4">
@@ -292,7 +300,7 @@ function ProductPage() {
                                     />
                                 ) : (
                                     <div className="d-flex align-items-center justify-content-center bg-light" style={{ height: "500px" }}>
-                                        <FiEye size={64} className="text-secondary" />
+                                        <FiBox size={128} className="text-secondary" />
                                     </div>
                                 )}
                                 {/* Stock Badge */}

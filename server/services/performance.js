@@ -1,657 +1,271 @@
 const mongoose = require('mongoose');
-const Product = require('../models/Product');
-const Shop = require('../models/Shop');
-const User = require('../models/User');
-const Order = require('../models/Order');
-const Cart = require('../models/Cart');
 
 /**
- * Performance Optimization Service
- * Handles caching, query optimization, and performance monitoring
+ * Performance monitoring service for the Product API
+ * Tracks response times, error rates, and system health
  */
-
 class PerformanceService {
-  
-  // Cache configuration
-  static cache = new Map();
-  static CACHE_TTL = 5 * 60 * 1000; // 5 minutes
-  static CACHE_MAX_SIZE = 1000;
-
-  /**
-   * Get products with optimized query and caching
-   */
-  static async getProducts(page = 1, limit = 12, filters = {}, sort = 'relevance') {
-    try {
-      const skip = (page - 1) * limit;
-      const cacheKey = `products:${page}:${limit}:${JSON.stringify(filters)}:${sort}`;
-
-      // Check cache first
-      const cached = this.getFromCache(cacheKey);
-      if (cached) {
-        return cached;
-      }
-
-      // Build query
-      const query = { isDeleted: { $ne: true } };
-      
-      // Apply filters
-      if (filters.shopId) {
-        query.shop = filters.shopId;
-      }
-      
-      if (filters.minPrice !== undefined && filters.maxPrice !== undefined) {
-        query.productPrice = { $gte: filters.minPrice, $lte: filters.maxPrice };
-      } else if (filters.minPrice !== undefined) {
-        query.productPrice = { $gte: filters.minPrice };
-      } else if (filters.maxPrice !== undefined) {
-        query.productPrice = { $lte: filters.maxPrice };
-      }
-
-      // Build sort options
-      let sortOptions = {};
-      switch (sort) {
-        case 'price-asc':
-          sortOptions = { productPrice: 1 };
-          break;
-        case 'price-desc':
-          sortOptions = { productPrice: -1 };
-          break;
-        case 'date-asc':
-          sortOptions = { createdAt: 1 };
-          break;
-        case 'date-desc':
-          sortOptions = { createdAt: -1 };
-          break;
-        case 'relevance':
-        default:
-          sortOptions = { createdAt: -1 }; // Default to newest first
-      }
-
-      // Execute optimized query with projection
-      const [products, total] = await Promise.all([
-        Product.find(query)
-          .select('productName productPrice productStock productImages featuredImageIndex shop createdAt')
-          .populate({
-            path: 'shop',
-            select: 'shopName shopLogo shopLocation',
-            match: { isDeleted: { $ne: true } }
-          })
-          .sort(sortOptions)
-          .skip(skip)
-          .limit(limit)
-          .lean(),
-        Product.countDocuments(query)
-      ]);
-
-      // Filter out products with deleted shops
-      const validProducts = products.filter(p => p.shop);
-
-      const result = {
-        success: true,
-        data: validProducts,
-        pagination: {
-          page: parseInt(page),
-          limit: parseInt(limit),
-          total,
-          pages: Math.ceil(total / limit),
-          hasNext: page < Math.ceil(total / limit),
-          hasPrev: page > 1
-        }
-      };
-
-      // Cache the result
-      this.setCache(cacheKey, result);
-
-      return result;
-
-    } catch (error) {
-      console.error('Error getting products:', error);
-      throw error;
-    }
-  }
-
-  /**
-   * Get shops with optimized query and caching
-   */
-  static async getShops(page = 1, limit = 10, filters = {}) {
-    try {
-      const skip = (page - 1) * limit;
-      const cacheKey = `shops:${page}:${limit}:${JSON.stringify(filters)}`;
-
-      // Check cache first
-      const cached = this.getFromCache(cacheKey);
-      if (cached) {
-        return cached;
-      }
-
-      // Build query
-      const query = { isDeleted: { $ne: true } };
-      
-      if (filters.location) {
-        query.shopLocation = { $regex: filters.location, $options: 'i' };
-      }
-
-      // Execute optimized query
-      const [shops, total] = await Promise.all([
-        Shop.find(query)
-          .select('shopName shopDescription shopLogo shopLocation shopContact owner createdAt')
-          .populate({
-            path: 'owner',
-            select: 'firstName lastName email',
-            match: { isDeleted: { $ne: true } }
-          })
-          .sort({ createdAt: -1 })
-          .skip(skip)
-          .limit(limit)
-          .lean(),
-        Shop.countDocuments(query)
-      ]);
-
-      // Filter out shops with deleted owners
-      const validShops = shops.filter(s => s.owner);
-
-      const result = {
-        success: true,
-        data: validShops,
-        pagination: {
-          page: parseInt(page),
-          limit: parseInt(limit),
-          total,
-          pages: Math.ceil(total / limit),
-          hasNext: page < Math.ceil(total / limit),
-          hasPrev: page > 1
-        }
-      };
-
-      // Cache the result
-      this.setCache(cacheKey, result);
-
-      return result;
-
-    } catch (error) {
-      console.error('Error getting shops:', error);
-      throw error;
-    }
-  }
-
-  /**
-   * Get product by ID with optimized query
-   */
-  static async getProductById(productId) {
-    try {
-      const cacheKey = `product:${productId}`;
-
-      // Check cache first
-      const cached = this.getFromCache(cacheKey);
-      if (cached) {
-        return cached;
-      }
-
-      // Execute optimized query
-      const product = await Product.findById(productId)
-        .populate({
-          path: 'shop',
-          select: 'shopName shopDescription shopLogo shopLocation shopContact owner',
-          populate: {
-            path: 'owner',
-            select: 'firstName lastName email'
-          }
-        })
-        .lean();
-
-      if (!product || product.isDeleted || !product.shop || product.shop.isDeleted) {
-        return { success: false, message: 'Product not found' };
-      }
-
-      const result = {
-        success: true,
-        data: product
-      };
-
-      // Cache the result
-      this.setCache(cacheKey, result);
-
-      return result;
-
-    } catch (error) {
-      console.error('Error getting product:', error);
-      throw error;
-    }
-  }
-
-  /**
-   * Get shop by ID with optimized query
-   */
-  static async getShopById(shopId) {
-    try {
-      const cacheKey = `shop:${shopId}`;
-
-      // Check cache first
-      const cached = this.getFromCache(cacheKey);
-      if (cached) {
-        return cached;
-      }
-
-      // Execute optimized query
-      const shop = await Shop.findById(shopId)
-        .populate({
-          path: 'owner',
-          select: 'firstName lastName email role sellerStatus'
-        })
-        .lean();
-
-      if (!shop || shop.isDeleted || !shop.owner || shop.owner.isDeleted) {
-        return { success: false, message: 'Shop not found' };
-      }
-
-      const result = {
-        success: true,
-        data: shop
-      };
-
-      // Cache the result
-      this.setCache(cacheKey, result);
-
-      return result;
-
-    } catch (error) {
-      console.error('Error getting shop:', error);
-      throw error;
-    }
-  }
-
-  /**
-   * Get user's orders with optimized query
-   */
-  static async getUserOrders(userId, userType = 'buyer', page = 1, limit = 10) {
-    try {
-      const skip = (page - 1) * limit;
-      const cacheKey = `orders:${userType}:${userId}:${page}:${limit}`;
-
-      // Check cache first
-      const cached = this.getFromCache(cacheKey);
-      if (cached) {
-        return cached;
-      }
-
-      // Build query based on user type
-      const query = userType === 'buyer' ? { buyer: userId } : { seller: userId };
-
-      // Execute optimized query
-      const [orders, total] = await Promise.all([
-        Order.find(query)
-          .populate([
-            {
-              path: 'buyer',
-              select: 'firstName lastName email'
-            },
-            {
-              path: 'seller',
-              select: 'firstName lastName email'
-            },
-            {
-              path: 'items.product',
-              select: 'productName productImages productStock'
-            }
-          ])
-          .sort({ createdAt: -1 })
-          .skip(skip)
-          .limit(limit)
-          .lean(),
-        Order.countDocuments(query)
-      ]);
-
-      const result = {
-        success: true,
-        data: orders,
-        pagination: {
-          page: parseInt(page),
-          limit: parseInt(limit),
-          total,
-          pages: Math.ceil(total / limit),
-          hasNext: page < Math.ceil(total / limit),
-          hasPrev: page > 1
-        }
-      };
-
-      // Cache the result
-      this.setCache(cacheKey, result);
-
-      return result;
-
-    } catch (error) {
-      console.error('Error getting user orders:', error);
-      throw error;
-    }
-  }
-
-  /**
-   * Search products with optimized query
-   */
-  static async searchProducts(query, page = 1, limit = 12, sort = 'relevance') {
-    try {
-      const skip = (page - 1) * limit;
-      const cacheKey = `search:${query}:${page}:${limit}:${sort}`;
-
-      // Check cache first
-      const cached = this.getFromCache(cacheKey);
-      if (cached) {
-        return cached;
-      }
-
-      // Build search query using text search or regex
-      let searchQuery;
-      if (mongoose.connection.db.databaseName) {
-        // Use text search if available
-        searchQuery = {
-          $text: { $search: query },
-          isDeleted: { $ne: true }
-        };
-      } else {
-        // Fallback to regex search
-        searchQuery = {
-          $or: [
-            { productName: { $regex: query, $options: 'i' } },
-            { productDescription: { $regex: query, $options: 'i' } }
-          ],
-          isDeleted: { $ne: true }
-        };
-      }
-
-      // Build sort options
-      let sortOptions = {};
-      if (sort === 'relevance' && mongoose.connection.db.databaseName) {
-        sortOptions = { score: { $meta: 'textScore' } };
-      } else {
-        switch (sort) {
-          case 'price-asc':
-            sortOptions = { productPrice: 1 };
-            break;
-          case 'price-desc':
-            sortOptions = { productPrice: -1 };
-            break;
-          case 'date-asc':
-            sortOptions = { createdAt: 1 };
-            break;
-          case 'date-desc':
-            sortOptions = { createdAt: -1 };
-            break;
-          default:
-            sortOptions = { createdAt: -1 };
-        }
-      }
-
-      // Execute optimized search query
-      const [products, total] = await Promise.all([
-        Product.find(searchQuery)
-          .select('productName productPrice productStock productImages featuredImageIndex shop createdAt')
-          .populate({
-            path: 'shop',
-            select: 'shopName shopLogo shopLocation',
-            match: { isDeleted: { $ne: true } }
-          })
-          .sort(sortOptions)
-          .skip(skip)
-          .limit(limit)
-          .lean(),
-        Product.countDocuments(searchQuery)
-      ]);
-
-      // Filter out products with deleted shops
-      const validProducts = products.filter(p => p.shop);
-
-      const result = {
-        success: true,
-        data: validProducts,
-        pagination: {
-          page: parseInt(page),
-          limit: parseInt(limit),
-          total,
-          pages: Math.ceil(total / limit),
-          hasNext: page < Math.ceil(total / limit),
-          hasPrev: page > 1
-        }
-      };
-
-      // Cache the result
-      this.setCache(cacheKey, result);
-
-      return result;
-
-    } catch (error) {
-      console.error('Error searching products:', error);
-      throw error;
-    }
-  }
-
-  /**
-   * Get search suggestions with caching
-   */
-  static async getSearchSuggestions(query, limit = 5) {
-    try {
-      const cacheKey = `suggestions:${query}:${limit}`;
-
-      // Check cache first
-      const cached = this.getFromCache(cacheKey);
-      if (cached) {
-        return cached;
-      }
-
-      // Get suggestions from product names
-      const suggestions = await Product.aggregate([
-        {
-          $match: {
-            productName: { $regex: `^${query}`, $options: 'i' },
-            isDeleted: { $ne: true }
-          }
-        },
-        {
-          $group: {
-            _id: '$productName',
-            count: { $sum: 1 }
-          }
-        },
-        {
-          $sort: { count: -1, _id: 1 }
-        },
-        {
-          $limit: limit
-        },
-        {
-          $project: {
-            suggestion: '$_id',
-            _id: 0
-          }
-        }
-      ]);
-
-      const result = {
-        success: true,
-        data: suggestions.map(s => s.suggestion)
-      };
-
-      // Cache the result
-      this.setCache(cacheKey, result);
-
-      return result;
-
-    } catch (error) {
-      console.error('Error getting search suggestions:', error);
-      throw error;
-    }
-  }
-
-  /**
-   * Cache management methods
-   */
-  static setCache(key, value) {
-    // Implement LRU cache with size limit
-    if (this.cache.size >= this.CACHE_MAX_SIZE) {
-      const firstKey = this.cache.keys().next().value;
-      this.cache.delete(firstKey);
-    }
-
-    this.cache.set(key, {
-      data: value,
-      timestamp: Date.now()
-    });
-  }
-
-  static getFromCache(key) {
-    const cached = this.cache.get(key);
-    if (!cached) {
-      return null;
-    }
-
-    // Check if cache is expired
-    if (Date.now() - cached.timestamp > this.CACHE_TTL) {
-      this.cache.delete(key);
-      return null;
-    }
-
-    return cached.data;
-  }
-
-  static clearCache() {
-    this.cache.clear();
-  }
-
-  static getCacheStats() {
-    return {
-      size: this.cache.size,
-      maxSize: this.CACHE_MAX_SIZE,
-      ttl: this.CACHE_TTL
+  constructor() {
+    this.metrics = {
+      requests: new Map(),
+      errors: new Map(),
+      responseTimes: [],
+      fileUploads: []
+    };
+    
+    this.health = {
+      gridFSReady: false,
+      databaseConnected: false,
+      lastCheck: null
     };
   }
 
   /**
-   * Database query optimization helpers
+   * Middleware to track request performance
    */
-  static async optimizeDatabaseIndexes() {
-    try {
-      // Create indexes for frequently queried fields
-      await Product.createIndexes([
-        { key: { isDeleted: 1, createdAt: -1 } },
-        { key: { shop: 1, isDeleted: 1 } },
-        { key: { productPrice: 1 } },
-        { key: { productName: 'text', productDescription: 'text' } }
-      ]);
+  trackRequest(req, res, next) {
+    const startTime = Date.now();
+    const endpoint = `${req.method} ${req.route?.path || req.path}`;
+    
+    // Store start time
+    req.startTime = startTime;
+    req.endpoint = endpoint;
+    
+    // Track response
+    const originalSend = res.send;
+    res.send = function(data) {
+      const responseTime = Date.now() - startTime;
+      const statusCode = res.statusCode;
+      
+      // Record metrics
+      this.recordRequest(endpoint, responseTime, statusCode);
+      this.recordResponseTime(responseTime);
+      
+      // Log slow requests
+      if (responseTime > 2000) {
+        console.warn(`Slow request detected: ${endpoint} took ${responseTime}ms`);
+      }
+      
+      originalSend.call(this, data);
+    }.bind(this);
+    
+    next();
+  }
 
-      await Shop.createIndexes([
-        { key: { isDeleted: 1, createdAt: -1 } },
-        { key: { owner: 1 } },
-        { key: { shopLocation: 'text' } }
-      ]);
-
-      await Order.createIndexes([
-        { key: { buyer: 1, createdAt: -1 } },
-        { key: { seller: 1, createdAt: -1 } },
-        { key: { status: 1 } },
-        { key: { orderNumber: 1 }, unique: true }
-      ]);
-
-      await User.createIndexes([
-        { key: { email: 1 }, unique: true },
-        { key: { role: 1, sellerStatus: 1 } },
-        { key: { isDeleted: 1, dateRegistered: -1 } }
-      ]);
-
-      await Cart.createIndexes([
-        { key: { user: 1 }, unique: true }
-      ]);
-
-      return { success: true, message: 'Database indexes optimized' };
-
-    } catch (error) {
-      console.error('Error optimizing database indexes:', error);
-      throw error;
+  /**
+   * Record a request metric
+   */
+  recordRequest(endpoint, responseTime, statusCode) {
+    if (!this.metrics.requests.has(endpoint)) {
+      this.metrics.requests.set(endpoint, {
+        count: 0,
+        totalResponseTime: 0,
+        errors: 0,
+        lastAccess: null
+      });
+    }
+    
+    const metric = this.metrics.requests.get(endpoint);
+    metric.count++;
+    metric.totalResponseTime += responseTime;
+    metric.lastAccess = new Date();
+    
+    if (statusCode >= 400) {
+      metric.errors++;
     }
   }
 
   /**
-   * Performance monitoring
+   * Record response time for statistical analysis
    */
-  static async getPerformanceMetrics() {
-    try {
-      const metrics = {
-        cache: this.getCacheStats(),
-        database: {
-          collections: await this.getCollectionStats(),
-          indexes: await this.getIndexStats()
-        },
-        memory: {
-          used: process.memoryUsage(),
-          uptime: process.uptime()
-        }
-      };
-
-      return { success: true, data: metrics };
-
-    } catch (error) {
-      console.error('Error getting performance metrics:', error);
-      throw error;
-    }
-  }
-
-  static async getCollectionStats() {
-    try {
-      const collections = ['products', 'shops', 'users', 'orders', 'carts'];
-      const stats = {};
-
-      for (const collection of collections) {
-        const count = await mongoose.connection.db.collection(collection).countDocuments();
-        stats[collection] = { count };
-      }
-
-      return stats;
-
-    } catch (error) {
-      console.error('Error getting collection stats:', error);
-      return {};
-    }
-  }
-
-  static async getIndexStats() {
-    try {
-      const collections = ['products', 'shops', 'users', 'orders', 'carts'];
-      const indexStats = {};
-
-      for (const collection of collections) {
-        const indexes = await mongoose.connection.db.collection(collection).indexes();
-        indexStats[collection] = indexes;
-      }
-
-      return indexStats;
-
-    } catch (error) {
-      console.error('Error getting index stats:', error);
-      return {};
+  recordResponseTime(responseTime) {
+    this.metrics.responseTimes.push({
+      time: responseTime,
+      timestamp: new Date()
+    });
+    
+    // Keep only last 1000 entries
+    if (this.metrics.responseTimes.length > 1000) {
+      this.metrics.responseTimes = this.metrics.responseTimes.slice(-1000);
     }
   }
 
   /**
-   * Cleanup expired cache entries
+   * Record file upload metrics
    */
-  static cleanupCache() {
+  recordFileUpload(filename, fileSize, responseTime, success) {
+    this.metrics.fileUploads.push({
+      filename,
+      fileSize,
+      responseTime,
+      success,
+      timestamp: new Date()
+    });
+    
+    // Keep only last 500 entries
+    if (this.metrics.fileUploads.length > 500) {
+      this.metrics.fileUploads = this.metrics.fileUploads.slice(-500);
+    }
+  }
+
+  /**
+   * Get performance metrics
+   */
+  getMetrics() {
     const now = Date.now();
-    for (const [key, value] of this.cache.entries()) {
-      if (now - value.timestamp > this.CACHE_TTL) {
-        this.cache.delete(key);
+    const oneHourAgo = now - (60 * 60 * 1000);
+    
+    // Calculate average response times
+    const recentResponseTimes = this.metrics.responseTimes
+      .filter(entry => entry.timestamp.getTime() > oneHourAgo)
+      .map(entry => entry.time);
+    
+    const avgResponseTime = recentResponseTimes.length > 0 
+      ? recentResponseTimes.reduce((a, b) => a + b, 0) / recentResponseTimes.length 
+      : 0;
+    
+    // Calculate error rates
+    const endpointMetrics = {};
+    for (const [endpoint, metric] of this.metrics.requests) {
+      const errorRate = metric.count > 0 ? (metric.errors / metric.count) * 100 : 0;
+      endpointMetrics[endpoint] = {
+        count: metric.count,
+        errors: metric.errors,
+        errorRate: errorRate.toFixed(2),
+        avgResponseTime: metric.totalResponseTime / metric.count
+      };
+    }
+    
+    // File upload statistics
+    const recentUploads = this.metrics.fileUploads
+      .filter(entry => entry.timestamp.getTime() > oneHourAgo);
+    
+    const uploadStats = {
+      total: recentUploads.length,
+      successful: recentUploads.filter(u => u.success).length,
+      failed: recentUploads.filter(u => !u.success).length,
+      avgResponseTime: recentUploads.length > 0 
+        ? recentUploads.reduce((a, b) => a + b.responseTime, 0) / recentUploads.length 
+        : 0
+    };
+
+    return {
+      systemHealth: this.health,
+      endpointMetrics,
+      responseTime: {
+        avg: avgResponseTime.toFixed(2),
+        min: Math.min(...recentResponseTimes),
+        max: Math.max(...recentResponseTimes),
+        p95: this.calculatePercentile(recentResponseTimes, 95)
+      },
+      fileUploads: uploadStats,
+      timestamp: new Date()
+    };
+  }
+
+  /**
+   * Calculate percentile
+   */
+  calculatePercentile(values, percentile) {
+    if (values.length === 0) return 0;
+    
+    const sorted = values.slice().sort((a, b) => a - b);
+    const index = Math.ceil((percentile / 100) * sorted.length) - 1;
+    return sorted[index] || 0;
+  }
+
+  /**
+   * Check system health
+   */
+  async checkHealth() {
+    try {
+      // Check database connection
+      this.health.databaseConnected = mongoose.connection.readyState === 1;
+      
+      // Check GridFS readiness
+      try {
+        const { isGridFSReady } = require('../config/gridfsBucket');
+        this.health.gridFSReady = isGridFSReady();
+      } catch (err) {
+        this.health.gridFSReady = false;
       }
+      
+      this.health.lastCheck = new Date();
+      
+      return {
+        status: this.health.databaseConnected && this.health.gridFSReady ? 'healthy' : 'degraded',
+        ...this.health
+      };
+    } catch (err) {
+      console.error('Health check failed:', err);
+      return {
+        status: 'error',
+        error: err.message,
+        ...this.health
+      };
     }
   }
 
   /**
-   * Start periodic cache cleanup
+   * Get slow endpoints (over 1 second average response time)
    */
-  static startCacheCleanup(interval = 5 * 60 * 1000) { // 5 minutes
-    setInterval(() => {
-      this.cleanupCache();
-    }, interval);
+  getSlowEndpoints() {
+    const slowEndpoints = [];
+    
+    for (const [endpoint, metric] of this.metrics.requests) {
+      const avgResponseTime = metric.totalResponseTime / metric.count;
+      if (avgResponseTime > 1000) {
+        slowEndpoints.push({
+          endpoint,
+          avgResponseTime: avgResponseTime.toFixed(2),
+          count: metric.count,
+          errors: metric.errors
+        });
+      }
+    }
+    
+    return slowEndpoints.sort((a, b) => b.avgResponseTime - a.avgResponseTime);
+  }
+
+  /**
+   * Reset metrics (useful for testing)
+   */
+  resetMetrics() {
+    this.metrics = {
+      requests: new Map(),
+      errors: new Map(),
+      responseTimes: [],
+      fileUploads: []
+    };
+  }
+
+  /**
+   * Log performance summary
+   */
+  logSummary() {
+    const metrics = this.getMetrics();
+    
+    console.log('\n=== Performance Summary ===');
+    console.log(`System Status: ${metrics.systemHealth.status}`);
+    console.log(`Database Connected: ${metrics.systemHealth.databaseConnected}`);
+    console.log(`GridFS Ready: ${metrics.systemHealth.gridFSReady}`);
+    console.log(`Average Response Time: ${metrics.responseTime.avg}ms`);
+    console.log(`95th Percentile: ${metrics.responseTime.p95}ms`);
+    console.log(`File Upload Success Rate: ${metrics.fileUploads.total > 0 ? 
+      ((metrics.fileUploads.successful / metrics.fileUploads.total) * 100).toFixed(2) : 0}%`);
+    
+    const slowEndpoints = this.getSlowEndpoints();
+    if (slowEndpoints.length > 0) {
+      console.log('\nSlow Endpoints:');
+      slowEndpoints.forEach(ep => {
+        console.log(`  ${ep.endpoint}: ${ep.avgResponseTime}ms (${ep.count} requests)`);
+      });
+    }
+    console.log('==========================\n');
   }
 }
 
-// Start periodic cache cleanup
-PerformanceService.startCacheCleanup();
+// Create singleton instance
+const performanceService = new PerformanceService();
 
-module.exports = PerformanceService;
+module.exports = performanceService;

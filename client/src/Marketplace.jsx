@@ -66,7 +66,7 @@ function Marketplace() {
                 setLoading(true);
                 const response = await api.get(`/api/products?page=${currentPage}&limit=${productsPerPage}`);
                 const data = response.data;
-                const productsData = Array.isArray(data.products) ? data.products : [];
+                const productsData = Array.isArray(data.data) ? data.data : [];
                 setProducts(productsData);
                 setTotalPages(data.pagination?.totalPages || 1);
             } catch (err) {
