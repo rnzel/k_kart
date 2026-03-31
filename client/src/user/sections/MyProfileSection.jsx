@@ -8,6 +8,7 @@ export default function MyProfileSection() {
     const [message, setMessage] = React.useState({ type: "", text: "" });
     const [error, setError] = React.useState("");
     const [showPasswordForm, setShowPasswordForm] = React.useState(false);
+    const [isEditing, setIsEditing] = React.useState(false);
     
     const [user, setUser] = React.useState({
         firstName: "",
@@ -115,6 +116,7 @@ export default function MyProfileSection() {
             });
             
             setUser(response.data.user);
+            setInitialUser(response.data.user);
             
             // Update localStorage so Navbar avatar updates immediately
             const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
@@ -122,6 +124,7 @@ export default function MyProfileSection() {
             localStorage.setItem('user', JSON.stringify(updatedUser));
             
             setMessage({ type: "success", text: "Profile updated successfully!" });
+            setIsEditing(false); // Exit edit mode after successful save
         } catch (err) {
             setMessage({ type: "danger", text: err.response?.data?.error?.message || "Error updating profile" });
         } finally {
@@ -311,43 +314,89 @@ export default function MyProfileSection() {
 
                 {/* Form Content */}
                 {!loading && !error && (
-                    <form onSubmit={showPasswordForm ? handlePasswordChange : handleSave}>
+                    <form onSubmit={(e) => {
+                        // Prevent form submission when not in edit mode and not in password form
+                        if (!showPasswordForm && !isEditing) {
+                            e.preventDefault();
+                            return;
+                        }
+                        // Call the appropriate handler
+                        if (showPasswordForm) {
+                            handlePasswordChange(e);
+                        } else {
+                            handleSave(e);
+                        }
+                    }}>
                     {!showPasswordForm && (
                         <>
                             <div className="row">
                                 <div className="col-md-6 mb-3">
                                     <label className="form-label font-weight-semibold">First Name</label>
-                                    <input
-                                        type="text"
-                                        className="form-control"
-                                        name="firstName"
-                                        value={user.firstName || ""}
-                                        onChange={handleInputChange}
-                                        required
-                                    />
+                                    {isEditing ? (
+                                        <input
+                                            type="text"
+                                            className="form-control"
+                                            name="firstName"
+                                            value={user.firstName || ""}
+                                            onChange={handleInputChange}
+                                            required
+                                            autoFocus
+                                        />
+                                    ) : (
+                                        <div 
+                                            className="form-control text-muted bg-light" 
+                                            style={{ cursor: 'pointer' }}
+                                            onClick={() => setIsEditing(true)}
+                                            title="Click to edit"
+                                        >
+                                            {user.firstName || ""}
+                                        </div>
+                                    )}
                                 </div>
                                 <div className="col-md-6 mb-3">
                                     <label className="form-label font-weight-semibold">Last Name</label>
-                                    <input
-                                        type="text"
-                                        className="form-control"
-                                        name="lastName"
-                                        value={user.lastName || ""}
-                                        onChange={handleInputChange}
-                                        required
-                                    />
+                                    {isEditing ? (
+                                        <input
+                                            type="text"
+                                            className="form-control"
+                                            name="lastName"
+                                            value={user.lastName || ""}
+                                            onChange={handleInputChange}
+                                            required
+                                        />
+                                    ) : (
+                                        <div 
+                                            className="form-control text-muted bg-light" 
+                                            style={{ cursor: 'pointer' }}
+                                            onClick={() => setIsEditing(true)}
+                                            title="Click to edit"
+                                        >
+                                            {user.lastName || ""}
+                                        </div>
+                                    )}
                                 </div>
                             </div>
                             <div className="mb-3">
                                 <label className="form-label font-weight-semibold">Email</label>
-                                <input
-                                    type="email"
-                                    className="form-control"
-                                    name="email"
-                                    value={user.email || ""}
-                                    onChange={handleInputChange}
-                                    required
-                                />
+                                {isEditing ? (
+                                    <input
+                                        type="email"
+                                        className="form-control"
+                                        name="email"
+                                        value={user.email || ""}
+                                        onChange={handleInputChange}
+                                        required
+                                    />
+                                ) : (
+                                    <div 
+                                        className="form-control text-muted bg-light" 
+                                        style={{ cursor: 'pointer' }}
+                                        onClick={() => setIsEditing(true)}
+                                        title="Click to edit"
+                                    >
+                                        {user.email || ""}
+                                    </div>
+                                )}
                             </div>
                         </>
                     )}
@@ -400,16 +449,16 @@ export default function MyProfileSection() {
                         </div>
                     )}
 
-                    <div className="d-flex gap-2 mt-4">
+                    <div className="mt-4">
                         {showPasswordForm ? (
-                            <>
-                                <button type="submit" className="btn btn-primary" style={{ width: "100%" }} disabled={loading}>
+                            <div className="d-flex gap-2">
+                                <button type="submit" className="btn btn-primary" style={{ width: '100%' }} disabled={loading}>
                                     {loading ? "Changing..." : "Save"}
                                 </button>
                                 <button 
                                     type="button" 
-                                    className="btn btn-secondary" 
-                                    style={{ width: "100%" }}
+                                    className="btn btn-secondary"
+                                    style={{ width: '100%' }}
                                     onClick={() => {
                                         setShowPasswordForm(false);
                                         setPasswordData({ currentPassword: "", newPassword: "", confirmPassword: "" });
@@ -418,10 +467,20 @@ export default function MyProfileSection() {
                                 >
                                     Cancel
                                 </button>
-                            </>
+                            </div>
                         ) : (
-                            <button type="submit" className="btn btn-primary" style={{ width: "100%" }} disabled={loading}>
-                                {loading ? "Saving..." : "Edit Profile"}
+                            <button 
+                                type={isEditing ? "submit" : "button"}
+                                className="btn btn-primary"
+                                style={{ width: '100%' }}
+                                onClick={() => {
+                                    if (!isEditing) {
+                                        setIsEditing(true);
+                                    }
+                                }}
+                                disabled={loading && isEditing}
+                            >
+                                {loading && isEditing ? "Saving..." : "Edit Profile"}
                             </button>
                         )}
                     </div>
