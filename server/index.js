@@ -84,7 +84,8 @@ app.use(helmet({
     includeSubDomains: true,
     preload: true
   },
-  crossOriginEmbedderPolicy: false // Allow image streaming
+  crossOriginEmbedderPolicy: false,        // Allow cross-origin image streaming
+  crossOriginResourcePolicy: false          // Allow cross-origin resource loading for images
 }))
 
 app.use(cors(corsOptions))
@@ -95,8 +96,38 @@ app.use(express.urlencoded({ extended: true }))
 // Image Streaming Route
 // GET /api/images/:filename
 // ============================================
+
+// Allowed origins for CORS on image endpoints
+const allowedImageOrigins = [
+  'http://localhost:5173',
+  'http://localhost:3000',
+  'https://k-kart-mauve.vercel.app',
+  'https://k-kart-c3ip.onrender.com'
+]
+
+// Helper function to set CORS headers for image responses
+const setImageCorsHeaders = (req, res) => {
+  const origin = req.headers.origin
+  if (!origin || allowedImageOrigins.includes(origin)) {
+    res.setHeader('Access-Control-Allow-Origin', origin || '*')
+  }
+  res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS')
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type')
+  res.setHeader('Access-Control-Expose-Headers', 'Content-Type, Content-Length')
+  res.setHeader('Cache-Control', 'public, max-age=31536000, immutable')
+}
+
+// Handle OPTIONS preflight requests for images
+app.options('/api/images/:filename', (req, res) => {
+  setImageCorsHeaders(req, res)
+  res.sendStatus(204)
+})
+
 app.get('/api/images/:filename', async (req, res) => {
   try {
+    // Set CORS headers for cross-origin image loading
+    setImageCorsHeaders(req, res)
+
     // Wait for GridFS to be ready with retry logic
     const maxRetries = 3
     let retryCount = 0
@@ -146,7 +177,9 @@ app.get('/api/images/:filename', async (req, res) => {
 
   } catch (err) {
     console.error('Error serving image:', err)
-    res.status(500).json({ message: 'Error serving image' })
+    if (!res.headersSent) {
+      res.status(500).json({ message: 'Error serving image' })
+    }
   }
 })
 
