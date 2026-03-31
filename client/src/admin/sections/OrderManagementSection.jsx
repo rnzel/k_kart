@@ -39,23 +39,35 @@ function OrderManagementSection() {
     };
 
     const getStatusText = (status) => {
+        // Handle both PascalCase (from backend) and lowercase/underscore formats
         switch (status) {
-            case 'pending': return 'Pending';
-            case 'confirmed': return 'Confirmed';
-            case 'on_delivery': return 'On Delivery';
-            case 'completed': return 'Completed';
-            case 'cancelled': return 'Cancelled';
+            case 'pending':
+            case 'Pending': return 'Pending';
+            case 'confirmed':
+            case 'Confirmed': return 'Confirmed';
+            case 'on_delivery':
+            case 'On-Delivery': return 'On Delivery';
+            case 'completed':
+            case 'Completed': return 'Completed';
+            case 'cancelled':
+            case 'Cancelled': return 'Cancelled';
             default: return status;
         }
     };
 
     const getStatusColor = (status) => {
+        // Handle both PascalCase (from backend) and lowercase/underscore formats
         switch (status) {
-            case 'pending': return 'warning';
-            case 'confirmed': return 'info';
-            case 'on_delivery': return 'primary';
-            case 'completed': return 'success';
-            case 'cancelled': return 'danger';
+            case 'pending':
+            case 'Pending': return 'warning';
+            case 'confirmed':
+            case 'Confirmed': return 'info';
+            case 'on_delivery':
+            case 'On-Delivery': return 'primary';
+            case 'completed':
+            case 'Completed': return 'success';
+            case 'cancelled':
+            case 'Cancelled': return 'danger';
             default: return 'secondary';
         }
     };

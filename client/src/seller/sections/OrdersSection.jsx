@@ -17,10 +17,20 @@ function OrdersSection() {
     const [totalPages, setTotalPages] = React.useState(1);
     const [totalOrders, setTotalOrders] = React.useState(0);
     const [activeTab, setActiveTab] = React.useState('all');
+    const [statusLoading, setStatusLoading] = React.useState(null); // Track which order is being updated
+    const [successModalConfig, setSuccessModalConfig] = React.useState({ title: '', message: '' });
+    const [showStatusConfirmModal, setShowStatusConfirmModal] = React.useState(false);
+    const [statusToUpdate, setStatusToUpdate] = React.useState({ orderId: null, newStatus: '' });
 
     React.useEffect(() => {
         fetchOrders(1); // Reset to page 1 when tab changes
     }, [activeTab]);
+
+    // Normalize status for filtering (handle both 'On-Delivery' from backend and 'on_delivery' from tab)
+    const normalizeStatusForFilter = (status) => {
+        if (!status) return '';
+        return status.toLowerCase().replace(/[-]/g, '_');
+    };
 
     const fetchOrders = async (page = 1) => {
         try {
@@ -34,7 +44,7 @@ function OrdersSection() {
                 // Filter orders based on active tab
                 if (activeTab !== 'all') {
                     filteredOrders = response.data.filter(order => {
-                        const orderStatus = order.status.toLowerCase();
+                        const orderStatus = normalizeStatusForFilter(order.status);
                         const tabStatus = activeTab.toLowerCase();
                         return orderStatus === tabStatus;
                     });
@@ -56,10 +66,18 @@ function OrdersSection() {
     };
 
     const handleUpdateStatus = async (orderId, newStatus) => {
+        setStatusLoading(orderId);
         try {
             const response = await orderAPI.updateOrderStatus(orderId, newStatus);
             if (response.success) {
+                // Set dynamic success message based on action
+                setSuccessModalConfig({
+                    title: 'Order Status Updated',
+                    message: `Order has been ${newStatus === 'Confirmed' ? 'confirmed' : newStatus === 'On-Delivery' ? 'marked as on delivery' : 'completed'} successfully.`
+                });
                 setShowSuccessModal(true);
+                // Reset to 'all' tab to show the updated order
+                setActiveTab('all');
                 fetchOrders(); // Refresh orders
             } else {
                 alert(response.message || 'Failed to update order status. Please try again.');
@@ -67,6 +85,8 @@ function OrdersSection() {
         } catch (err) {
             console.error('Failed to update order status:', err);
             alert('Failed to update order status. Please try again.');
+        } finally {
+            setStatusLoading(null);
         }
     };
 
@@ -79,7 +99,13 @@ function OrdersSection() {
         try {
             const response = await orderAPI.cancelOrder(orderId);
             if (response.success) {
+                setSuccessModalConfig({
+                    title: 'Order Cancelled Successfully',
+                    message: 'The order has been cancelled and the stock has been restored.'
+                });
                 setShowSuccessModal(true);
+                // Reset to 'all' tab to show the updated order
+                setActiveTab('all');
                 fetchOrders(); // Refresh orders
             } else {
                 alert(response.message || 'Failed to cancel order. Please try again.');
@@ -88,6 +114,17 @@ function OrdersSection() {
             console.error('Failed to cancel order:', err);
             alert('Failed to cancel order. Please try again.');
         }
+    };
+
+    // Handle status update with confirmation
+    const handleStatusUpdateClick = (orderId, newStatus) => {
+        setStatusToUpdate({ orderId, newStatus });
+        setShowStatusConfirmModal(true);
+    };
+
+    const handleStatusUpdateConfirm = async () => {
+        setShowStatusConfirmModal(false);
+        await handleUpdateStatus(statusToUpdate.orderId, statusToUpdate.newStatus);
     };
 
 
@@ -118,7 +155,22 @@ function OrdersSection() {
         }
     };
 
+// Normalize status to handle case inconsistencies (e.g., 'pending' vs 'Pending' vs 'On-Delivery' vs 'on_delivery')
+const normalizeStatus = (status) => {
+    if (!status) return '';
+    const normalized = status.toLowerCase().replace(/[_-]/g, '');
+    switch (normalized) {
+        case 'pending': return 'Pending';
+        case 'confirmed': return 'Confirmed';
+        case 'ondelivery': return 'On-Delivery';
+        case 'completed': return 'Completed';
+        case 'cancelled': return 'Cancelled';
+        default: return status; // Return as-is if not recognized
+    }
+};
+
 const getAvailableStatuses = (currentStatus) => {
+    const normalizedStatus = normalizeStatus(currentStatus);
     const statusFlow = {
         'Pending': ['Confirmed'],
         'Confirmed': ['On-Delivery'],
@@ -126,7 +178,7 @@ const getAvailableStatuses = (currentStatus) => {
         'Completed': [],
         'Cancelled': []
     };
-    return statusFlow[currentStatus] || [];
+    return statusFlow[normalizedStatus] || [];
 };
 
     // Loading state
@@ -508,7 +560,6 @@ const getAvailableStatuses = (currentStatus) => {
                                                         <p className="mb-0 text-muted small mt-1">
                                                             {order.buyer?.firstName} {order.buyer?.lastName}
                                                         </p>
-                                                        <p className="mb-0 text-muted small">{order.buyer?.email}</p>
                                                     </div>
                                                 </div>
 
@@ -519,7 +570,9 @@ const getAvailableStatuses = (currentStatus) => {
                                                         </div>
                                                         <div>
                                                             <span className="fw-semibold text-dark">Contact Number</span>
-                                                            <p className="mb-0 text-muted small mt-1">{order.contactNumber}</p>
+                                                            <a href={`tel:${order.contactNumber}`} className="text-primary small mt-1">
+                                                                <p className="mb-0">{order.contactNumber}</p>
+                                                            </a>
                                                         </div>
                                                     </div>
                                                 )}
@@ -566,11 +619,16 @@ const getAvailableStatuses = (currentStatus) => {
                                                             if (status === 'Cancelled') {
                                                                 handleCancelOrder(order._id);
                                                             } else {
-                                                                handleUpdateStatus(order._id, status);
+                                                                handleStatusUpdateClick(order._id, status);
                                                             }
                                                         }}
-                                                        disabled={loading}
+                                                        disabled={loading || statusLoading === order._id}
                                                     >
+                                                        {statusLoading === order._id ? (
+                                                            <span className="spinner-border spinner-border-sm me-1" role="status">
+                                                                <span className="visually-hidden">Loading...</span>
+                                                            </span>
+                                                        ) : null}
                                                         {status === 'Confirmed' && 'Confirm Order'}
                                                         {status === 'On-Delivery' && 'Mark as On-Delivery'}
                                                         {status === 'Completed' && 'Mark as Completed'}
@@ -639,10 +697,18 @@ const getAvailableStatuses = (currentStatus) => {
             <SuccessModal
                 showModal={showSuccessModal}
                 onClose={() => setShowSuccessModal(false)}
-                title="Order Cancelled Successfully"
-                message="The order has been cancelled and the stock has been restored."
+                title={successModalConfig.title}
+                message={successModalConfig.message}
                 buttonText="Close"
                 onButtonClick={() => setShowSuccessModal(false)}
+            />
+
+            <DangerModal
+                show={showStatusConfirmModal}
+                onHide={() => setShowStatusConfirmModal(false)}
+                onConfirm={handleStatusUpdateConfirm}
+                title="Confirm Status Update"
+                message={`Are you sure you want to update this order status to ${statusToUpdate.newStatus}?`}
             />
         </>
     );

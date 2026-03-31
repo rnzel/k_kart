@@ -24,6 +24,12 @@ function MyOrdersSection() {
         fetchOrders(1); // Reset to page 1 when tab changes
     }, [activeTab]);
 
+    // Normalize status for filtering (handle both 'On-Delivery' from backend and 'on_delivery' from tab)
+    const normalizeStatusForFilter = (status) => {
+        if (!status) return '';
+        return status.toLowerCase().replace(/[-]/g, '_');
+    };
+
     const fetchOrders = async (page = 1) => {
         try {
             setLoading(true);
@@ -36,7 +42,7 @@ function MyOrdersSection() {
                 // Filter orders based on active tab
                 if (activeTab !== 'all') {
                     filteredOrders = response.data.filter(order => {
-                        const orderStatus = order.status.toLowerCase();
+                        const orderStatus = normalizeStatusForFilter(order.status);
                         const tabStatus = activeTab.toLowerCase();
                         return orderStatus === tabStatus;
                     });
@@ -69,6 +75,8 @@ function MyOrdersSection() {
             if (response.success) {
                 setShowSuccessModal(true);
                 setShowCancelModal(false);
+                // Reset to 'all' tab to show the updated order
+                setActiveTab('all');
                 fetchOrders(); // Refresh orders
             } else {
                 alert(response.message || 'Failed to cancel order. Please try again.');
@@ -588,7 +596,10 @@ function MyOrdersSection() {
             <DangerModal
                 show={showCancelModal}
                 onHide={() => setShowCancelModal(false)}
-                onConfirm={() => handleCancelOrderConfirm(orderToCancel)}
+                onConfirm={() => {
+                    handleCancelOrderConfirm(orderToCancel);
+                    setShowCancelModal(false);
+                }}
                 title="Cancel Order"
                 message="Are you sure you want to cancel this order? This action cannot be undone."
                 loading={cancelLoading}
