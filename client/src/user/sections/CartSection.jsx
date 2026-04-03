@@ -206,7 +206,41 @@ function CartSection() {
             }
         } else {
             try {
-                const response = await cartAPI.updateCartItem(itemId, newQuantity);
+                // Find the item to get its product ID
+                const item = cart.find(i => i._id === itemId);
+                console.log('Cart item for update:', item);
+                
+                if (!item) {
+                    console.error('Item not found in cart:', itemId);
+                    alert('Item not found in cart');
+                    return;
+                }
+                
+                if (!item.product) {
+                    console.error('Product reference missing in cart item:', item);
+                    alert('Product information is missing. The item may have been removed.');
+                    return;
+                }
+                
+                // Convert product to string in case it's a populated object
+                let productId;
+                if (typeof item.product === 'object' && item.product !== null) {
+                    // Populated object - use _id
+                    productId = item.product._id || item.product.toString();
+                } else {
+                    // Already a string or ObjectId
+                    productId = String(item.product);
+                }
+                
+                console.log('Product ID for update:', productId);
+                
+                if (!productId || productId === 'undefined' || productId === 'null') {
+                    console.error('Invalid product ID:', productId);
+                    alert('Invalid product information. Please refresh the page.');
+                    return;
+                }
+                
+                const response = await cartAPI.updateCartItem(productId, newQuantity);
                 if (response.success) {
                     setCart(response.data.items);
                 } else {

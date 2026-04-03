@@ -35,6 +35,8 @@ const { errorHandler, notFound } = require('./middleware/errorHandler')
 // Import GridFS utilities
 const { initGridFSBucket, getGridFSBucket, isGridFSReady } = require('./config/gridfsBucket')
 
+const path = require('path')
+
 const app = express()
 const PORT = process.env.PORT || 3000
 
@@ -204,6 +206,24 @@ app.get('/api/health', (req, res) => {
     gridfs: isGridFSReady() ? 'ready' : 'not ready'
   })
 })
+
+// ============================================
+// Root Route - API Status Message
+// ============================================
+app.get('/', (req, res) => {
+  res.json({ message: 'KampusKart API is running!' })
+})
+
+// ============================================
+// Static File Serving (Optional - for frontend in public folder)
+// ============================================
+const publicPath = path.join(__dirname, '..', 'public')
+app.use(express.static(publicPath, { 
+  fallthrough: true, // Continue to next middleware if file not found
+  etag: true,
+  lastModified: true,
+  maxAge: '1d'
+}))
 
 // ============================================
 // 404 Not Found Handler

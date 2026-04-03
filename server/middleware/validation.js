@@ -21,7 +21,9 @@ const validateObjectId = (id, fieldName = 'ID') => {
 // Validate cart item data
 const validateCartItem = (req, res, next) => {
   try {
-    const { productId, quantity } = req.body;
+    // Check for productId in both body (for add) and params (for update)
+    const productId = req.body.productId || req.params.productId;
+    const quantity = req.body.quantity;
 
     if (!productId) {
       return res.status(400).json({
