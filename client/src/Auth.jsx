@@ -2,6 +2,33 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "./utils/api";
 import { validateRegistrationForm, validateLoginForm, sanitizeInput } from "./utils/validation";
+import { FiEye, FiEyeOff } from "react-icons/fi";
+
+// Reusable PasswordInput component with eye icon toggle
+const PasswordInput = ({ id, value, onChange, placeholder, show, onToggle, required }) => {
+    return (
+        <div className="password-input-wrapper">
+            <input
+                type={show ? "text" : "password"}
+                className="form-control password-input-with-icon"
+                id={id}
+                placeholder={placeholder}
+                value={value}
+                onChange={onChange}
+                required={required}
+            />
+            <button
+                type="button"
+                className="password-toggle-btn"
+                onClick={onToggle}
+                tabIndex="-1"
+                aria-label={show ? "Hide password" : "Show password"}
+            >
+                {show ? <FiEye size={18} /> : <FiEyeOff size={18} />}
+            </button>
+        </div>
+    );
+};
 
 function Auth() {
     // General states
@@ -12,6 +39,7 @@ function Auth() {
     // Login form states
     const [loginEmail, setLoginEmail] = useState('');
     const [loginPassword, setLoginPassword] = useState('');
+    const [showLoginPassword, setShowLoginPassword] = useState(false);
     const [loginError, setLoginError] = useState('');
     const navigate = useNavigate();
 
@@ -20,7 +48,9 @@ function Auth() {
     const [lastName, setLastName] = useState('');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
+    const [showPassword, setShowPassword] = useState(false);
     const [confirmPassword, setConfirmPassword] = useState('');
+    const [showConfirmPassword, setShowConfirmPassword] = useState(false);
     const [studentIdPicture, setStudentIdPicture] = useState(null);
     const [successMessage, setSuccessMessage] = useState('');
     const [error, setError] = useState('');
@@ -216,7 +246,15 @@ function Auth() {
                             <input type="email" className="form-control" id="loginEmail" placeholder="Email" value={loginEmail} onChange={(e) => setLoginEmail(e.target.value)} required/>
                         </div>
                         <div className="mb-3">
-                            <input type="password" className="form-control" id="loginPassword" placeholder="Password" value={loginPassword} onChange={(e) => setLoginPassword(e.target.value)} required/>
+                            <PasswordInput
+                                id="loginPassword"
+                                value={loginPassword}
+                                onChange={(e) => setLoginPassword(e.target.value)}
+                                placeholder="Password"
+                                show={showLoginPassword}
+                                onToggle={() => setShowLoginPassword(!showLoginPassword)}
+                                required
+                            />
                         </div>
                         {successMessage && <div className="alert alert-success py-2 mb-3 small">{successMessage}</div>}
                         {loginError && <div className="alert alert-danger py-2 mb-3 small">{loginError}</div>}
@@ -236,10 +274,26 @@ function Auth() {
                             <input type="email" className="form-control" id="email" placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} required/>
                         </div>
                         <div className="mb-3">
-                            <input type="password" className="form-control" id="password" placeholder="Password" value={password} onChange={handlePasswordChange} required/>
+                            <PasswordInput
+                                id="password"
+                                value={password}
+                                onChange={handlePasswordChange}
+                                placeholder="Password"
+                                show={showPassword}
+                                onToggle={() => setShowPassword(!showPassword)}
+                                required
+                            />
                         </div>
                         <div className="mb-3">
-                            <input type="password" className="form-control" id="confirmPassword" placeholder="Confirm Password" value={confirmPassword} onChange={handleConfirmPasswordChange} required/>
+                            <PasswordInput
+                                id="confirmPassword"
+                                value={confirmPassword}
+                                onChange={handleConfirmPasswordChange}
+                                placeholder="Confirm Password"
+                                show={showConfirmPassword}
+                                onToggle={() => setShowConfirmPassword(!showConfirmPassword)}
+                                required
+                            />
                         </div>
                         {passwordError && <div className="alert alert-danger py-2 mb-3 small">{passwordError}</div>}
                         {error && <div className="alert alert-danger py-2 mb-3 small">{error}</div>}
