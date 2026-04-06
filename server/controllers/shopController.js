@@ -194,7 +194,19 @@ const deleteShop = async (req, res) => {
 const getAllShops = async (req, res) => {
     try {
         const shops = await Shop.find();
-        res.status(200).json(shops);
+        
+        // Get product count for each shop
+        const shopsWithProductCount = await Promise.all(
+            shops.map(async (shop) => {
+                const productCount = await Product.countDocuments({ shop: shop._id });
+                return {
+                    ...shop.toObject(),
+                    productsCount: productCount
+                };
+            })
+        );
+        
+        res.status(200).json(shopsWithProductCount);
     } catch (error) {
         res.status(500).json({ message: error.message });
     }

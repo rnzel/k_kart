@@ -506,3 +506,10 @@ h1 {
   background-color: #db4444;
   color: white;
 }
+
+/* User Dashboard - Mobile bottom navigation spacing */
+@media (max-width: 767px) {
+  .dashboard-container {
+    padding-bottom: 120px !important;
+  }
+}

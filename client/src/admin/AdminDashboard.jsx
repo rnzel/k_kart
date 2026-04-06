@@ -97,12 +97,14 @@ function AdminDashboard() {
                         </ul>
                     </aside>
 
-                    <div className="col-md-9 p-3 pb-5 pb-md-3">
+                    <div className="col-md-9 p-3">
                         {activeSection === 'users' && <UsersSection />}
                         {activeSection === 'applications' && <SellerApplicationsSection />}
                         {activeSection === 'shops' && <ShopManagementSection />}
                         {activeSection === 'products' && <ProductManagementSection />}
                         {activeSection === 'orders' && <OrderManagementSection />}
+                        {/* Spacer for mobile bottom navigation */}
+                        <div className="d-md-none" style={{ height: '120px' }}></div>
                     </div>
                 </div>
             </div>

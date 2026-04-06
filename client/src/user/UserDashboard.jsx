@@ -23,7 +23,7 @@ function UserDashboard() {
         <div>
             <Navbar />
 
-            <div className="container mt-4 d-flex flex-column gap-4">
+            <div className="container mt-4 mb-5 d-flex flex-column gap-4">
                 <div className="row">
                     {/* Desktop Sidebar - Hidden on mobile */}
                     <aside className="col-md-3 d-none d-md-block" style={{fontSize:'17px'}}>
@@ -83,11 +83,13 @@ function UserDashboard() {
                         </ul>
                     </aside>
 
-                    <div className="col-md-9 p-3 pb-5 pb-md-3">
+                    <div className="col-md-9 p-3">
                         {activeSection === 'profile' && <MyProfileSection />}
                         {activeSection === 'orders' && <MyOrdersSection />}
                         {activeSection === 'cart' && <CartSection />}
                         {activeSection === 'messages' && <MessagesSection />}
+                        {/* Spacer for mobile bottom navigation */}
+                        <div className="d-md-none" style={{ height: '120px' }}></div>
                     </div>
                 </div>
             </div>

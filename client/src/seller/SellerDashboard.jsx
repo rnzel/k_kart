@@ -78,13 +78,15 @@ function SellerDashboard() {
                         </ul>
                     </aside>
 
-                    <div className="col-md-9 p-3 pb-5 pb-md-3">
+                    <div className="col-md-9 p-3">
                         {activeSection === 'my-shop' && (
                             <MyShopSection />
                         )}
                         {activeSection === 'products' && <ProductsSection />}
                         {activeSection === 'orders' && <OrdersSection />}
                         {activeSection === 'messages' && <MessagesSection />}
+                        {/* Spacer for mobile bottom navigation */}
+                        <div className="d-md-none" style={{ height: '120px' }}></div>
                     </div>
                 </div>
             </div>

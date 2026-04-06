@@ -316,15 +316,21 @@ router.get('/shops', authenticateToken, requireAdmin, async (req, res) => {
             Shop.countDocuments()
         ])
 
-        // Add shop status based on isDeleted field
-        const shopsWithStatus = shops.map(shop => ({
-            ...shop.toObject(),
-            status: shop.isDeleted ? 'deleted' : 'active'
-        }))
+        // Get product count for each shop and add status
+        const shopsWithProductCount = await Promise.all(
+            shops.map(async (shop) => {
+                const productCount = await Product.countDocuments({ shop: shop._id })
+                return {
+                    ...shop.toObject(),
+                    productsCount: productCount,
+                    status: shop.isDeleted ? 'deleted' : 'active'
+                }
+            })
+        )
 
         res.json({
             success: true,
-            data: shopsWithStatus,
+            data: shopsWithProductCount,
             pagination: {
                 page,
                 limit,
