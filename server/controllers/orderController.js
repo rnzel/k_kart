@@ -63,261 +63,256 @@ const createOrder = async (req, res) => {
       });
     }
 
-    // Use transaction to ensure atomicity
-    const session = await Order.startSession();
-    
     try {
-      await session.withTransaction(async () => {
-        // Check if this is a direct checkout (product IDs) or cart checkout (cart item IDs)
-        const isDirectCheckout = selectedItems.some(item => 
-          item.productId && typeof item.productId === 'string'
+      // Check if this is a direct checkout (product IDs) or cart checkout (cart item IDs)
+      const isDirectCheckout = selectedItems.some(item => 
+        item.productId && typeof item.productId === 'string'
+      );
+
+      let itemsToProcess = [];
+
+      if (isDirectCheckout) {
+        // Direct checkout: items are { productId, quantity }
+        itemsToProcess = selectedItems;
+      } else {
+        // Cart checkout: items are cart item IDs
+        // Get user's cart
+        const cart = await Cart.findOne({ user: userId })
+          .populate('items.product', 'productStock productName productPrice isDeleted')
+          .populate('items.shop', 'shopName owner isDeleted');
+
+        if (!cart || cart.items.length === 0) {
+          throw new Error('Cart is empty');
+        }
+
+        // Filter cart items to only include selected items
+        itemsToProcess = cart.items.filter(item => 
+          selectedItems.includes(item._id.toString())
         );
 
-        let itemsToProcess = [];
+        if (itemsToProcess.length === 0) {
+          throw new Error('No selected items found in cart');
+        }
+      }
+
+      // Group items by seller
+      const itemsBySeller = {};
+      const validationErrors = [];
+
+      // First pass: Validate all items
+      for (const item of itemsToProcess) {
+        let product, shop, quantity, productName;
 
         if (isDirectCheckout) {
-          // Direct checkout: items are { productId, quantity }
-          itemsToProcess = selectedItems;
+          // Direct checkout format
+          const productData = await Product.findById(item.productId);
+          const shopData = await Shop.findOne({ _id: productData.shop });
+          
+          if (!productData) {
+            validationErrors.push(`Product not found: ${item.productId}`);
+            continue;
+          }
+
+          if (productData.isDeleted) {
+            validationErrors.push(`Cannot order deleted product: ${item.productId}`);
+            continue;
+          }
+
+          if (!shopData) {
+            validationErrors.push(`Shop not found for product: ${item.productId}`);
+            continue;
+          }
+
+          if (shopData.isDeleted) {
+            validationErrors.push(`Cannot order from deleted shop: ${shopData.shopName}`);
+            continue;
+          }
+
+          product = productData;
+          shop = shopData;
+          quantity = item.quantity;
+          productName = productData.productName;
         } else {
-          // Cart checkout: items are cart item IDs
-          // Get user's cart with session
-          const cart = await Cart.findOne({ user: userId }).session(session)
-            .populate('items.product', 'productStock productName productPrice isDeleted')
-            .populate('items.shop', 'shopName owner isDeleted');
-
-          if (!cart || cart.items.length === 0) {
-            throw new Error('Cart is empty');
-          }
-
-          // Filter cart items to only include selected items
-          itemsToProcess = cart.items.filter(item => 
-            selectedItems.includes(item._id.toString())
-          );
-
-          if (itemsToProcess.length === 0) {
-            throw new Error('No selected items found in cart');
-          }
+          // Cart item format
+          product = item.product;
+          shop = item.shop;
+          quantity = item.quantity;
+          productName = item.productName;
         }
 
-        // Group items by seller
-        const itemsBySeller = {};
-        const validationErrors = [];
+        // Validate product and shop
+        if (!product) {
+          validationErrors.push(`Product not found for item: ${productName}`);
+          continue;
+        }
 
-        // First pass: Validate all items and reserve stock
-        for (const item of itemsToProcess) {
-          let product, shop, quantity, productName;
+        if (product.isDeleted) {
+          validationErrors.push(`Cannot order deleted product: ${productName}`);
+          continue;
+        }
 
-          if (isDirectCheckout) {
-            // Direct checkout format
-            const productData = await Product.findById(item.productId).session(session);
-            const shopData = await Shop.findOne({ _id: productData.shop }).session(session);
-            
-            if (!productData) {
-              validationErrors.push(`Product not found: ${item.productId}`);
-              continue;
-            }
+        if (!shop) {
+          validationErrors.push(`Shop not found for product: ${productName}`);
+          continue;
+        }
 
-            if (productData.isDeleted) {
-              validationErrors.push(`Cannot order deleted product: ${item.productId}`);
-              continue;
-            }
+        if (shop.isDeleted) {
+          validationErrors.push(`Cannot order from deleted shop: ${shop.shopName}`);
+          continue;
+        }
 
-            if (!shopData) {
-              validationErrors.push(`Shop not found for product: ${item.productId}`);
-              continue;
-            }
+        // Validate stock
+        if (product.productStock < quantity) {
+          validationErrors.push(`Insufficient stock for ${productName}. Available: ${product.productStock}, Requested: ${quantity}`);
+          continue;
+        }
 
-            if (shopData.isDeleted) {
-              validationErrors.push(`Cannot order from deleted shop: ${shopData.shopName}`);
-              continue;
-            }
-
-            product = productData;
-            shop = shopData;
-            quantity = item.quantity;
-            productName = productData.productName;
-          } else {
-            // Cart item format
-            product = item.product;
-            shop = item.shop;
-            quantity = item.quantity;
-            productName = item.productName;
-          }
-
-          // Validate product and shop
-          if (!product) {
-            validationErrors.push(`Product not found for item: ${productName}`);
-            continue;
-          }
-
-          if (product.isDeleted) {
-            validationErrors.push(`Cannot order deleted product: ${productName}`);
-            continue;
-          }
-
-          if (!shop) {
-            validationErrors.push(`Shop not found for product: ${productName}`);
-            continue;
-          }
-
-          if (shop.isDeleted) {
-            validationErrors.push(`Cannot order from deleted shop: ${shop.shopName}`);
-            continue;
-          }
-
-          // Validate stock with additional safety margin
-          if (product.productStock < quantity) {
-            validationErrors.push(`Insufficient stock for ${productName}. Available: ${product.productStock}, Requested: ${quantity}`);
-            continue;
-          }
-
-          // Use the shop owner's user ID as the seller ID
-          const sellerId = shop.owner.toString();
-          if (!itemsBySeller[sellerId]) {
-            itemsBySeller[sellerId] = {
-              seller: shop.owner,
-              sellerName: shop.shopName,
-              items: []
-            };
-          }
-          itemsBySeller[sellerId].items.push({
-            product: product._id,
-            productName: productName,
-            quantity: quantity,
-            price: product.productPrice,
+        // Use the shop owner's user ID as the seller ID
+        const sellerId = shop.owner.toString();
+        if (!itemsBySeller[sellerId]) {
+          itemsBySeller[sellerId] = {
             seller: shop.owner,
             sellerName: shop.shopName,
-            contactNumber: contactNumber.trim()
+            items: []
+          };
+        }
+        itemsBySeller[sellerId].items.push({
+          product: product._id,
+          productName: productName,
+          quantity: quantity,
+          price: product.productPrice,
+          seller: shop.owner,
+          sellerName: shop.shopName,
+          contactNumber: contactNumber.trim()
+        });
+      }
+
+      if (validationErrors.length > 0) {
+        throw new Error(validationErrors.join('; '));
+      }
+
+      if (Object.keys(itemsBySeller).length === 0) {
+        throw new Error('No valid items found');
+      }
+
+      const createdOrders = [];
+      const failedOrders = [];
+
+      // Second pass: Create orders and update stock atomically (NO TRANSACTION)
+      for (const sellerId in itemsBySeller) {
+        const sellerData = itemsBySeller[sellerId];
+        
+        // Calculate total amount
+        const totalAmount = sellerData.items.reduce((sum, item) => {
+          return sum + (item.price * item.quantity);
+        }, 0);
+
+        try {
+          // Generate UNIQUE order number for EACH seller
+          const orderNumber = await generateOrderNumber();
+          
+          // Create order
+          const order = new Order({
+            orderNumber,
+            buyer: userId,
+            seller: sellerData.seller,
+            items: sellerData.items,
+            totalAmount,
+            pickupLocation: pickupLocation.trim(),
+            contactNumber: contactNumber.trim(),
+            note: note || '',
+            paymentMethod: 'COD',
+            status: 'Pending'
+          });
+
+          await order.save();
+          
+          // Update product stock atomically using findOneAndUpdate
+          for (const item of sellerData.items) {
+            const updateResult = await Product.findOneAndUpdate(
+              { 
+                _id: item.product, 
+                productStock: { $gte: item.quantity } 
+              },
+              { $inc: { productStock: -item.quantity } },
+              { new: true }
+            );
+
+            if (!updateResult) {
+              throw new Error(`Stock update failed for ${item.productName}. Stock may have changed during checkout.`);
+            }
+          }
+          
+          createdOrders.push(order);
+        } catch (error) {
+          console.error('Error creating order for seller:', sellerId, error);
+          failedOrders.push({
+            sellerName: sellerData.sellerName,
+            error: error.message
           });
         }
+      }
 
-        if (validationErrors.length > 0) {
-          throw new Error(validationErrors.join('; '));
-        }
+      // Third pass: Remove purchased items from cart (only for cart checkout)
+      if (!isDirectCheckout && createdOrders.length > 0) {
+        // Get cart again to ensure we have the latest version
+        const cart = await Cart.findOne({ user: userId });
+        if (cart) {
+          console.log('Attempting to remove purchased items from cart...');
+          console.log('Selected items to remove:', selectedItems);
+          console.log('Cart items before removal:', cart.items.map(item => ({
+            id: item._id.toString(),
+            productId: item.product ? item.product.toString() : 'null',
+            quantity: item.quantity
+          })));
 
-        if (Object.keys(itemsBySeller).length === 0) {
-          throw new Error('No valid items found');
-        }
-
-        const createdOrders = [];
-        const failedOrders = [];
-
-        // Second pass: Create orders and update stock atomically
-        for (const sellerId in itemsBySeller) {
-          const sellerData = itemsBySeller[sellerId];
+          // Remove all selected items from cart since they were successfully purchased
+          const originalCartLength = cart.items.length;
+          cart.items = cart.items.filter(item => {
+            const shouldRemove = selectedItems.includes(item._id.toString());
+            console.log(`Cart item ${item._id}: selected=${shouldRemove}`);
+            return !shouldRemove;
+          });
           
-          // Calculate total amount
-          const totalAmount = sellerData.items.reduce((sum, item) => {
-            return sum + (item.price * item.quantity);
-          }, 0);
-
-          try {
-            // Generate unique order number
-            const orderNumber = await generateOrderNumber();
-            
-            // Create order
-            const order = new Order({
-              orderNumber,
-              buyer: userId,
-              seller: sellerData.seller,
-              items: sellerData.items,
-              totalAmount,
-              pickupLocation: pickupLocation.trim(),
-              contactNumber: contactNumber.trim(),
-              note: note || '',
-              paymentMethod: 'COD',
-              status: 'Pending'
-            });
-
-            await order.save({ session });
-            
-            // Update product stock atomically
-            for (const item of sellerData.items) {
-              const product = await Product.findById(item.product).session(session);
-              if (product) {
-                // Double-check stock before updating (optimistic concurrency control)
-                if (product.productStock < item.quantity) {
-                  throw new Error(`Stock reservation failed for ${item.productName}. Stock changed during checkout.`);
-                }
-                
-                product.productStock -= item.quantity;
-                await product.save({ session });
-              }
-            }
-            
-            createdOrders.push(order);
-          } catch (error) {
-            console.error('Error creating order for seller:', sellerId, error);
-            failedOrders.push({
-              sellerName: sellerData.sellerName,
-              error: error.message
-            });
+          const itemsRemoved = originalCartLength - cart.items.length;
+          console.log(`Items removed from cart: ${itemsRemoved} (original: ${originalCartLength}, remaining: ${cart.items.length})`);
+          
+          if (itemsRemoved > 0) {
+            await cart.save();
+            console.log(`Successfully removed ${itemsRemoved} purchased items from cart`);
+          } else {
+            console.log('No items were removed from cart - this indicates a matching issue');
           }
         }
+      }
 
-        // Third pass: Remove purchased items from cart (only for cart checkout)
-        if (!isDirectCheckout && createdOrders.length > 0) {
-          // Get cart again to ensure we have the latest version
-          const cart = await Cart.findOne({ user: userId }).session(session);
-          if (cart) {
-            console.log('Attempting to remove purchased items from cart...');
-            console.log('Selected items to remove:', selectedItems);
-            console.log('Cart items before removal:', cart.items.map(item => ({
-              id: item._id.toString(),
-              productId: item.product ? item.product.toString() : 'null',
-              quantity: item.quantity
-            })));
+      // Prepare response
+      const response = {
+        success: createdOrders.length > 0,
+        createdOrders,
+        failedOrders,
+        message: createdOrders.length > 0 
+          ? `Successfully created ${createdOrders.length} order(s)`
+          : 'No orders were created'
+      };
 
-            // Remove all selected items from cart since they were successfully purchased
-            const originalCartLength = cart.items.length;
-            cart.items = cart.items.filter(item => {
-              const shouldRemove = selectedItems.includes(item._id.toString());
-              console.log(`Cart item ${item._id}: selected=${shouldRemove}`);
-              return !shouldRemove;
-            });
-            
-            const itemsRemoved = originalCartLength - cart.items.length;
-            console.log(`Items removed from cart: ${itemsRemoved} (original: ${originalCartLength}, remaining: ${cart.items.length})`);
-            
-            if (itemsRemoved > 0) {
-              await cart.save({ session });
-              console.log(`Successfully removed ${itemsRemoved} purchased items from cart`);
-            } else {
-              console.log('No items were removed from cart - this indicates a matching issue');
-            }
-          }
-        }
+      if (failedOrders.length > 0) {
+        response.message += `. Failed: ${failedOrders.length} order(s)`;
+      }
 
-        // Prepare response
-        const response = {
-          success: createdOrders.length > 0,
-          createdOrders,
-          failedOrders,
-          message: createdOrders.length > 0 
-            ? `Successfully created ${createdOrders.length} order(s)`
-            : 'No orders were created'
-        };
-
-        if (failedOrders.length > 0) {
-          response.message += `. Failed: ${failedOrders.length} order(s)`;
-        }
-
-        res.status(createdOrders.length > 0 ? 201 : 400).json(response);
-      });
+      res.status(createdOrders.length > 0 ? 201 : 400).json(response);
     } catch (error) {
       if (error.message.includes('Cart is empty') ||
           error.message.includes('Cannot order') ||
           error.message.includes('Insufficient stock') ||
           error.message.includes('No valid items') ||
-          error.message.includes('Stock reservation failed')) {
+          error.message.includes('Stock update failed')) {
         return res.status(400).json({ 
           success: false,
           message: error.message 
         });
       }
       throw error;
-    } finally {
-      await session.endSession();
     }
   } catch (error) {
     console.error('Error creating order:', error);
@@ -393,7 +388,7 @@ const getSellerOrders = async (req, res) => {
     const totalOrders = await Order.countDocuments({ seller: userId });
     const totalPages = Math.ceil(totalOrders / limit);
 
-    const orders = await Order.find({ seller: userId })
+    const sellerOrders = await Order.find({ seller: userId })
       .populate('buyer', 'firstName lastName email')
       .populate('items.product', 'productName productImages productStock')
       .populate('items.seller', 'firstName lastName')
@@ -403,7 +398,7 @@ const getSellerOrders = async (req, res) => {
 
     res.status(200).json({
       success: true,
-      data: orders,
+      data: sellerOrders,
       pagination: {
         page,
         limit,

@@ -126,7 +126,7 @@ function CheckoutPage() {
 
     const handleCheckout = () => {
         if (selectedItems.length === 0) {
-            alert('Please select at least one item to checkout.');
+            setCheckoutError('Please select at least one item to checkout.');
             return;
         }
         // For single product, we proceed directly to checkout
@@ -138,8 +138,60 @@ function CheckoutPage() {
             }
             handleSingleProductCheckout();
         } else {
-            // Cart checkout - show modal (this would need to be implemented)
-            alert('Cart checkout functionality would be implemented here.');
+            // Cart checkout
+            if (!pickupLocation.trim()) {
+                setCheckoutError('Please enter a pickup location before placing your order.');
+                return;
+            }
+            handleCartCheckout();
+        }
+    };
+
+    const handleCartCheckout = async () => {
+        setCheckoutLoading(true);
+        setCheckoutError(null);
+        
+        try {
+            // Get the cart item IDs that are selected
+            const cartItemIds = cart
+                .filter(item => selectedItems.includes(item._id))
+                .map(item => item._id);
+            
+            if (cartItemIds.length === 0) {
+                setCheckoutError('No items selected for checkout.');
+                setCheckoutLoading(false);
+                return;
+            }
+            
+            // Call the order API to create orders
+            const checkoutResponse = await orderAPI.createOrder(
+                pickupLocation, 
+                note, 
+                cartItemIds, 
+                contactNumber
+            );
+            
+            if (checkoutResponse.success) {
+                if (checkoutResponse.data.createdOrders && checkoutResponse.data.createdOrders.length > 0) {
+                    const successMsg = `Successfully created ${checkoutResponse.data.createdOrders.length} order(s)!`;
+                    setSuccessMessage(successMsg);
+                    setShowSuccessModal(true);
+                    setCheckoutError(null);
+                    // Refresh cart to show updated state
+                    fetchCart();
+                    // Clear selected items since they've been purchased
+                    setSelectedItems([]);
+                } else {
+                    setCheckoutError('No orders were created. Please try again.');
+                }
+            } else {
+                setCheckoutError(checkoutResponse.message || 'Checkout failed. Please try again.');
+            }
+        } catch (err) {
+            console.error('Checkout failed:', err);
+            setCheckoutError('Checkout failed. Please try again.');
+        } finally {
+            setCheckoutLoading(false);
         }
     };
 
