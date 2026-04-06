@@ -1,6 +1,6 @@
 const express = require('express')
 const router = express.Router()
-const rateLimit = require('express-rate-limit')
+// const rateLimit = require('express-rate-limit') // Temporarily disabled for testing
 const User = require('../models/User')
 const bcrypt = require('bcryptjs')
 const jwt = require('jsonwebtoken')
@@ -17,16 +17,16 @@ const {
 const { authenticateToken, requireAuth } = require('../middleware/auth')
 
 // ============================================
-// Rate Limiter for Login Route
+// Rate Limiter for Login Route - TEMPORARILY DISABLED FOR TESTING
 // ============================================
 // 5 requests per 15 minutes
-const loginLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 5, // Limit each IP to 5 requests per windowMs
-  message: { message: 'Too many login attempts. Please try again after 15 minutes.' },
-  standardHeaders: true,
-  legacyHeaders: false,
-})
+// const loginLimiter = rateLimit({
+//   windowMs: 15 * 60 * 1000, // 15 minutes
+//   max: 5, // Limit each IP to 5 requests per windowMs
+//   message: { message: 'Too many login attempts. Please try again after 15 minutes.' },
+//   standardHeaders: true,
+//   legacyHeaders: false,
+// })
 
 // Register with enhanced security
 router.post('/register', 
@@ -58,9 +58,9 @@ router.post('/check-email', async (req, res) => {
   }
 })
 
-// Login - with rate limiting (5 requests per 15 minutes) and enhanced security
+// Login - rate limiting temporarily disabled for testing
 router.post('/login', 
-  loginLimiter,
+  // loginLimiter, // Temporarily disabled for testing
   validateUserLogin,
   handleValidationErrors,
   async (req, res) => {

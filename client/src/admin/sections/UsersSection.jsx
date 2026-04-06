@@ -141,51 +141,32 @@ function UsersSection() {
                 </button>
             </div>
             
-            {/* Tabs with Search Bar */}
+            {/* Filter Dropdown with Search Bar */}
             <div className="row mb-4">
-                <div className="col-lg-8">
-                    <ul className="nav nav-tabs">
-                        <li className="nav-item">
-                            <button
-                                className={`nav-link ${activeTab === 'all' ? 'active text-primary fw-semibold' : 'text-muted'}`}
-                                onClick={() => setActiveTab('all')}
-                            >
-                                All
-                            </button>
-                        </li>
-                        <li className="nav-item">
-                            <button
-                                className={`nav-link ${activeTab === 'buyer' ? 'active text-primary fw-semibold' : 'text-muted'}`}
-                                onClick={() => setActiveTab('buyer')}
-                            >
-                                Buyers
-                            </button>
-                        </li>
-                        <li className="nav-item">
-                            <button
-                                className={`nav-link ${activeTab === 'seller' ? 'active text-primary fw-semibold' : 'text-muted'}`}
-                                onClick={() => setActiveTab('seller')}
-                            >
-                                Sellers
-                            </button>
-                        </li>
-                    </ul>
-                </div>
-                <div className="col-lg-4">
-                    <div className="position-relative d-flex gap-2">
-                        <div className="input-group flex-grow-1">
-                            <span className="input-group-text bg-white border-end-0">
-                                <FiSearch className="text-muted" />
-                            </span>
-                            <input
-                                type="text"
-                                className="form-control border-start-0"
-                                placeholder="Search users..."
-                                value={searchTerm}
-                                onChange={(e) => setSearchTerm(e.target.value)}
-                            />
-                        </div>
+                <div className="col-md-8 mb-3 mb-md-0">
+                    <div className="input-group">
+                        <span className="input-group-text bg-white border-end-0">
+                            <FiSearch className="text-muted" />
+                        </span>
+                        <input
+                            type="text"
+                            className="form-control border-start-0"
+                            placeholder="Search users..."
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                        />
                     </div>
+                </div>
+                <div className="col-md-4">
+                    <select 
+                        className="form-select custom-filter-select"
+                        value={activeTab}
+                        onChange={(e) => setActiveTab(e.target.value)}
+                    >
+                        <option value="all">All Users</option>
+                        <option value="buyer">Buyers</option>
+                        <option value="seller">Sellers</option>
+                    </select>
                 </div>
             </div>
             

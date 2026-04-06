@@ -476,3 +476,33 @@ h1 {
     right: 6px;
   }
 }
+
+/* Custom Filter Select Dropdown - Match App Color Scheme */
+.custom-filter-select {
+  background-color: white !important;
+  border: 1px solid black !important;
+  color: black !important;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.custom-filter-select:hover {
+  border-color: #db4444 !important;
+}
+
+.custom-filter-select:focus {
+  border-color: #db4444 !important;
+  box-shadow: none !important;
+  outline: none;
+}
+
+.custom-filter-select option {
+  background-color: white;
+  color: black;
+  padding: 8px;
+}
+
+.custom-filter-select option:checked {
+  background-color: #db4444;
+  color: white;
+}
