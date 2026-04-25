@@ -59,10 +59,11 @@ const updateShop = async (req, res) => {
             return res.status(404).json({ message: "Shop not found" });
         }
 
-        shop.shopName = shopName.trim();
-        shop.shopDescription = shopDescription.trim();
-        shop.shopContact = shopContact.trim();
-        shop.shopLocation = shopLocation.trim();
+shop.shopName = shopName.trim();
+shop.shopDescription = shopDescription.trim();
+shop.shopContact = shopContact.trim();
+shop.shopLocation = shopLocation.trim();
+shop.shopEmail = shopEmail.trim();
 
         // Check if user wants to remove the logo
         const removeLogo = req.body.removeLogo === "true";

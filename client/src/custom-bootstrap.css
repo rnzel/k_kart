@@ -47,6 +47,47 @@ h2 {
     padding: 0.25rem 0.5rem !important; /* smaller padding */
     font-size: 0.8rem !important;        /* smaller font */
   }
+
+  .order-status-badge {
+    font-size: 0.6rem !important;
+    padding: 0.2rem 0.4rem !important;
+  }
+
+  .order-id-text {
+    font-size: 0.8rem !important;
+  }
+
+  .order-card h6 {
+    font-size: 0.85rem !important;
+  }
+
+  .order-card .card-body .badge {
+    font-size: 0.7rem !important;
+    padding: 0.25rem 0.4rem !important;
+  }
+
+  .order-card .card-body span.fw-semibold.text-dark {
+    font-size: 0.8rem !important;
+  }
+
+  .order-card .card-body .text-muted.small {
+    font-size: 0.75rem !important;
+  }
+
+  .order-card .card-body .fw-bold.text-primary,
+  .order-card .card-body .fw-semibold.text-primary {
+    font-size: 0.85rem !important;
+  }
+
+  .order-product-img {
+    width: 40px !important;
+    height: 40px !important;
+  }
+
+  .order-product-img svg {
+    width: 15px !important;
+    height: 15px !important;
+  }
 }
 
 /* Form control focus/active border */
@@ -507,9 +548,93 @@ h1 {
   color: white;
 }
 
-/* User Dashboard - Mobile bottom navigation spacing */
-@media (max-width: 767px) {
-  .dashboard-container {
-    padding-bottom: 120px !important;
-  }
+/* Underline for active desktop sidebar links */
+a.text-primary.font-weight-semibold {
+  position: relative; /* Added for sliding animation */
+  overflow: hidden; /* Added for sliding animation */
+  display: inline-flex; /* Ensure border-bottom works correctly with padding for inline elements */
+  /* Removed direct border-bottom and padding-bottom */
+}
+
+a.text-primary.font-weight-semibold::after {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 0;
+  height: 2px;
+  background-color: #db4444;
+  transition: width 0.3s ease-out;
+}
+
+a.text-primary.font-weight-semibold::after {
+  width: 100%;
+}
+
+/* Responsive Tabs Horizontal Scroll */
+.nav-tabs-wrapper {
+  overflow-x: auto;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
+  margin-bottom: 1rem;
+}
+
+.nav-tabs-wrapper .nav-tabs {
+  flex-wrap: nowrap !important;
+  white-space: nowrap !important;
+}
+
+.nav-tabs-wrapper .nav-item {
+  flex: 0 0 auto;
+}
+
+/* Hide scrollbar for Chrome, Safari and Opera */
+.nav-tabs-wrapper::-webkit-scrollbar {
+  display: none;
+}
+
+/* Hide scrollbar for IE, Edge and Firefox */
+.nav-tabs-wrapper {
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
+}
+
+/* Custom Active Tab Styling */
+.nav-tabs {
+  border-bottom: none !important;
+}
+
+.nav-tabs .nav-link {
+  border: none !important;
+  color: #6c757d;
+  padding: 0.75rem 1.25rem;
+  position: relative;
+  transition: all 0.1 ease;
+  overflow: hidden; /* Added for sliding animation */
+}
+
+.nav-tabs .nav-link::after {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 0;
+  height: 2px;
+  background-color: #db4444;
+  transition: width 0.1s ease-out;
+}
+
+.nav-tabs .nav-link:hover {
+  color: #db4444;
+}
+
+.nav-tabs .nav-link.active {
+  font-weight: normal !important;
+  color: #db4444 !important;
+  background: none !important;
+  /* Removed direct border-bottom and padding-bottom */
+}
+
+.nav-tabs .nav-link.active::after {
+  width: 100%;
 }

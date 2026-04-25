@@ -147,6 +147,7 @@ function Marketplace() {
                 <StickySearchBar 
                     onCartClick={handleCartClick}
                     onMessagesClick={handleMessagesClick}
+                    cartCount={cartCount}
                 />
                 <div className="container py-5">
                     <div className="d-flex justify-content-center align-items-center py-5">
@@ -184,6 +185,7 @@ function Marketplace() {
                 showDropdown={showDropdown}
                 onCartClick={handleCartClick}
                 onMessagesClick={handleMessagesClick}
+                cartCount={cartCount}
                 onKeyDown={handleKeyDown}
             />
 

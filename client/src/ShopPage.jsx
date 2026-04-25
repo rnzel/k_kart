@@ -25,6 +25,23 @@ function ShopPage() {
     const [showDropdown, setShowDropdown] = React.useState(false);
     const productsPerPage = 12;
 
+    const normalizedSearchTerm = searchTerm.trim().toLowerCase();
+    const filteredProducts = React.useMemo(() => {
+        if (!normalizedSearchTerm) return products;
+
+        return products.filter((product) => {
+            const name = product.productName?.toLowerCase() || "";
+            const description = product.productDescription?.toLowerCase() || "";
+            const category = product.productCategory?.toLowerCase() || "";
+
+            return (
+                name.includes(normalizedSearchTerm) ||
+                description.includes(normalizedSearchTerm) ||
+                category.includes(normalizedSearchTerm)
+            );
+        });
+    }, [products, normalizedSearchTerm]);
+
     // Fetch cart count on mount
     React.useEffect(() => {
         fetchCartCount();
@@ -135,6 +152,7 @@ function ShopPage() {
                     showBackButton={true}
                     onBackClick={handleBackClick}
                     showSuggestions={false}
+                    showRecentSearches={false}
                 />
                 <div className="container py-5">
                     <div className="d-flex justify-content-center align-items-center py-5">
@@ -156,6 +174,7 @@ function ShopPage() {
                     showBackButton={true}
                     onBackClick={handleBackClick}
                     showSuggestions={false}
+                    showRecentSearches={false}
                 />
                 <div className="container py-5">
                     <div className="row justify-content-center">
@@ -184,6 +203,7 @@ function ShopPage() {
                     showBackButton={true}
                     onBackClick={handleBackClick}
                     showSuggestions={false}
+                    showRecentSearches={false}
                 />
                 <div className="container py-5">
                     <div className="row justify-content-center">
@@ -227,6 +247,7 @@ function ShopPage() {
                 showBackButton={true}
                 onBackClick={handleBackClick}
                 showSuggestions={false}
+                showRecentSearches={false}
             />
             
             {/* Shop Content */}
@@ -247,7 +268,7 @@ function ShopPage() {
 
                     {products.length > 0 && (
                         <ShopProductsGrid 
-                            products={products}
+                            products={filteredProducts}
                             loading={loading}
                             error={error}
                             onAddToCart={handleAddToCart}
@@ -255,6 +276,12 @@ function ShopPage() {
                             currentPage={currentPage}
                             totalPages={totalPages}
                             onPageChange={handlePageChange}
+                            emptyTitle={normalizedSearchTerm ? "No matching products in this shop" : "No products found"}
+                            emptyDescription={
+                                normalizedSearchTerm
+                                    ? `No products in this shop match "${searchTerm.trim()}".`
+                                    : "This shop doesn't have any products available at the moment."
+                            }
                         />
                     )}
                 </div>

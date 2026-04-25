@@ -29,10 +29,10 @@ function AdminDashboard() {
                     {/* Desktop Sidebar - Hidden on mobile */}
                     <aside className="col-md-3 d-none d-md-block" style={{fontSize:'17px'}}>
                         <ul className="d-flex flex-column gap-3 list-unstyled p-3 justify-content-center">
-                            <li className="item d-flex align-items-center font-weight-semibold mb-2">
+                            <li className="item d-flex align-items-center mb-2">
                                 <a 
                                     href="#users" 
-                                    className={`d-flex align-items-center text-decoration-none ${activeSection === 'users' ? 'text-primary' : 'text-dark'}`}
+                                    className={`d-flex align-items-center text-decoration-none ${activeSection === 'users' ? 'text-primary font-weight-semibold' : 'text-dark'}`}
                                     onClick={(e) => {
                                         e.preventDefault();
                                         setActiveSection('users');
@@ -42,10 +42,10 @@ function AdminDashboard() {
                                     Users
                                 </a>
                             </li>
-                            <li className="item d-flex align-items-center font-weight-semibold mb-2">
+                            <li className="item d-flex align-items-center mb-2">
                                 <a 
                                     href="#applications" 
-                                    className={`d-flex align-items-center text-decoration-none ${activeSection === 'applications' ? 'text-primary' : 'text-dark'}`}
+                                    className={`d-flex align-items-center text-decoration-none ${activeSection === 'applications' ? 'text-primary font-weight-semibold' : 'text-dark'}`}
                                     onClick={(e) => {
                                         e.preventDefault();
                                         setActiveSection('applications');
@@ -55,10 +55,10 @@ function AdminDashboard() {
                                     Seller Applications
                                 </a>
                             </li>
-                            <li className="item d-flex align-items-center font-weight-semibold mb-2">
+                            <li className="item d-flex align-items-center mb-2">
                                 <a 
                                     href="#shops" 
-                                    className={`d-flex align-items-center text-decoration-none ${activeSection === 'shops' ? 'text-primary' : 'text-dark'}`}
+                                    className={`d-flex align-items-center text-decoration-none ${activeSection === 'shops' ? 'text-primary font-weight-semibold' : 'text-dark'}`}
                                     onClick={(e) => {
                                         e.preventDefault();
                                         setActiveSection('shops');
@@ -68,10 +68,10 @@ function AdminDashboard() {
                                     Shop Management
                                 </a>
                             </li>
-                            <li className="item d-flex align-items-center font-weight-semibold mb-2">
+                            <li className="item d-flex align-items-center mb-2">
                                 <a 
                                     href="#products" 
-                                    className={`d-flex align-items-center text-decoration-none ${activeSection === 'products' ? 'text-primary' : 'text-dark'}`}
+                                    className={`d-flex align-items-center text-decoration-none ${activeSection === 'products' ? 'text-primary font-weight-semibold' : 'text-dark'}`}
                                     onClick={(e) => {
                                         e.preventDefault();
                                         setActiveSection('products');
@@ -81,10 +81,10 @@ function AdminDashboard() {
                                     Product Management
                                 </a>
                             </li>
-                            <li className="item d-flex align-items-center font-weight-semibold mb-2">
+                            <li className="item d-flex align-items-center mb-2">
                                 <a 
                                     href="#orders" 
-                                    className={`d-flex align-items-center text-decoration-none ${activeSection === 'orders' ? 'text-primary' : 'text-dark'}`}
+                                    className={`d-flex align-items-center text-decoration-none ${activeSection === 'orders' ? 'text-primary font-weight-semibold' : 'text-dark'}`}
                                     onClick={(e) => {
                                         e.preventDefault();
                                         setActiveSection('orders');

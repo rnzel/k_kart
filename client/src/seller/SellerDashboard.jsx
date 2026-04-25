@@ -23,10 +23,10 @@ function SellerDashboard() {
                     {/* Desktop Sidebar - Hidden on mobile */}
                     <aside className="col-md-3 seller-sidebar d-none d-md-block" style={{fontSize:'17px'}}>
                         <ul className="d-flex flex-column gap-3 list-unstyled p-3 justify-content-center">
-                            <li className="item d-flex align-items-center font-weight-semibold mb-2">
+                            <li className="item d-flex align-items-center mb-2">
                                 <a 
                                     href="#my-shop" 
-                                    className={`d-flex align-items-center text-decoration-none ${activeSection === 'my-shop' ? 'text-primary' : 'text-dark'}`}
+                                    className={`d-flex align-items-center text-decoration-none ${activeSection === 'my-shop' ? 'text-primary font-weight-semibold' : 'text-dark'}`}
                                     onClick={(e) => {
                                         e.preventDefault();
                                         setActiveSection('my-shop');
@@ -36,10 +36,10 @@ function SellerDashboard() {
                                     My Shop
                                 </a>
                             </li>
-                            <li className="item d-flex align-items-center font-weight-semibold mb-2">
+                            <li className="item d-flex align-items-center mb-2">
                                 <a 
                                     href="#products" 
-                                    className={`d-flex align-items-center text-decoration-none ${activeSection === 'products' ? 'text-primary' : 'text-dark'}`}
+                                    className={`d-flex align-items-center text-decoration-none ${activeSection === 'products' ? 'text-primary font-weight-semibold' : 'text-dark'}`}
                                     onClick={(e) => {
                                         e.preventDefault();
                                         setActiveSection('products');
@@ -49,10 +49,10 @@ function SellerDashboard() {
                                     Products
                                 </a>
                             </li>
-                            <li className="item d-flex align-items-center font-weight-semibold mb-2">
+                            <li className="item d-flex align-items-center mb-2">
                                 <a 
                                     href="#orders" 
-                                    className={`d-flex align-items-center text-decoration-none ${activeSection === 'orders' ? 'text-primary' : 'text-dark'}`}
+                                    className={`d-flex align-items-center text-decoration-none ${activeSection === 'orders' ? 'text-primary font-weight-semibold' : 'text-dark'}`}
                                     onClick={(e) => {
                                         e.preventDefault();
                                         setActiveSection('orders');
@@ -62,10 +62,10 @@ function SellerDashboard() {
                                     Orders
                                 </a>
                             </li>
-                            <li className="item d-flex align-items-center font-weight-semibold mb-2">
+                            <li className="item d-flex align-items-center mb-2">
                                 <a 
                                     href="#messages" 
-                                    className={`d-flex align-items-center text-decoration-none ${activeSection === 'messages' ? 'text-primary' : 'text-dark'}`}
+                                    className={`d-flex align-items-center text-decoration-none ${activeSection === 'messages' ? 'text-primary font-weight-semibold' : 'text-dark'}`}
                                     onClick={(e) => {
                                         e.preventDefault();
                                         setActiveSection('messages');

@@ -1,5 +1,5 @@
 import React from "react";
-import { FiHome, FiShoppingBag } from "react-icons/fi";
+import { FiHome, FiShoppingBag, FiMail, FiMapPin, FiPhone } from "react-icons/fi";
 import api from "../../utils/api";
 import { getImageUrl } from "../../utils/imageUrl.js";
 import DangerModal from "../../components/DangerModal.jsx";
@@ -392,6 +392,30 @@ function MyShopSection() {
                         <div className="text-center mb-4">
                             <h3 className="mb-2">{shopData?.shopName}</h3>
                             <p className="text-muted">{shopData?.shopDescription}</p>
+                            
+                            <div className="mt-3">
+                                <div className="d-flex flex-column align-items-center gap-3">
+                                    {/* Email */}
+                                    <div className="d-flex align-items-center gap-2">
+                                        <FiMail size={16} className="text-primary" />
+                                        <a href={`mailto:${shopData?.shopEmail}`} className="text-decoration-none">
+                                            <span className="text-primary fw-semibold">{shopData?.shopEmail}</span>
+                                        </a>
+                                    </div>
+                                    
+                                    {/* Location */}
+                                    <div className="d-flex align-items-center gap-2">
+                                        <FiMapPin size={16} className="text-secondary" />
+                                        <span className="text-secondary">{shopData?.shopLocation}</span>
+                                    </div>
+                                    
+                                    {/* Contact */}
+                                    <div className="d-flex align-items-center gap-2">
+                                        <FiPhone size={16} className="text-success" />
+                                        <span className="text-success fw-semibold">{shopData?.shopContact}</span>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
 
                         <div className="d-flex gap-2">

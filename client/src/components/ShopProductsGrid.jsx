@@ -10,7 +10,9 @@ function ShopProductsGrid({
     isAddingToCart, 
     currentPage, 
     totalPages, 
-    onPageChange 
+    onPageChange,
+    emptyTitle = "No products found",
+    emptyDescription = "This shop doesn't have any products available at the moment."
 }) {
     const handlePageChange = (newPage) => {
         if (newPage >= 1 && newPage <= totalPages) {
@@ -38,8 +40,8 @@ function ShopProductsGrid({
             {!loading && !error && (!products || products.length === 0) && (
                 <div className="text-center mt-5">
                     <FiBox size={64} className="text-secondary" />
-                    <h4 className="mt-3 text-muted">No products found</h4>
-                    <p className="text-muted">This shop doesn't have any products available at the moment.</p>
+                    <h4 className="mt-3 text-muted">{emptyTitle}</h4>
+                    <p className="text-muted">{emptyDescription}</p>
                 </div>
             )}
 

@@ -31,10 +31,11 @@ function MyOrdersSection() {
     };
 
     const fetchOrders = async (page = 1) => {
+        const safePage = typeof page === 'number' && Number.isFinite(page) ? page : 1;
         try {
             setLoading(true);
             setError(null);
-            const response = await orderAPI.getMyOrders(page, 10);
+            const response = await orderAPI.getMyOrders(safePage, 10);
             
             if (response.success) {
                 let filteredOrders = response.data;
@@ -49,7 +50,7 @@ function MyOrdersSection() {
                 }
                 
                 setOrders(filteredOrders);
-                setCurrentPage(page);
+                setCurrentPage(safePage);
                 setTotalPages(response.pagination?.totalPages || 1);
                 setTotalOrders(response.pagination?.totalOrders || 0);
             } else {
@@ -125,7 +126,7 @@ function MyOrdersSection() {
                     <h2 className="text-primary mb-0">My Orders</h2>
                     <button 
                         className="btn btn-outline-primary btn-sm"
-                        onClick={fetchOrders}
+                        onClick={() => fetchOrders(currentPage)}
                     >
                         <FiRefreshCw className="me-2" />
                         Refresh
@@ -134,11 +135,11 @@ function MyOrdersSection() {
 
                 {/* Tab Navigation */}
                 <div className="row mb-4">
-                    <div>
+                    <div className="nav-tabs-wrapper">
                         <ul className="nav nav-tabs">
                             <li className="nav-item">
                                 <button
-                                    className={`nav-link ${activeTab === 'all' ? 'active text-primary fw-semibold' : 'text-muted'}`}
+                                    className={`nav-link ${activeTab === 'all' ? 'active' : ''}`}
                                     onClick={() => setActiveTab('all')}
                                 >
                                     All
@@ -146,7 +147,7 @@ function MyOrdersSection() {
                             </li>
                             <li className="nav-item">
                                 <button
-                                    className={`nav-link ${activeTab === 'pending' ? 'active text-primary fw-semibold' : 'text-muted'}`}
+                                    className={`nav-link ${activeTab === 'pending' ? 'active' : ''}`}
                                     onClick={() => setActiveTab('pending')}
                                 >
                                     Pending
@@ -154,7 +155,7 @@ function MyOrdersSection() {
                             </li>
                             <li className="nav-item">
                                 <button
-                                    className={`nav-link ${activeTab === 'confirmed' ? 'active text-primary fw-semibold' : 'text-muted'}`}
+                                    className={`nav-link ${activeTab === 'confirmed' ? 'active' : ''}`}
                                     onClick={() => setActiveTab('confirmed')}
                                 >
                                     Confirmed
@@ -162,7 +163,7 @@ function MyOrdersSection() {
                             </li>
                             <li className="nav-item">
                                 <button
-                                    className={`nav-link ${activeTab === 'on_delivery' ? 'active text-primary fw-semibold' : 'text-muted'}`}
+                                    className={`nav-link ${activeTab === 'on_delivery' ? 'active' : ''}`}
                                     onClick={() => setActiveTab('on_delivery')}
                                 >
                                     On Delivery
@@ -170,7 +171,7 @@ function MyOrdersSection() {
                             </li>
                             <li className="nav-item">
                                 <button
-                                    className={`nav-link ${activeTab === 'completed' ? 'active text-primary fw-semibold' : 'text-muted'}`}
+                                    className={`nav-link ${activeTab === 'completed' ? 'active' : ''}`}
                                     onClick={() => setActiveTab('completed')}
                                 >
                                     Completed
@@ -178,7 +179,7 @@ function MyOrdersSection() {
                             </li>
                             <li className="nav-item">
                                 <button
-                                    className={`nav-link ${activeTab === 'cancelled' ? 'active text-primary fw-semibold' : 'text-muted'}`}
+                                    className={`nav-link ${activeTab === 'cancelled' ? 'active' : ''}`}
                                     onClick={() => setActiveTab('cancelled')}
                                 >
                                     Cancelled
@@ -205,7 +206,7 @@ function MyOrdersSection() {
                 <div className="alert alert-danger mt-3" role="alert">
                     {error}
                 </div>
-                <button className="btn btn-primary" onClick={fetchOrders}>
+                <button className="btn btn-primary" onClick={() => fetchOrders(currentPage)}>
                     Try Again
                 </button>
             </div>
@@ -254,7 +255,7 @@ function MyOrdersSection() {
                     <h2 className="text-primary mb-0">My Orders</h2>
                     <button 
                         className="btn btn-outline-primary btn-sm"
-                        onClick={fetchOrders}
+                        onClick={() => fetchOrders(currentPage)}
                     >
                         <FiRefreshCw className="me-2" />
                         Refresh
@@ -263,11 +264,11 @@ function MyOrdersSection() {
 
                 {/* Tab Navigation */}
                 <div className="row mb-4">
-                    <div>
-                        <ul className="nav nav-tabs">
+                    <div className="nav-tabs-wrapper">
+                        <ul className="nav nav-tabs border-bottom-0">
                             <li className="nav-item">
                                 <button
-                                    className={`nav-link ${activeTab === 'all' ? 'active text-primary fw-semibold' : 'text-muted'}`}
+                                    className={`nav-link ${activeTab === 'all' ? 'active text-primary font-weight-semibold' : 'text-muted'}`}
                                     onClick={() => setActiveTab('all')}
                                 >
                                     All
@@ -275,7 +276,7 @@ function MyOrdersSection() {
                             </li>
                             <li className="nav-item">
                                 <button
-                                    className={`nav-link ${activeTab === 'pending' ? 'active text-primary fw-semibold' : 'text-muted'}`}
+                                    className={`nav-link ${activeTab === 'pending' ? 'active text-primary font-weight-semibold' : 'text-muted'}`}
                                     onClick={() => setActiveTab('pending')}
                                 >
                                     Pending
@@ -283,7 +284,7 @@ function MyOrdersSection() {
                             </li>
                             <li className="nav-item">
                                 <button
-                                    className={`nav-link ${activeTab === 'confirmed' ? 'active text-primary fw-semibold' : 'text-muted'}`}
+                                    className={`nav-link ${activeTab === 'confirmed' ? 'active text-primary font-weight-semibold' : 'text-muted'}`}
                                     onClick={() => setActiveTab('confirmed')}
                                 >
                                     Confirmed
@@ -291,7 +292,7 @@ function MyOrdersSection() {
                             </li>
                             <li className="nav-item">
                                 <button
-                                    className={`nav-link ${activeTab === 'on_delivery' ? 'active text-primary fw-semibold' : 'text-muted'}`}
+                                    className={`nav-link ${activeTab === 'on_delivery' ? 'active text-primary font-weight-semibold' : 'text-muted'}`}
                                     onClick={() => setActiveTab('on_delivery')}
                                 >
                                     On Delivery
@@ -299,7 +300,7 @@ function MyOrdersSection() {
                             </li>
                             <li className="nav-item">
                                 <button
-                                    className={`nav-link ${activeTab === 'completed' ? 'active text-primary fw-semibold' : 'text-muted'}`}
+                                    className={`nav-link ${activeTab === 'completed' ? 'active text-primary font-weight-semibold' : 'text-muted'}`}
                                     onClick={() => setActiveTab('completed')}
                                 >
                                     Completed
@@ -307,7 +308,7 @@ function MyOrdersSection() {
                             </li>
                             <li className="nav-item">
                                 <button
-                                    className={`nav-link ${activeTab === 'cancelled' ? 'active text-primary fw-semibold' : 'text-muted'}`}
+                                    className={`nav-link ${activeTab === 'cancelled' ? 'active text-primary font-weight-semibold' : 'text-muted'}`}
                                     onClick={() => setActiveTab('cancelled')}
                                 >
                                     Cancelled
@@ -342,7 +343,7 @@ function MyOrdersSection() {
                     <h2 className="text-primary mb-0">My Orders</h2>
                     <button 
                         className="btn btn-outline-primary btn-sm"
-                        onClick={fetchOrders}
+                        onClick={() => fetchOrders(currentPage)}
                     >
                         <FiRefreshCw className="me-2" />
                         Refresh
@@ -351,11 +352,11 @@ function MyOrdersSection() {
 
                 {/* Tab Navigation */}
                 <div className="row mb-4">
-                    <div>
-                        <ul className="nav nav-tabs">
+                    <div className="nav-tabs-wrapper">
+                        <ul className="nav nav-tabs border-bottom-0">
                             <li className="nav-item">
                                 <button
-                                    className={`nav-link ${activeTab === 'all' ? 'active text-primary fw-semibold' : 'text-muted'}`}
+                                    className={`nav-link ${activeTab === 'all' ? 'active text-primary font-weight-semibold' : 'text-muted'}`}
                                     onClick={() => setActiveTab('all')}
                                 >
                                     All
@@ -363,7 +364,7 @@ function MyOrdersSection() {
                             </li>
                             <li className="nav-item">
                                 <button
-                                    className={`nav-link ${activeTab === 'pending' ? 'active text-primary fw-semibold' : 'text-muted'}`}
+                                    className={`nav-link ${activeTab === 'pending' ? 'active text-primary font-weight-semibold' : 'text-muted'}`}
                                     onClick={() => setActiveTab('pending')}
                                 >
                                     Pending
@@ -371,7 +372,7 @@ function MyOrdersSection() {
                             </li>
                             <li className="nav-item">
                                 <button
-                                    className={`nav-link ${activeTab === 'confirmed' ? 'active text-primary fw-semibold' : 'text-muted'}`}
+                                    className={`nav-link ${activeTab === 'confirmed' ? 'active text-primary font-weight-semibold' : 'text-muted'}`}
                                     onClick={() => setActiveTab('confirmed')}
                                 >
                                     Confirmed
@@ -379,7 +380,7 @@ function MyOrdersSection() {
                             </li>
                             <li className="nav-item">
                                 <button
-                                    className={`nav-link ${activeTab === 'on_delivery' ? 'active text-primary fw-semibold' : 'text-muted'}`}
+                                    className={`nav-link ${activeTab === 'on_delivery' ? 'active text-primary font-weight-semibold' : 'text-muted'}`}
                                     onClick={() => setActiveTab('on_delivery')}
                                 >
                                     On Delivery
@@ -387,7 +388,7 @@ function MyOrdersSection() {
                             </li>
                             <li className="nav-item">
                                 <button
-                                    className={`nav-link ${activeTab === 'completed' ? 'active text-primary fw-semibold' : 'text-muted'}`}
+                                    className={`nav-link ${activeTab === 'completed' ? 'active text-primary font-weight-semibold' : 'text-muted'}`}
                                     onClick={() => setActiveTab('completed')}
                                 >
                                     Completed
@@ -395,7 +396,7 @@ function MyOrdersSection() {
                             </li>
                             <li className="nav-item">
                                 <button
-                                    className={`nav-link ${activeTab === 'cancelled' ? 'active text-primary fw-semibold' : 'text-muted'}`}
+                                    className={`nav-link ${activeTab === 'cancelled' ? 'active text-primary font-weight-semibold' : 'text-muted'}`}
                                     onClick={() => setActiveTab('cancelled')}
                                 >
                                     Cancelled
@@ -408,21 +409,21 @@ function MyOrdersSection() {
                 <div className="row g-4">
                     {orders.map(order => (
                         <div key={order._id} className="col-12">
-                            <div className="card border rounded">
+                            <div className="card border border-black rounded order-card">
                                 <div className="card-header bg-white p-3">
-                                    <div className="row align-items-center">
-                                        <div className="col-md-6 col-lg-7">
+                                 <div className="d-flex flex-wrap align-items-center justify-content-between">
+                                        <div className="d-flex align-items-center gap-2">
                                             <div className="d-flex align-items-center gap-3">
-                                                <span className={`badge bg-${getStatusColor(order.status)} text-white fs-small px-3 py-2 fw-semibold`}>
+                                                <span className={`badge bg-${getStatusColor(order.status)} text-white fs-small px-3 py-2 fw-semibold order-status-badge`}>
                                                     {getStatusText(order.status)}
                                                 </span>
                                                 <div>
-                                                    <span className="font-weight-semibold fs-8">Order #{order.orderNumber}</span>
+                                                    <span className="font-weight-semibold order-id-text">Order #{order.orderNumber}</span>
                                                 </div>
                                             </div>
                                         </div>
-                                        <div className="col-md-6 col-lg-5 text-md-end">
-                                            <div className="d-flex flex-column align-items-md-end">
+                                        <div className="d-flex align-items-center justify-content-end">
+                                            <div className="d-flex align-items-center">
                                                 <span className="small">
                                                     {new Date(order.createdAt).toLocaleDateString()}
                                                 </span>
@@ -436,9 +437,6 @@ function MyOrdersSection() {
                                         <div className="col-lg-8">
                                             <div className="d-flex align-items-center justify-content-between mb-3">
                                                 <h6 className="mb-0 fw-semibold text-dark">Items ({order.items.length})</h6>
-                                                <span className="badge bg-light text-dark fw-normal">
-                                                    {order.items.length === 1 ? '1 item' : `${order.items.length} items`}
-                                                </span>
                                             </div>
                                             <div className="row g-3">
                                                 {order.items.map((item, index) => (
@@ -451,34 +449,25 @@ function MyOrdersSection() {
                                                                             <img 
                                                                                 src={getImageUrl(item.product.productImages[0])} 
                                                                                 alt={item.productName}
-                                                                                className="img-fluid rounded-3"
+                                                                                className="img-fluid rounded-3 order-product-img"
                                                                                 style={{ width: '80px', height: '80px', objectFit: 'cover' }}
                                                                             />
                                                                         ) : (
                                                                             <div 
-                                                                                className="bg-light rounded-3 d-flex align-items-center justify-content-center"
+                                                                                className="bg-light rounded-3 d-flex align-items-center justify-content-center order-product-img"
                                                                                 style={{ width: '80px', height: '80px' }}
                                                                             >
                                                                                 <FiPackage size={32} className="text-secondary" />
                                                                             </div>
                                                                         )}
-                                                                        {item.quantity > 1 && (
-                                                                            <span className="position-absolute top-0 start-100 translate-middle badge bg-primary rounded-pill">
-                                                                                x{item.quantity}
-                                                                            </span>
-                                                                        )}
                                                                     </div>
                                                                 </div>
                                                                 <div className="col">
                                                                     <div className="d-flex flex-column h-100">
-                                                                        <div className="d-flex justify-content-between align-items-start mb-2">
-                                                                            <h6 className="mb-0 fw-semibold text-dark">{item.productName}</h6>
-                                                                            <span className="badge bg-primary-subtle text-primary fw-semibold px-2 py-1">
-                                                                                ₱{item.price}
-                                                                            </span>
-                                                                        </div>
-                                                                        <div className="d-flex flex-wrap gap-2 mt-auto">
-                                                                            <span className="badge bg-light text-dark fw-normal">Qty: {item.quantity}</span>
+                                                                        <h6 className="mb-0 fw-semibold text-dark">{item.productName}</h6>
+                                                                        <div className="d-flex justify-content-between align-items-center mt-auto">
+                                                                            <span className="small text-muted">Qty: {item.quantity}</span>
+                                                                            <span className="small fw-semibold text-primary">₱{item.price}</span>
                                                                         </div>
                                                                     </div>
                                                                 </div>

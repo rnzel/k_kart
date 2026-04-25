@@ -33,10 +33,11 @@ function OrdersSection() {
     };
 
     const fetchOrders = async (page = 1) => {
+        const safePage = typeof page === 'number' && Number.isFinite(page) ? page : 1;
         try {
             setLoading(true);
             setError(null);
-            const response = await orderAPI.getSellerOrders(page, 10);
+            const response = await orderAPI.getSellerOrders(safePage, 10);
             
             if (response.success) {
                 let filteredOrders = response.data;
@@ -51,7 +52,7 @@ function OrdersSection() {
                 }
                 
                 setOrders(filteredOrders);
-                setCurrentPage(page);
+                setCurrentPage(safePage);
                 setTotalPages(response.pagination?.totalPages || 1);
                 setTotalOrders(response.pagination?.totalOrders || 0);
             } else {
@@ -189,7 +190,7 @@ const getAvailableStatuses = (currentStatus) => {
                     <h2 className="text-primary mb-0">Orders</h2>
                     <button 
                         className="btn btn-outline-primary btn-sm"
-                        onClick={fetchOrders}
+                        onClick={() => fetchOrders(currentPage)}
                     >
                         <FiRefreshCw className="me-2" />
                         Refresh
@@ -198,7 +199,7 @@ const getAvailableStatuses = (currentStatus) => {
 
                 {/* Tab Navigation */}
                 <div className="row mb-4">
-                    <div>
+                    <div className="nav-tabs-wrapper">
                         <ul className="nav nav-tabs">
                             <li className="nav-item">
                                 <button
@@ -269,7 +270,7 @@ const getAvailableStatuses = (currentStatus) => {
                 <div className="alert alert-danger mt-3" role="alert">
                     {error}
                 </div>
-                <button className="btn btn-primary" onClick={fetchOrders}>
+                <button className="btn btn-primary" onClick={() => fetchOrders(currentPage)}>
                     Try Again
                 </button>
             </div>
@@ -318,7 +319,7 @@ const getAvailableStatuses = (currentStatus) => {
                     <h2 className="text-primary mb-0">Orders</h2>
                     <button 
                         className="btn btn-outline-primary btn-sm"
-                        onClick={fetchOrders}
+                        onClick={() => fetchOrders(currentPage)}
                     >
                         <FiRefreshCw className="me-2" />
                         Refresh
@@ -327,7 +328,7 @@ const getAvailableStatuses = (currentStatus) => {
 
                 {/* Tab Navigation */}
                 <div className="row mb-4">
-                    <div>
+                    <div className="nav-tabs-wrapper">
                         <ul className="nav nav-tabs">
                             <li className="nav-item">
                                 <button
@@ -397,7 +398,7 @@ const getAvailableStatuses = (currentStatus) => {
                     <h2 className="text-primary mb-0">Orders</h2>
                     <button 
                         className="btn btn-outline-primary btn-sm"
-                        onClick={fetchOrders}
+                        onClick={() => fetchOrders(currentPage)}
                     >
                         <FiRefreshCw className="me-2" />
                         Refresh
@@ -406,7 +407,7 @@ const getAvailableStatuses = (currentStatus) => {
 
                 {/* Tab Navigation */}
                 <div className="row mb-4">
-                    <div>
+                    <div className="nav-tabs-wrapper">
                         <ul className="nav nav-tabs">
                             <li className="nav-item">
                                 <button
@@ -463,7 +464,7 @@ const getAvailableStatuses = (currentStatus) => {
                 <div className="row g-4">
                     {orders.map(order => (
                         <div key={order._id} className="col-12">
-                            <div className="card border rounded">
+                            <div className="card border border-black rounded">
                                 <div className="card-header bg-white p-3">
                                     <div className="row align-items-center">
                                         <div className="col-md-6 col-lg-7">

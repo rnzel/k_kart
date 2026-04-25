@@ -17,14 +17,15 @@ function OrderManagementSection() {
     }, []);
 
     const fetchOrders = async (page = 1) => {
+        const safePage = typeof page === 'number' && Number.isFinite(page) ? page : 1;
         try {
             setLoading(true);
             setError(null);
-            const response = await orderAPI.getAllOrders(page, 10);
+            const response = await orderAPI.getAllOrders(safePage, 10);
             
             if (response.success) {
                 setOrders(response.data);
-                setCurrentPage(page);
+                setCurrentPage(safePage);
                 setTotalPages(response.pagination?.totalPages || 1);
                 setTotalOrders(response.pagination?.totalOrders || 0);
             } else {
@@ -113,7 +114,7 @@ function OrderManagementSection() {
                 <div className="alert alert-danger mt-3" role="alert">
                     {error}
                 </div>
-                <button className="btn btn-primary" onClick={fetchOrders}>
+                <button className="btn btn-primary" onClick={() => fetchOrders(currentPage)}>
                     Try Again
                 </button>
             </div>

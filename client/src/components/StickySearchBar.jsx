@@ -17,10 +17,12 @@ function StickySearchBar({
     showBackButton = false,
     onBackClick,
     onKeyDown,
-    showSuggestions = true
+    showSuggestions = true,
+    cartCount: externalCartCount,
+    showRecentSearches = true
 }) {
     const navigate = useNavigate();
-    const [cartCount, setCartCount] = React.useState(0);
+    const [internalCartCount, setInternalCartCount] = React.useState(0);
     const [searchQuery, setSearchQuery] = useState(externalSearchTerm || "");
     const [suggestions, setSuggestions] = useState(null);
     const [isDropdownVisible, setIsDropdownVisible] = useState(false);
@@ -36,18 +38,24 @@ function StickySearchBar({
 
     // Fetch cart count on mount
     React.useEffect(() => {
-        fetchCartCount();
-    }, []);
+        if (typeof externalCartCount !== 'number') {
+            fetchCartCount();
+        }
+    }, [externalCartCount]);
 
     const fetchCartCount = async () => {
         try {
             const response = await cartAPI.getCart();
             const items = response.data.items || [];
-            setCartCount(items.length);
+            setInternalCartCount(items.length);
         } catch (err) {
             console.error('Failed to fetch cart:', err);
         }
     };
+
+    const effectiveCartCount = typeof externalCartCount === 'number'
+        ? externalCartCount
+        : internalCartCount;
 
     // Handle external search term changes
     React.useEffect(() => {
@@ -75,19 +83,19 @@ function StickySearchBar({
                     setIsDropdownVisible(true);
                 }
             } else {
-                // Show recent searches for empty external term (only if showSuggestions is enabled)
-                if (showSuggestions) {
+                // Show dropdown content for empty external term
+                if (showSuggestions || showRecentSearches) {
                     setSuggestions({
                         products: [],
                         shops: [],
                         categories: [],
-                        recentSearches: getRecentSearches()
+                        recentSearches: showRecentSearches ? getRecentSearches() : []
                     });
                     setIsDropdownVisible(true);
                 }
             }
         }
-    }, [externalSearchTerm]);
+    }, [externalSearchTerm, showSuggestions, showRecentSearches]);
 
     // Debounced search function
     const debouncedSearch = debounce(async (query) => {
@@ -138,6 +146,11 @@ function StickySearchBar({
 
     // Handle search input focus
     const handleInputFocus = () => {
+        if (!showSuggestions && !showRecentSearches) {
+            setIsDropdownVisible(false);
+            return;
+        }
+
         if (searchQuery && searchQuery.trim().length > 0) {
             setIsDropdownVisible(true);
             // Trigger search for existing query only if showSuggestions is enabled
@@ -145,15 +158,17 @@ function StickySearchBar({
                 debouncedSearch(searchQuery);
             }
         } else {
-            // Show recent searches when input is empty (only if showSuggestions is enabled)
-            setIsDropdownVisible(true);
-            if (showSuggestions) {
+            // Show dropdown content when input is empty
+            if (showSuggestions || showRecentSearches) {
                 setSuggestions({
                     products: [],
                     shops: [],
                     categories: [],
-                    recentSearches: getRecentSearches()
+                    recentSearches: showRecentSearches ? getRecentSearches() : []
                 });
+                setIsDropdownVisible(true);
+            } else {
+                setIsDropdownVisible(false);
             }
         }
     };
@@ -290,8 +305,8 @@ function StickySearchBar({
                 });
             }
             
-            // Add recent searches (only if no query)
-            if (!query) {
+            // Add recent searches (only if enabled and no query)
+            if (showRecentSearches && !query) {
                 const recentSearches = getRecentSearches();
                 recentSearches.forEach(search => {
                     if (!seen.has(search)) {
@@ -360,6 +375,15 @@ function StickySearchBar({
 
     // Handle input keydown (combines internal navigation and external handler)
     const handleInputKeyDown = (e) => {
+        // Save completed searches when pressing Enter (for flows where parent handles navigation)
+        if (e.key === 'Enter') {
+            const trimmedQuery = searchQuery.trim();
+            if (showRecentSearches && trimmedQuery.length > 0 && activeIndex === -1) {
+                saveRecentSearch(trimmedQuery);
+                setRecentSearches(getRecentSearches());
+            }
+        }
+
         // Call external handler first if provided
         if (onKeyDown) {
             onKeyDown(e);
@@ -380,6 +404,7 @@ function StickySearchBar({
     // Render suggestions dropdown
     const renderSuggestions = () => {
         if (!isDropdownVisible) return null;
+        if (!showSuggestions && !showRecentSearches) return null;
 
         const query = searchQuery.trim();
         const hasQuery = query.length > 0;
@@ -419,7 +444,7 @@ function StickySearchBar({
                 )}
 
                 {/* Show "Search in Shops" when there's a query */}
-                {hasQuery && !isLoading && (
+                {showSuggestions && hasQuery && !isLoading && (
                     <div 
                         className="d-flex align-items-center p-3 clickable-suggestion"
                         onClick={() => {
@@ -448,7 +473,7 @@ function StickySearchBar({
                 )}
 
                 {/* Show product suggestions */}
-                {!isLoading && displayProducts.length > 0 && (
+                {showSuggestions && !isLoading && displayProducts.length > 0 && (
                     <div className="p-2">
                         <div className="px-2 py-1 text-muted small fw-bold">Products</div>
                         {displayProducts.map((product, index) => {
@@ -488,7 +513,7 @@ function StickySearchBar({
                 )}
 
                 {/* Show shop suggestions */}
-                {!isLoading && displayShops.length > 0 && (
+                {showSuggestions && !isLoading && displayShops.length > 0 && (
                     <div className="p-2" style={{ borderTop: displayProducts.length > 0 ? '1px solid #dee2e6' : 'none' }}>
                         <div className="px-2 py-1 text-muted small fw-bold">Shops</div>
                         {displayShops.map((shop, index) => {
@@ -525,7 +550,7 @@ function StickySearchBar({
                 )}
 
                 {/* Show recent searches when query is empty - horizontal layout */}
-                {!hasQuery && !isLoading && currentRecentSearches.length > 0 && (
+                {showRecentSearches && !hasQuery && !isLoading && currentRecentSearches.length > 0 && (
                     <div className="p-3">
                         <div className="d-flex justify-content-between align-items-center mb-2">
                             <span className="fw-bold text-muted">Recent Searches</span>
@@ -569,7 +594,7 @@ function StickySearchBar({
                 )}
 
                 {/* Empty state: Show message when no recent searches and no other results */}
-                {!hasQuery && !isLoading && currentRecentSearches.length === 0 && (
+                {showRecentSearches && !hasQuery && !isLoading && currentRecentSearches.length === 0 && (
                     <div className="p-3 text-center text-muted">
                         No recent searches
                     </div>
@@ -629,9 +654,9 @@ function StickySearchBar({
                             onClick={onCartClick || (() => navigate('/cart'))}
                         >
                             <FiShoppingCart size={20} />
-                            {cartCount > 0 && (
+                            {effectiveCartCount > 0 && (
                                 <span className="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
-                                    {cartCount}
+                                    {effectiveCartCount}
                                 </span>
                             )}
                         </button>

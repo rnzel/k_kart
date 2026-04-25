@@ -28,10 +28,10 @@ function UserDashboard() {
                     {/* Desktop Sidebar - Hidden on mobile */}
                     <aside className="col-md-3 d-none d-md-block" style={{fontSize:'17px'}}>
                         <ul className="d-flex flex-column gap-3 list-unstyled p-3 justify-content-center">
-                            <li className="item d-flex align-items-center font-weight-semibold mb-2">
+                            <li className="item d-flex align-items-center mb-2">
                                 <a 
                                     href="#profile" 
-                                    className={`d-flex align-items-center text-decoration-none ${activeSection === 'profile' ? 'text-primary' : 'text-dark'}`}
+                                    className={`d-flex align-items-center text-decoration-none ${activeSection === 'profile' ? 'text-primary font-weight-semibold' : 'text-dark'}`}
                                     onClick={(e) => {
                                         e.preventDefault();
                                         setActiveSection('profile');
@@ -41,10 +41,10 @@ function UserDashboard() {
                                     My Profile
                                 </a>
                             </li>
-                            <li className="item d-flex align-items-center font-weight-semibold mb-2">
+                            <li className="item d-flex align-items-center mb-2">
                                 <a 
                                     href="#orders" 
-                                    className={`d-flex align-items-center text-decoration-none ${activeSection === 'orders' ? 'text-primary' : 'text-dark'}`}
+                                    className={`d-flex align-items-center text-decoration-none ${activeSection === 'orders' ? 'text-primary font-weight-semibold' : 'text-dark'}`}
                                     onClick={(e) => {
                                         e.preventDefault();
                                         setActiveSection('orders');
@@ -54,10 +54,10 @@ function UserDashboard() {
                                     My Orders
                                 </a>
                             </li>
-                            <li className="item d-flex align-items-center font-weight-semibold mb-2">
+                            <li className="item d-flex align-items-center mb-2">
                                 <a 
                                     href="#cart" 
-                                    className={`d-flex align-items-center text-decoration-none ${activeSection === 'cart' ? 'text-primary' : 'text-dark'}`}
+                                    className={`d-flex align-items-center text-decoration-none ${activeSection === 'cart' ? 'text-primary font-weight-semibold' : 'text-dark'}`}
                                     onClick={(e) => {
                                         e.preventDefault();
                                         setActiveSection('cart');
@@ -67,10 +67,10 @@ function UserDashboard() {
                                     Cart
                                 </a>
                             </li>
-                            <li className="item d-flex align-items-center font-weight-semibold mb-2">
+                            <li className="item d-flex align-items-center mb-2">
                                 <a 
                                     href="#messages" 
-                                    className={`d-flex align-items-center text-decoration-none ${activeSection === 'messages' ? 'text-primary' : 'text-dark'}`}
+                                    className={`d-flex align-items-center text-decoration-none ${activeSection === 'messages' ? 'text-primary font-weight-semibold' : 'text-dark'}`}
                                     onClick={(e) => {
                                         e.preventDefault();
                                         setActiveSection('messages');
