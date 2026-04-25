@@ -57,6 +57,10 @@ h2 {
     font-size: 0.8rem !important;
   }
 
+  .order-date-text {
+    font-size: 0.7rem !important;
+  }
+
   .order-card h6 {
     font-size: 0.85rem !important;
   }
@@ -569,6 +573,11 @@ a.text-primary.font-weight-semibold::after {
 
 a.text-primary.font-weight-semibold::after {
   width: 100%;
+}
+
+/* Remove underline from UserDashboard sidebar nav items */
+aside a.text-primary.font-weight-semibold::after {
+  display: none;
 }
 
 /* Responsive Tabs Horizontal Scroll */

@@ -411,24 +411,16 @@ function MyOrdersSection() {
                         <div key={order._id} className="col-12">
                             <div className="card border border-black rounded order-card">
                                 <div className="card-header bg-white p-3">
-                                 <div className="d-flex flex-wrap align-items-center justify-content-between">
-                                        <div className="d-flex align-items-center gap-2">
-                                            <div className="d-flex align-items-center gap-3">
-                                                <span className={`badge bg-${getStatusColor(order.status)} text-white fs-small px-3 py-2 fw-semibold order-status-badge`}>
-                                                    {getStatusText(order.status)}
-                                                </span>
-                                                <div>
-                                                    <span className="font-weight-semibold order-id-text">Order #{order.orderNumber}</span>
-                                                </div>
-                                            </div>
+                                    <div className="d-flex flex-wrap align-items-center justify-content-between">
+                                        <div className="d-flex flex-column">
+                                            <span className="font-weight-semibold order-id-text">Order #{order.orderNumber}</span>
+                                            <span className="small text-muted order-date-text">
+                                                {new Date(order.createdAt).toLocaleDateString()}
+                                            </span>
                                         </div>
-                                        <div className="d-flex align-items-center justify-content-end">
-                                            <div className="d-flex align-items-center">
-                                                <span className="small">
-                                                    {new Date(order.createdAt).toLocaleDateString()}
-                                                </span>
-                                            </div>
-                                        </div>
+                                        <span className={`badge bg-${getStatusColor(order.status)} text-white fs-small px-3 py-2 fw-semibold order-status-badge`}>
+                                            {getStatusText(order.status)}
+                                        </span>
                                     </div>
                                 </div>
                                 
