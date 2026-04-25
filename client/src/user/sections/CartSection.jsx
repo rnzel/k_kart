@@ -491,79 +491,71 @@ function CartSection() {
                     </div>
 
                     {/* Product Image */}
-                    <div className="col-3 col-md-3 col-lg-2">
+                    <div className="col-auto">
                         {item.productImages && item.productImages.length > 0 ? (
                             <img 
                                 src={getImageUrl(item.productImages[0])} 
                                 alt={item.productName}
-                                className="img-fluid rounded"
-                                style={{ height: '80px', width: '100%', objectFit: 'cover' }}
+                                className="rounded border"
+                                style={{ height: '70px', width: '70px', objectFit: 'cover' }}
                             />
                         ) : (
                             <div 
-                                className="bg-light rounded d-flex align-items-center justify-content-center"
-                                style={{ height: '80px' }}
+                                className="bg-light rounded border d-flex align-items-center justify-content-center"
+                                style={{ height: '70px', width: '70px' }}
                             >
                                 <FiShoppingCart size={24} className="text-secondary" />
                             </div>
                         )}
                     </div>
 
-                    {/* Product Details */}
-                    <div className="col-5 col-md-6 col-lg-6">
-                        <h6 className="mb-1 text-truncate">{item.productName}</h6>
-                        <div className="mt-2">
-                            <span className="fw-bold text-primary">₱{item.productPrice}</span>
+                    {/* Product Name + Subtotal */}
+                    <div className="col">
+                        <h6 className="mb-0 fw-semibold text-dark">{item.productName}</h6>
+                        <div className="d-flex justify-content-between align-items-center mt-1">
                             {item.productStock !== undefined && (
-                                <span className={`badge ms-2 ${item.quantity > item.productStock ? 'bg-danger' : 'bg-success'}`}>
+                                <span className={`small ${item.quantity > item.productStock ? 'text-danger' : 'text-muted'}`}>
                                     {item.productStock} in stock
                                 </span>
                             )}
-                        </div>
-                    </div>
-
-                    {/* Quantity Controls */}
-                    <div className="col-4 col-md-3 col-lg-2 mt-2 mt-md-0 d-flex justify-content-end">
-                        <div className="d-flex align-items-center justify-content-between justify-content-md-center">
-                            <div className="input-group" style={{ maxWidth: '100px' }}>
-                                <button 
-                                    className="btn btn-outline-secondary btn-sm"
-                                    onClick={() => updateQuantity(item._id, item.quantity - 1)}
-                                    disabled={loading}
-                                >
-                                    <FiMinus size={14} />
-                                </button>
-                                <input 
-                                    type="text" 
-                                    className="form-control form-control-sm text-center" 
-                                    value={item.quantity}
-                                    readOnly
-                                />
-                                <button 
-                                    className="btn btn-outline-secondary btn-sm"
-                                    onClick={() => updateQuantity(item._id, item.quantity + 1)}
-                                    disabled={loading || item.quantity >= (item.productStock || 999)}
-                                >
-                                    <FiPlus size={14} />
-                                </button>
-                            </div>
+                            <span className="small fw-semibold text-primary text-nowrap">₱{item.productPrice * item.quantity}</span>
                         </div>
                     </div>
                 </div>
 
-                {/* Subtotal & Remove Row */}
-                <div className="row mt-3 pt-3 border-top">
+                {/* Qty Controls + Remove Row */}
+                <div className="row mt-2 pt-2 border-top align-items-center">
                     <div className="col-6">
-                        <span className="text-muted">Subtotal: </span>
-                        <span className="fw-bold">₱{item.productPrice * item.quantity}</span>
+                        <div className="input-group input-group-sm" style={{ maxWidth: '100px' }}>
+                            <button 
+                                className="btn btn-outline-secondary"
+                                onClick={() => updateQuantity(item._id, item.quantity - 1)}
+                                disabled={loading}
+                            >
+                                <FiMinus size={14} />
+                            </button>
+                            <input 
+                                type="text" 
+                                className="form-control text-center" 
+                                value={item.quantity}
+                                readOnly
+                            />
+                            <button 
+                                className="btn btn-outline-secondary"
+                                onClick={() => updateQuantity(item._id, item.quantity + 1)}
+                                disabled={loading || item.quantity >= (item.productStock || 999)}
+                            >
+                                <FiPlus size={14} />
+                            </button>
+                        </div>
                     </div>
                     <div className="col-6 text-end">
                         <button 
-                            className="btn btn-outline-primary btn-sm"
+                            className="btn btn-outline-danger btn-sm"
                             onClick={() => removeItem(item._id)}
                             disabled={loading}
                         >
-                            Remove
+                            <FiTrash2 size={16} />
                         </button>
                     </div>
                 </div>
@@ -603,7 +595,7 @@ function CartSection() {
             </div>
 
             {/* Grouped by Shop */}
-            <div className="row g-3">
+            <div className="row g-2">
                 {shopGroups.map(([shopId, shopGroup]) => {
                     const shopTotal = shopGroup.items.reduce((sum, item) => sum + (item.productPrice * item.quantity), 0);
                     const shopSelectedTotal = shopGroup.items
@@ -613,7 +605,7 @@ function CartSection() {
                     const someShopSelected = shopGroup.items.some(item => selectedItems.includes(item._id));
 
                     return (
-                        <div key={shopId} className="col-12">
+                        <div key={shopId} className="col-12 border border-black rounded p-2">
                             {/* Shop Header */}
                             <div className="d-flex align-items-center gap-2 mb-2 p-2 bg-light rounded">
                                 <div className="form-check">
@@ -639,18 +631,15 @@ function CartSection() {
                                 )}
                                 <span className="fw-bold text-primary">{shopGroup.shopName}</span>
                                 <span className="text-muted small">({shopGroup.items.length} items)</span>
-                                {someShopSelected && (
-                                    <span className="ms-auto fw-bold text-primary">
-                                        ₱{shopSelectedTotal}
-                                    </span>
-                                )}
                             </div>
 
                             {/* Shop Items */}
-                            {shopGroup.items.map(item => renderCartItem(item))}
+                            <div className="row g-3">
+                                {shopGroup.items.map(item => renderCartItem(item))}
+                            </div>
 
                             {/* Shop Subtotal */}
-                            <div className="d-flex justify-content-end mb-3 px-2">
+                            <div className="d-flex justify-content-end px-2">
                                 <span className="text-muted">
                                     Shop Total: <span className="fw-bold">₱{shopTotal}</span>
                                 </span>

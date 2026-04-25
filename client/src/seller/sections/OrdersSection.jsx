@@ -464,26 +464,18 @@ const getAvailableStatuses = (currentStatus) => {
                 <div className="row g-4">
                     {orders.map(order => (
                         <div key={order._id} className="col-12">
-                            <div className="card border border-black rounded">
+                            <div className="card border border-black rounded order-card">
                                 <div className="card-header bg-white p-3">
-                                    <div className="row align-items-center">
-                                        <div className="col-md-6 col-lg-7">
-                                            <div className="d-flex align-items-center gap-3">
-                                                <span className={`badge bg-${getStatusColor(order.status)} text-white fs-small px-3 py-2 fw-semibold`}>
-                                                    {getStatusText(order.status)}
-                                                </span>
-                                                <div>
-                                                    <span className="font-weight-semibold fs-8">Order #{order.orderNumber}</span>
-                                                </div>
-                                            </div>
+                                    <div className="d-flex flex-wrap align-items-center justify-content-between">
+                                        <div className="d-flex flex-column">
+                                            <span className="font-weight-semibold order-id-text">Order #{order.orderNumber}</span>
+                                            <span className="small text-muted order-date-text">
+                                                {new Date(order.createdAt).toLocaleDateString()}
+                                            </span>
                                         </div>
-                                        <div className="col-md-6 col-lg-5 text-md-end">
-                                            <div className="d-flex flex-column align-items-md-end">
-                                                <span className="small">
-                                                    {new Date(order.createdAt).toLocaleDateString()}
-                                                </span>
-                                            </div>
-                                        </div>
+                                        <span className={`badge bg-${getStatusColor(order.status)} text-white fs-small px-3 py-2 fw-semibold order-status-badge`}>
+                                            {getStatusText(order.status)}
+                                        </span>
                                     </div>
                                 </div>
                                 
@@ -492,9 +484,6 @@ const getAvailableStatuses = (currentStatus) => {
                                         <div className="col-lg-8">
                                             <div className="d-flex align-items-center justify-content-between mb-3">
                                                 <h6 className="mb-0 fw-semibold text-dark">Items ({order.items.length})</h6>
-                                                <span className="badge bg-light text-dark fw-normal">
-                                                    {order.items.length === 1 ? '1 item' : `${order.items.length} items`}
-                                                </span>
                                             </div>
                                             <div className="row g-3">
                                                 {order.items.map((item, index) => (
@@ -507,34 +496,25 @@ const getAvailableStatuses = (currentStatus) => {
                                                                             <img 
                                                                                 src={getImageUrl(item.product.productImages[0])} 
                                                                                 alt={item.productName}
-                                                                                className="img-fluid rounded-3"
+                                                                                className="img-fluid rounded-3 order-product-img"
                                                                                 style={{ width: '80px', height: '80px', objectFit: 'cover' }}
                                                                             />
                                                                         ) : (
                                                                             <div 
-                                                                                className="bg-light rounded-3 d-flex align-items-center justify-content-center"
+                                                                                className="bg-light rounded-3 d-flex align-items-center justify-content-center order-product-img"
                                                                                 style={{ width: '80px', height: '80px' }}
                                                                             >
                                                                                 <FiPackage size={32} className="text-secondary" />
                                                                             </div>
                                                                         )}
-                                                                        {item.quantity > 1 && (
-                                                                            <span className="position-absolute top-0 start-100 translate-middle badge bg-primary rounded-pill">
-                                                                                x{item.quantity}
-                                                                            </span>
-                                                                        )}
                                                                     </div>
                                                                 </div>
                                                                 <div className="col">
                                                                     <div className="d-flex flex-column h-100">
-                                                                        <div className="d-flex justify-content-between align-items-start mb-2">
-                                                                            <h6 className="mb-0 fw-semibold text-dark">{item.productName}</h6>
-                                                                            <span className="badge bg-primary-subtle text-primary fw-semibold px-2 py-1">
-                                                                                ₱{item.price}
-                                                                            </span>
-                                                                        </div>
-                                                                        <div className="d-flex flex-wrap gap-2 mt-auto">
-                                                                            <span className="badge bg-light text-dark fw-normal">Qty: {item.quantity}</span>
+                                                                        <h6 className="mb-0 fw-semibold text-dark">{item.productName}</h6>
+                                                                        <div className="d-flex justify-content-between align-items-center mt-auto">
+                                                                            <span className="small text-muted">Qty: {item.quantity}</span>
+                                                                            <span className="small fw-semibold text-primary">₱{item.price}</span>
                                                                         </div>
                                                                     </div>
                                                                 </div>
@@ -558,9 +538,9 @@ const getAvailableStatuses = (currentStatus) => {
                                                     </div>
                                                     <div>
                                                         <span className="fw-semibold text-dark">Buyer</span>
-                                                        <p className="mb-0 text-muted small mt-1">
+                                                        <span className="d-block text-muted small">
                                                             {order.buyer?.firstName} {order.buyer?.lastName}
-                                                        </p>
+                                                        </span>
                                                     </div>
                                                 </div>
 
@@ -571,8 +551,8 @@ const getAvailableStatuses = (currentStatus) => {
                                                         </div>
                                                         <div>
                                                             <span className="fw-semibold text-dark">Contact Number</span>
-                                                            <a href={`tel:${order.contactNumber}`} className="text-primary small mt-1">
-                                                                <p className="mb-0">{order.contactNumber}</p>
+                                                            <a href={`tel:${order.contactNumber}`} className="d-block text-primary small">
+                                                                {order.contactNumber}
                                                             </a>
                                                         </div>
                                                     </div>
@@ -584,7 +564,7 @@ const getAvailableStatuses = (currentStatus) => {
                                                     </div>
                                                     <div>
                                                         <span className="fw-semibold text-dark">Pickup Location</span>
-                                                        <p className="mb-0 text-muted small mt-1">{order.pickupLocation}</p>
+                                                        <span className="d-block text-muted small">{order.pickupLocation}</span>
                                                     </div>
                                                 </div>
                                                 
@@ -593,10 +573,10 @@ const getAvailableStatuses = (currentStatus) => {
                                                         <div className="rounded-circle p-2">
                                                             <FiMessageSquare className="text-primary" size={20} />
                                                         </div>
-                                                        <div>
-                                                            <span className="fw-semibold text-dark">Delivery Note</span>
-                                                            <p className="mb-0 text-muted small mt-1">{order.note}</p>
-                                                        </div>
+                                                    <div>
+                                                        <span className="fw-semibold text-dark">Delivery Note</span>
+                                                        <span className="d-block text-muted small">{order.note}</span>
+                                                    </div>
                                                     </div>
                                                 )}
                                             </div>

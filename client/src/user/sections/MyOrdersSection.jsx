@@ -483,7 +483,7 @@ function MyOrdersSection() {
                                                     </div>
                                                     <div>
                                                         <span className="fw-semibold text-dark">Pickup Location</span>
-                                                        <p className="mb-0 text-muted small mt-1">{order.pickupLocation}</p>
+                                                        <span className="d-block text-muted small">{order.pickupLocation}</span>
                                                     </div>
                                                 </div>
                                                 
@@ -492,10 +492,10 @@ function MyOrdersSection() {
                                                         <div className="rounded-circle p-2">
                                                             <FiMessageSquare className="text-primary" size={20} />
                                                         </div>
-                                                        <div>
-                                                            <span className="fw-semibold text-dark">Delivery Note</span>
-                                                            <p className="mb-0 text-muted small mt-1">{order.note}</p>
-                                                        </div>
+                                                    <div>
+                                                        <span className="fw-semibold text-dark">Delivery Note</span>
+                                                        <span className="d-block text-muted small">{order.note}</span>
+                                                    </div>
                                                     </div>
                                                 )}
                                                 
@@ -506,7 +506,7 @@ function MyOrdersSection() {
                                                         </div>
                                                         <div>
                                                             <span className="fw-semibold text-dark">Contact Number</span>
-                                                            <p className="mb-0 text-muted small mt-1">{order.contactNumber}</p>
+                                                            <span className="d-block text-muted small">{order.contactNumber}</span>
                                                         </div>
                                                     </div>
                                                 )}
