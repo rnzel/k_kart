@@ -40,11 +40,12 @@ function OrdersSection() {
             const response = await orderAPI.getSellerOrders(safePage, 10);
             
             if (response.success) {
-                let filteredOrders = response.data;
+                const data = Array.isArray(response.data) ? response.data : [];
+                let filteredOrders = data;
                 
                 // Filter orders based on active tab
                 if (activeTab !== 'all') {
-                    filteredOrders = response.data.filter(order => {
+                    filteredOrders = data.filter(order => {
                         const orderStatus = normalizeStatusForFilter(order.status);
                         const tabStatus = activeTab.toLowerCase();
                         return orderStatus === tabStatus;
@@ -462,180 +463,190 @@ const getAvailableStatuses = (currentStatus) => {
                 </div>
 
                 <div className="row g-4">
-                    {orders.map(order => (
-                        <div key={order._id} className="col-12">
-                            <div className="card border border-black rounded order-card">
-                                <div className="card-header bg-white p-3">
-                                    <div className="d-flex flex-wrap align-items-center justify-content-between">
-                                        <div className="d-flex flex-column">
-                                            <span className="font-weight-semibold order-id-text">Order #{order.orderNumber}</span>
-                                            <span className="small text-muted order-date-text">
-                                                {new Date(order.createdAt).toLocaleDateString()}
+                    {Array.isArray(orders) && orders.length > 0 ? (
+                        orders.map(order => (
+                            <div key={order._id} className="col-12">
+                                <div className="card border border-black rounded order-card">
+                                    <div className="card-header bg-white p-3">
+                                        <div className="d-flex flex-wrap align-items-center justify-content-between">
+                                            <div className="d-flex flex-column">
+                                                <span className="font-weight-semibold order-id-text">Order #{order.orderNumber}</span>
+                                                <span className="small text-muted order-date-text">
+                                                    {new Date(order.createdAt).toLocaleDateString()}
+                                                </span>
+                                            </div>
+                                            <span className={`badge bg-${getStatusColor(order.status)} text-white fs-small px-3 py-2 fw-semibold order-status-badge`}>
+                                                {getStatusText(order.status)}
                                             </span>
                                         </div>
-                                        <span className={`badge bg-${getStatusColor(order.status)} text-white fs-small px-3 py-2 fw-semibold order-status-badge`}>
-                                            {getStatusText(order.status)}
-                                        </span>
                                     </div>
-                                </div>
-                                
-                                <div className="card-body p-4">
-                                    <div className="row g-4">
-                                        <div className="col-lg-8">
-                                            <div className="d-flex align-items-center justify-content-between mb-3">
-                                                <h6 className="mb-0 fw-semibold text-dark">Items ({order.items.length})</h6>
-                                            </div>
-                                            <div className="row g-3">
-                                                {order.items.map((item, index) => (
-                                                    <div key={index} className="col-12">
-                                                        <div className="card border rounded-3 p-3 h-100">
-                                                            <div className="row g-3">
-                                                                <div className="col-auto">
-                                                                    <div className="position-relative">
-                                                                        {item.product?.productImages && item.product.productImages.length > 0 ? (
-                                                                            <img 
-                                                                                src={getImageUrl(item.product.productImages[0])} 
-                                                                                alt={item.productName}
-                                                                                className="img-fluid rounded-3 order-product-img"
-                                                                                style={{ width: '80px', height: '80px', objectFit: 'cover' }}
-                                                                            />
-                                                                        ) : (
-                                                                            <div 
-                                                                                className="bg-light rounded-3 d-flex align-items-center justify-content-center order-product-img"
-                                                                                style={{ width: '80px', height: '80px' }}
-                                                                            >
-                                                                                <FiPackage size={32} className="text-secondary" />
-                                                                            </div>
-                                                                        )}
+                                    
+                                    <div className="card-body p-4">
+                                        <div className="row g-4">
+                                            <div className="col-lg-8">
+                                                <div className="d-flex align-items-center justify-content-between mb-3">
+                                                    <h6 className="mb-0 fw-semibold text-dark">Items ({order.items.length})</h6>
+                                                </div>
+                                                <div className="row g-3">
+                                                    {order.items.map((item, index) => (
+                                                        <div key={index} className="col-12">
+                                                            <div className="card border rounded-3 p-3 h-100">
+                                                                <div className="row g-3">
+                                                                    <div className="col-auto">
+                                                                        <div className="position-relative">
+                                                                            {item.product?.productImages && item.product.productImages.length > 0 ? (
+                                                                                <img 
+                                                                                    src={getImageUrl(item.product.productImages[0])} 
+                                                                                    alt={item.productName}
+                                                                                    className="img-fluid rounded-3 order-product-img"
+                                                                                    style={{ width: '80px', height: '80px', objectFit: 'cover' }}
+                                                                                />
+                                                                            ) : (
+                                                                                <div 
+                                                                                    className="bg-light rounded-3 d-flex align-items-center justify-content-center order-product-img"
+                                                                                    style={{ width: '80px', height: '80px' }}
+                                                                                >
+                                                                                    <FiPackage size={32} className="text-secondary" />
+                                                                                </div>
+                                                                            )}
+                                                                        </div>
                                                                     </div>
-                                                                </div>
-                                                                <div className="col">
-                                                                    <div className="d-flex flex-column h-100">
-                                                                        <h6 className="mb-0 fw-semibold text-dark">{item.productName}</h6>
-                                                                        <div className="d-flex justify-content-between align-items-center mt-auto">
-                                                                            <span className="small text-muted">Qty: {item.quantity}</span>
-                                                                            <span className="small fw-semibold text-primary">₱{item.price}</span>
+                                                                    <div className="col">
+                                                                        <div className="d-flex flex-column h-100">
+                                                                            <h6 className="mb-0 fw-semibold text-dark">{item.productName}</h6>
+                                                                            <div className="d-flex justify-content-between align-items-center mt-auto">
+                                                                                <span className="small text-muted">Qty: {item.quantity}</span>
+                                                                                <span className="small fw-semibold text-primary">₱{item.price}</span>
+                                                                            </div>
                                                                         </div>
                                                                     </div>
                                                                 </div>
                                                             </div>
                                                         </div>
-                                                    </div>
-                                                ))}
-                                            </div>
-                                        </div>
-                                        
-                                        <div className="col-lg-4">
-                                            <div className="d-flex align-items-center justify-content-between mb-3">
-                                                <h6 className="mb-0 fw-semibold text-dark">Order Details</h6>
-                                                <span className="badge bg-primary text-white fw-bold">COD</span>
+                                                    ))}
+                                                </div>
                                             </div>
                                             
-                                            <div className="card border rounded-3 p-3 mb-3">
-                                                <div className="d-flex align-items-start gap-3 mb-2">
-                                                    <div className="rounded-circle p-2">
-                                                        <FiUser className="text-primary" size={20} />
-                                                    </div>
-                                                    <div>
-                                                        <span className="fw-semibold text-dark">Buyer</span>
-                                                        <span className="d-block text-muted small">
-                                                            {order.buyer?.firstName} {order.buyer?.lastName}
-                                                        </span>
-                                                    </div>
-                                                </div>
-
-                                                {order.contactNumber && (
-                                                    <div className="d-flex align-items-start gap-3 mb-2">
-                                                        <div className="rounded-circle p-2">
-                                                            <FiPhone className="text-primary" size={20} />
-                                                        </div>
-                                                        <div>
-                                                            <span className="fw-semibold text-dark">Contact Number</span>
-                                                            <a href={`tel:${order.contactNumber}`} className="d-block text-primary small">
-                                                                {order.contactNumber}
-                                                            </a>
-                                                        </div>
-                                                    </div>
-                                                )}
-
-                                                <div className="d-flex align-items-start gap-3 mb-2">
-                                                    <div className="rounded-circle p-2">
-                                                        <FiMapPin className="text-primary" size={20} />
-                                                    </div>
-                                                    <div>
-                                                        <span className="fw-semibold text-dark">Pickup Location</span>
-                                                        <span className="d-block text-muted small">{order.pickupLocation}</span>
-                                                    </div>
+                                            <div className="col-lg-4">
+                                                <div className="d-flex align-items-center justify-content-between mb-3">
+                                                    <h6 className="mb-0 fw-semibold text-dark">Order Details</h6>
+                                                    <span className="badge bg-primary text-white fw-bold">COD</span>
                                                 </div>
                                                 
-                                                {order.note && (
+                                                <div className="card border rounded-3 p-3 mb-3">
                                                     <div className="d-flex align-items-start gap-3 mb-2">
                                                         <div className="rounded-circle p-2">
-                                                            <FiMessageSquare className="text-primary" size={20} />
+                                                            <FiUser className="text-primary" size={20} />
                                                         </div>
-                                                    <div>
-                                                        <span className="fw-semibold text-dark">Delivery Note</span>
-                                                        <span className="d-block text-muted small">{order.note}</span>
-                                                    </div>
-                                                    </div>
-                                                )}
-                                            </div>
-                                        </div>
-                                         <div className="d-flex justify-content-between">
-                                                <div className="d-flex">
-                                                    <div>
-                                                        <div className="mt-2">
-                                                            <span className="fw-bold text-primary">Total Amount: ₱{order.totalAmount}</span>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                                <div className="d-flex">
-                                                    {order.status !== 'completed' && order.status !== 'cancelled' && (
-                                                        <div className="btn-group-vertical" role="group">
-                                                {getAvailableStatuses(order.status).map(status => (
-                                                    <button 
-                                                        key={status}
-                                                        className="btn btn-primary btn-sm"
-                                                        onClick={() => {
-                                                            if (status === 'Cancelled') {
-                                                                handleCancelOrder(order._id);
-                                                            } else {
-                                                                handleStatusUpdateClick(order._id, status);
-                                                            }
-                                                        }}
-                                                        disabled={loading || statusLoading === order._id}
-                                                    >
-                                                        {statusLoading === order._id ? (
-                                                            <span className="spinner-border spinner-border-sm me-1" role="status">
-                                                                <span className="visually-hidden">Loading...</span>
+                                                        <div>
+                                                            <span className="fw-semibold text-dark">Buyer</span>
+                                                            <span className="d-block text-muted small">
+                                                                {order.buyer?.firstName} {order.buyer?.lastName}
                                                             </span>
-                                                        ) : null}
-                                                        {status === 'Confirmed' && 'Confirm Order'}
-                                                        {status === 'On-Delivery' && 'Mark as On-Delivery'}
-                                                        {status === 'Completed' && 'Mark as Completed'}
-                                                        {status === 'Cancelled' && 'Cancel Order'}
-                                                    </button>
-                                                ))}
+                                                        </div>
+                                                    </div>
+
+                                                    {order.contactNumber && (
+                                                        <div className="d-flex align-items-start gap-3 mb-2">
+                                                            <div className="rounded-circle p-2">
+                                                                <FiPhone className="text-primary" size={20} />
+                                                            </div>
+                                                            <div>
+                                                                <span className="fw-semibold text-dark">Contact Number</span>
+                                                                <a href={`tel:${order.contactNumber}`} className="d-block text-primary small">
+                                                                    {order.contactNumber}
+                                                                </a>
+                                                            </div>
                                                         </div>
                                                     )}
+
+                                                    <div className="d-flex align-items-start gap-3 mb-2">
+                                                        <div className="rounded-circle p-2">
+                                                            <FiMapPin className="text-primary" size={20} />
+                                                        </div>
+                                                        <div>
+                                                            <span className="fw-semibold text-dark">Pickup Location</span>
+                                                            <span className="d-block text-muted small">{order.pickupLocation}</span>
+                                                        </div>
+                                                    </div>
                                                     
-                                                    {order.status === 'completed' && (
-                                                        <span className="badge bg-primary-subtle text-primary fw-semibold px-3 py-2">
-                                                            <FiCheckCircle className="me-1" /> Order Completed
-                                                        </span>
-                                                    )}
-                                                    {order.status === 'cancelled' && (
-                                                        <span className="badge bg-primary-subtle text-primary fw-semibold px-3 py-2">
-                                                            <FiXCircle className="me-1" /> Order Cancelled
-                                                        </span>
+                                                    {order.note && (
+                                                        <div className="d-flex align-items-start gap-3 mb-2">
+                                                            <div className="rounded-circle p-2">
+                                                                <FiMessageSquare className="text-primary" size={20} />
+                                                            </div>
+                                                        <div>
+                                                            <span className="fw-semibold text-dark">Delivery Note</span>
+                                                            <span className="d-block text-muted small">{order.note}</span>
+                                                        </div>
+                                                        </div>
                                                     )}
                                                 </div>
                                             </div>
+                                             <div className="d-flex justify-content-between">
+                                                    <div className="d-flex">
+                                                        <div>
+                                                            <div className="mt-2">
+                                                                <span className="fw-bold text-primary">Total Amount: ₱{order.totalAmount}</span>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div className="d-flex">
+                                                        {order.status !== 'completed' && order.status !== 'cancelled' && (
+                                                            <div className="btn-group-vertical" role="group">
+                                                    {getAvailableStatuses(order.status).map(status => (
+                                                        <button 
+                                                            key={status}
+                                                            className="btn btn-primary btn-sm"
+                                                            onClick={() => {
+                                                                if (status === 'Cancelled') {
+                                                                    handleCancelOrder(order._id);
+                                                                } else {
+                                                                    handleStatusUpdateClick(order._id, status);
+                                                                }
+                                                            }}
+                                                            disabled={loading || statusLoading === order._id}
+                                                        >
+                                                            {statusLoading === order._id ? (
+                                                                <span className="spinner-border spinner-border-sm me-1" role="status">
+                                                                    <span className="visually-hidden">Loading...</span>
+                                                                </span>
+                                                            ) : null}
+                                                            {status === 'Confirmed' && 'Confirm Order'}
+                                                            {status === 'On-Delivery' && 'Mark as On-Delivery'}
+                                                            {status === 'Completed' && 'Mark as Completed'}
+                                                            {status === 'Cancelled' && 'Cancel Order'}
+                                                        </button>
+                                                    ))}
+                                                            </div>
+                                                        )}
+                                                        
+                                                        {order.status === 'completed' && (
+                                                            <span className="badge bg-primary-subtle text-primary fw-semibold px-3 py-2">
+                                                                <FiCheckCircle className="me-1" /> Order Completed
+                                                            </span>
+                                                        )}
+                                                        {order.status === 'cancelled' && (
+                                                            <span className="badge bg-primary-subtle text-primary fw-semibold px-3 py-2">
+                                                                <FiXCircle className="me-1" /> Order Cancelled
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
+                        ))
+                    ) : !loading && (
+                        <div className="col-12 text-center py-5">
+                            <div className="bg-light rounded-circle d-inline-flex p-4 mb-3">
+                                <FiPackage size={48} className="text-muted" />
+                            </div>
+                            <h5 className="text-dark fw-semibold">No orders found</h5>
+                            <p className="text-muted">You don't have any orders {activeTab !== 'all' ? `in the ${activeTab} category` : 'yet'}.</p>
                         </div>
-                    ))}
+                    )}
                 </div>
 
                 {/* Pagination */}

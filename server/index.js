@@ -6,7 +6,7 @@ const mongoose = require('mongoose')
 const helmet = require('helmet')
 const { createServer } = require('http')
 const { Server } = require('socket.io')
-// Note: express-rate-limit is used in authRoutes.js for login rate limiting only
+const rateLimit = require('express-rate-limit')
 
 // ============================================
 // Environment Variable Validation
@@ -91,6 +91,33 @@ app.use(helmet({
 }))
 
 app.use(cors(corsOptions))
+
+// ============================================
+// Global Rate Limiter
+// ============================================
+const globalLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 1000, // Increased to 1000 requests per 15 minutes for better UX
+  message: { 
+    success: false,
+    message: 'Too many requests from this IP, please try again after 15 minutes' 
+  },
+  standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
+  legacyHeaders: false, // Disable the `X-RateLimit-*` headers
+  skip: (req) => {
+    // Skip rate limiting for non-critical routes
+    const skipPaths = [
+      '/api/health',
+      '/api/images',
+      '/api/uploads'
+    ]
+    return skipPaths.some(path => req.path.startsWith(path))
+  }
+})
+
+// Apply the global rate limiter to all requests starting with /api
+app.use('/api', globalLimiter)
+
 app.use(express.json({ limit: '10mb' }))
 app.use(express.urlencoded({ extended: true }))
 

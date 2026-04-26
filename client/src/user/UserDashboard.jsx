@@ -84,10 +84,18 @@ function UserDashboard() {
                     </aside>
 
                     <div className="col-md-9 p-3">
-                        {activeSection === 'profile' && <MyProfileSection />}
-                        {activeSection === 'orders' && <MyOrdersSection />}
-                        {activeSection === 'cart' && <CartSection />}
-                        {activeSection === 'messages' && <MessagesSection />}
+                        <div style={{ display: activeSection === 'profile' ? 'block' : 'none' }}>
+                            <MyProfileSection />
+                        </div>
+                        <div style={{ display: activeSection === 'orders' ? 'block' : 'none' }}>
+                            <MyOrdersSection />
+                        </div>
+                        <div style={{ display: activeSection === 'cart' ? 'block' : 'none' }}>
+                            <CartSection />
+                        </div>
+                        <div style={{ display: activeSection === 'messages' ? 'block' : 'none' }}>
+                            <MessagesSection />
+                        </div>
                         {/* Spacer for mobile bottom navigation */}
                         <div className="d-md-none" style={{ height: '120px' }}></div>
                     </div>

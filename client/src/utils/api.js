@@ -7,28 +7,128 @@ const api = axios.create({
   baseURL: API_BASE_URL
 })
 
-// Add token to all requests automatically
+// In-memory cache for deduplicating GET requests
+const pendingRequests = new Map();
+
+// Add token and deduplication to all requests automatically
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem('token')
   if (token) {
     config.headers.Authorization = `Bearer ${token}`
   }
+
+  // Deduplicate GET requests
+  if (config.method === 'get') {
+    const requestKey = `${config.url}${JSON.stringify(config.params || {})}`;
+    if (pendingRequests.has(requestKey)) {
+      // Return a custom flag to handle this in the response interceptor
+      config.isDuplicate = true;
+      config.originalRequest = pendingRequests.get(requestKey);
+      
+      // Use a cancel token to stop the actual network request
+      const source = axios.CancelToken.source();
+      config.cancelToken = source.token;
+      source.cancel('Deduplicated request');
+    } else {
+      pendingRequests.set(requestKey, new Promise((resolve, reject) => {
+        config.resolvePromise = resolve;
+        config.rejectPromise = reject;
+      }));
+    }
+  }
+
   return config
 })
 
-// Handle response errors globally
+// Handle response errors and deduplication cleanup globally
 api.interceptors.response.use(
-  (response) => response,
-  (error) => {
-    // Handle 401 Unauthorized errors
-    if (error.response?.status === 401 && !error.config.url.includes('api/auth/login')
+  (response) => {
+    const { config } = response;
+    if (config.method === 'get') {
+      const requestKey = `${config.url}${JSON.stringify(config.params || {})}`;
+      if (config.resolvePromise) {
+        config.resolvePromise(response);
+      }
+      pendingRequests.delete(requestKey);
+    }
+    return response;
+  },
+  async (error) => {
+    // Handle deduplicated requests that were cancelled - these are NOT actual errors
+    if (axios.isCancel(error) && error.message === 'Deduplicated request') {
+      try {
+        // When cancel is called from request interceptor, error.config does not exist
+        if (error.config && error.config.originalRequest) {
+          return await error.config.originalRequest;
+        }
+        
+        // If we reach here, the request was cancelled inside the interceptor
+        // These are NOT errors - this is intentional optimization
+        // Return empty success response, caller will handle it gracefully
+        return {
+          data: {},
+          status: 200,
+          statusText: 'OK',
+          headers: {},
+          config: error.config || {}
+        };
+      } catch (originalError) {
+        // If original request failed, pass that error through instead
+        return Promise.reject(originalError);
+      }
+    }
+
+    // Cleanup failed requests from pending map
+    if (error.config && error.config.method === 'get') {
+      const requestKey = `${error.config.url}${JSON.stringify(error.config.params || {})}`;
+      if (error.config.rejectPromise) {
+        error.config.rejectPromise(error);
+      }
+      pendingRequests.delete(requestKey);
+    }
+
+    // Handle 401 Unauthorized errors with automatic token refresh
+    if (error.response?.status === 401 && 
+        !error.config.url.includes('api/auth/login') &&
+        !error.config.url.includes('api/auth/refresh') &&
+        !error.config._retry
     ) {
-      // Clear local storage
-      localStorage.removeItem('token')
-      localStorage.removeItem('user')
+      error.config._retry = true;
       
-      // Redirect to login page
-      window.location.href = '/'
+      try {
+        const refreshToken = localStorage.getItem('refreshToken');
+        
+        if (!refreshToken) {
+          // No refresh token available - redirect to login
+          localStorage.removeItem('token');
+          localStorage.removeItem('user');
+          localStorage.removeItem('refreshToken');
+          window.location.href = '/';
+          return Promise.reject(error);
+        }
+
+        // Attempt token refresh
+        const refreshResponse = await api.post('/api/auth/refresh', { refreshToken });
+        
+        if (refreshResponse.data.success) {
+          // Save new tokens
+          localStorage.setItem('token', refreshResponse.data.token);
+          localStorage.setItem('refreshToken', refreshResponse.data.refreshToken);
+          
+          // Update authorization header for original request
+          error.config.headers.Authorization = `Bearer ${refreshResponse.data.token}`;
+          
+          // Retry original request with new token
+          return api(error.config);
+        }
+      } catch (refreshError) {
+        // Refresh failed - clear storage and redirect
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        localStorage.removeItem('refreshToken');
+        window.location.href = '/';
+        return Promise.reject(refreshError);
+      }
     }
     return Promise.reject(error)
   }
@@ -36,6 +136,11 @@ api.interceptors.response.use(
 
 // Enhanced error handler for API responses
 const handleApiError = (error) => {
+  // Ignore cancelled deduplication requests - these are not actual errors
+  if (axios.isCancel(error) && error.message === 'Deduplicated request') {
+    return null;
+  }
+  
   if (error.response) {
     // Server responded with error status
     const { status, data } = error.response

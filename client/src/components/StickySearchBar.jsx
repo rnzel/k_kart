@@ -46,10 +46,11 @@ function StickySearchBar({
     const fetchCartCount = async () => {
         try {
             const response = await cartAPI.getCart();
-            const items = response.data.items || [];
+            const items = response?.data?.items || [];
             setInternalCartCount(items.length);
         } catch (err) {
             console.error('Failed to fetch cart:', err);
+            setInternalCartCount(0);
         }
     };
 
@@ -80,10 +81,14 @@ function StickySearchBar({
                 // Only trigger search if showSuggestions is enabled
                 if (showSuggestions) {
                     debouncedSearch(externalSearchTerm);
-                    setIsDropdownVisible(true);
+                    // Only show dropdown if it was already visible or explicitly requested via externalShowDropdown
+                    if (isDropdownVisible || externalShowDropdown) {
+                        setIsDropdownVisible(true);
+                    }
                 }
             } else {
-                // Show dropdown content for empty external term
+                // Reset suggestions for empty term but DON'T automatically show dropdown
+                // unless explicitly requested via externalShowDropdown
                 if (showSuggestions || showRecentSearches) {
                     setSuggestions({
                         products: [],
@@ -91,11 +96,14 @@ function StickySearchBar({
                         categories: [],
                         recentSearches: showRecentSearches ? getRecentSearches() : []
                     });
-                    setIsDropdownVisible(true);
+                    
+                    if (externalShowDropdown) {
+                        setIsDropdownVisible(true);
+                    }
                 }
             }
         }
-    }, [externalSearchTerm, showSuggestions, showRecentSearches]);
+    }, [externalSearchTerm, showSuggestions, showRecentSearches, externalShowDropdown]);
 
     // Debounced search function
     const debouncedSearch = debounce(async (query) => {

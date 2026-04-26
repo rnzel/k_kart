@@ -21,8 +21,7 @@ async function authenticateToken(req, res, next) {
   try {
     // Verify token with strict validation
     const decoded = jwt.verify(token, process.env.JWT_SECRET, {
-      algorithms: ['HS256'], // Specify allowed algorithms
-      maxAge: '7d' // Token expiration check
+      algorithms: ['HS256'] // Specify allowed algorithms (removed 7d maxAge to respect token's own expiry)
     })
     
     // Fetch fresh user data to get current status

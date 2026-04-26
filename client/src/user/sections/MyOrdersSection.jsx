@@ -49,7 +49,7 @@ function MyOrdersSection() {
                     });
                 }
                 
-                setOrders(filteredOrders);
+                setOrders(Array.isArray(filteredOrders) ? filteredOrders : []);
                 setCurrentPage(safePage);
                 setTotalPages(response.pagination?.totalPages || 1);
                 setTotalOrders(response.pagination?.totalOrders || 0);
@@ -407,7 +407,7 @@ function MyOrdersSection() {
                 </div>
 
                 <div className="row g-4">
-                    {orders.map(order => (
+                    {Array.isArray(orders) ? orders.map(order => (
                         <div key={order._id} className="col-12">
                             <div className="card border border-black rounded order-card">
                                 <div className="card-header bg-white p-3">
@@ -431,7 +431,7 @@ function MyOrdersSection() {
                                                 <h6 className="mb-0 fw-semibold text-dark">Items ({order.items.length})</h6>
                                             </div>
                                             <div className="row g-3">
-                                                {order.items.map((item, index) => (
+                    {Array.isArray(order.items) ? order.items.map((item, index) => (
                                                     <div key={index} className="col-12">
                                                         <div className="card border rounded-3 p-3 h-100">
                                                             <div className="row g-3">
@@ -466,7 +466,7 @@ function MyOrdersSection() {
                                                             </div>
                                                         </div>
                                                     </div>
-                                                ))}
+                    )) : null}
                                             </div>
                                         </div>
                                         
@@ -545,7 +545,7 @@ function MyOrdersSection() {
                                 </div>
                             </div>
                         </div>
-                    ))}
+                    )) : null}
                 </div>
 
                 {/* Pagination */}

@@ -14,6 +14,8 @@ function Marketplace() {
     const [products, setProducts] = React.useState([]);
     const [loading, setLoading] = React.useState(true);
     const [shopsLoading, setShopsLoading] = React.useState(true);
+    const [isFetchingShops, setIsFetchingShops] = React.useState(false);
+    const [isFetchingProducts, setIsFetchingProducts] = React.useState(false);
     const [error, setError] = React.useState("");
     const [searchTerm, setSearchTerm] = React.useState("");
     const [showDropdown, setShowDropdown] = React.useState(false);
@@ -36,33 +38,41 @@ function Marketplace() {
     const fetchCartCount = async () => {
         try {
             const response = await cartAPI.getCart();
-            const items = response.data.items || [];
+            const items = response?.data?.items || [];
             setCartCount(items.length);
         } catch (err) {
             console.error('Failed to fetch cart:', err);
+            setCartCount(0);
         }
     };
 
     React.useEffect(() => {
         const fetchShops = async () => {
+            if (isFetchingShops || shops.length > 0) return;
+            
             try {
+                setIsFetchingShops(true);
                 setShopsLoading(true);
                 const response = await api.get("/api/shops");
-                const shops = Array.isArray(response.data) ? response.data : [];
-                setShops(shops);
+                const shopsData = Array.isArray(response.data) ? response.data : [];
+                setShops(shopsData);
             } catch (err) {
                 setError(err.response?.data?.error?.message || "Error fetching shops");
             } finally {
                 setShopsLoading(false);
+                setIsFetchingShops(false);
             }
         };
 
         fetchShops();
-    }, []);
+    }, []); // Only once on mount
 
     React.useEffect(() => {
         const fetchProducts = async () => {
+            if (isFetchingProducts) return;
+            
             try {
+                setIsFetchingProducts(true);
                 setLoading(true);
                 const response = await api.get(`/api/products?page=${currentPage}&limit=${productsPerPage}`);
                 const data = response.data;
@@ -73,15 +83,18 @@ function Marketplace() {
                 setError(err.response?.data?.message || "Error fetching products");
             } finally {
                 setLoading(false);
+                setIsFetchingProducts(false);
             }
         };
 
         fetchProducts();
-    }, [currentPage]);
+    }, [currentPage]); // Re-fetch on page change
 
     const handleSearchChange = (e) => {
         const value = e.target.value;
         setSearchTerm(value);
+        // showDropdown is still useful for parent to control visibility
+        // but StickySearchBar now also manages its own visibility based on user interaction
         setShowDropdown(value.trim().length > 0);
     };
 

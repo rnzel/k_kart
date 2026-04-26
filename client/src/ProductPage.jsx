@@ -2,13 +2,12 @@ import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { FiShoppingCart, FiBox, FiPlus, FiMinus, FiArrowLeft, FiShoppingBag, FiChevronLeft, FiChevronRight } from "react-icons/fi";
 import { getImageUrl } from "./utils/imageUrl.js";
-import { cartAPI, orderAPI } from "./utils/api.js";
+import { cartAPI, orderAPI, productAPI } from "./utils/api.js";
 import DangerModal from "./components/DangerModal.jsx";
 import SuccessModal from "./components/SuccessModal.jsx";
 import CheckoutModal from "./components/CheckoutModal.jsx";
 import Navbar from "./components/Navbar.jsx";
 import StickySearchBar from "./components/StickySearchBar.jsx";
-import api from "./utils/api.js";
 import './product-page-styles.css';
 
 function ProductPage() {
@@ -57,24 +56,18 @@ function ProductPage() {
             setError(null);
             
             // Fetch real product data from API
-            const response = await api.get(`/api/products/${productId}`);
+            const response = await productAPI.getProductById(productId);
             
-            if (response.data && response.data.success) {
-                const productData = response.data.data;
+            if (response && response.success) {
+                const productData = response.data;
                 setProduct(productData);
                 setShop(productData.shop);
             } else {
-                setError("Failed to load product. Please try again.");
+                setError(response?.message || "Failed to load product. Please try again.");
             }
         } catch (err) {
             console.error("Error fetching product:", err);
-            if (err.response?.status === 404) {
-                setError("Product not found.");
-            } else if (err.response?.status === 401) {
-                setError("Please log in to view this product.");
-            } else {
-                setError("Failed to load product. Please try again.");
-            }
+            setError("Failed to load product. Please try again.");
         } finally {
             setLoading(false);
         }
@@ -400,7 +393,7 @@ function ProductPage() {
                                     {/* Price and Stock */}
                                     <div className="d-flex align-items-center justify-content-between mb-3">
                                         <div>
-                                            <span className="h4 text-primary fw-bold">₱{product.productPrice.toLocaleString()}</span>
+                                            <span className="h4 text-primary fw-bold">₱{product.productPrice?.toLocaleString() || 0}</span>
                                             <span className="text-muted ms-2">per pieces</span>
                                         </div>
                                         <div className="text-end">

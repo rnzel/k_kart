@@ -1,7 +1,8 @@
 const express = require('express')
 const router = express.Router()
-// const rateLimit = require('express-rate-limit') // Temporarily disabled for testing
+const rateLimit = require('express-rate-limit')
 const User = require('../models/User')
+const RefreshToken = require('../models/RefreshToken')
 const bcrypt = require('bcryptjs')
 const jwt = require('jsonwebtoken')
 const RoleManagementService = require('../services/roleManagement')
@@ -17,19 +18,71 @@ const {
 const { authenticateToken, requireAuth } = require('../middleware/auth')
 
 // ============================================
-// Rate Limiter for Login Route - TEMPORARILY DISABLED FOR TESTING
+// Token Helpers
 // ============================================
-// 5 requests per 15 minutes
-// const loginLimiter = rateLimit({
-//   windowMs: 15 * 60 * 1000, // 15 minutes
-//   max: 5, // Limit each IP to 5 requests per windowMs
-//   message: { message: 'Too many login attempts. Please try again after 15 minutes.' },
-//   standardHeaders: true,
-//   legacyHeaders: false,
-// })
+const generateAccessToken = (user) => {
+  return jwt.sign(
+    { 
+      userId: user.id || user._id, 
+      role: user.role, 
+      isVerified: user.isVerified,
+      sellerStatus: user.sellerStatus,
+      email: user.email
+    },
+    process.env.JWT_SECRET,
+     { expiresIn: '30m' } // Access token valid for 30 minutes
+  )
+}
+
+const generateRefreshToken = async (user) => {
+  const token = jwt.sign(
+    { userId: user.id || user._id },
+    process.env.REFRESH_TOKEN_SECRET,
+    { expiresIn: '7d' }
+  )
+  
+  const expiresAt = new Date()
+  expiresAt.setDate(expiresAt.getDate() + 7)
+  
+  await RefreshToken.create({
+    token,
+    user: user.id || user._id,
+    expiresAt
+  })
+  
+  return token
+}
+
+// ============================================
+// Rate Limiter for Login Route
+// ============================================
+// 5 requests per minute
+const loginLimiter = rateLimit({
+  windowMs: 1 * 60 * 1000, // 1 minute
+  max: 5, // Limit each IP to 5 requests per windowMs
+  message: { 
+    success: false,
+    message: 'Too many login attempts. Please try again after a minute.' 
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+})
+
+// Rate Limiter for Registration Route
+const registerLimiter = rateLimit({
+  windowMs: 1 * 60 * 1000, // 1 minute
+  max: 5, // Limit each IP to 5 requests per windowMs
+  message: { 
+    success: false,
+    message: 'Too many registration attempts. Please try again after a minute.' 
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+})
 
 // Register with enhanced security
 router.post('/register', 
+  registerLimiter,
   validateUserRegistration, 
   handleValidationErrors,
   async (req, res) => {
@@ -58,9 +111,9 @@ router.post('/check-email', async (req, res) => {
   }
 })
 
-// Login - rate limiting temporarily disabled for testing
+// Login
 router.post('/login', 
-  // loginLimiter, // Temporarily disabled for testing
+  loginLimiter,
   validateUserLogin,
   handleValidationErrors,
   async (req, res) => {
@@ -95,23 +148,15 @@ router.post('/login',
         })
       }
       
-      // Generate JWT token with enhanced payload
-      const token = jwt.sign(
-        { 
-          userId: user.id, 
-          role: user.role, 
-          isVerified: user.isVerified,
-          sellerStatus: user.sellerStatus,
-          email: user.email
-        },
-        process.env.JWT_SECRET,
-        { expiresIn: '7d' }
-      )
+      // Generate tokens
+      const accessToken = generateAccessToken(user)
+      const refreshToken = await generateRefreshToken(user)
       
       res.json({ 
         success: true,
         message: 'Login successful',
-        token,
+        token: accessToken,
+        refreshToken,
         user: {
           id: user._id,
           firstName: user.firstName,
@@ -202,6 +247,93 @@ router.put('/change-password',
     }
   }
 )
+
+// Refresh Token Endpoint
+router.post('/refresh', async (req, res) => {
+  try {
+    const { refreshToken } = req.body
+    
+    if (!refreshToken) {
+      return res.status(401).json({ 
+        success: false, 
+        message: 'Refresh token is required' 
+      })
+    }
+    
+    // Check if token exists in DB
+    const savedToken = await RefreshToken.findOne({ token: refreshToken })
+    if (!savedToken) {
+      return res.status(403).json({ 
+        success: false, 
+        message: 'Invalid refresh token' 
+      })
+    }
+    
+    // Verify token
+    let decoded
+    try {
+      decoded = jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET)
+    } catch (err) {
+      await RefreshToken.deleteOne({ token: refreshToken })
+      return res.status(403).json({ 
+        success: false, 
+        message: 'Expired or invalid refresh token' 
+      })
+    }
+    
+    // Get user
+    const user = await User.findById(decoded.userId)
+    if (!user || user.isDeleted) {
+      await RefreshToken.deleteOne({ token: refreshToken })
+      return res.status(403).json({ 
+        success: false, 
+        message: 'User not found or deactivated' 
+      })
+    }
+    
+    // Implement Refresh Token Rotation
+    // Delete old token
+    await RefreshToken.deleteOne({ token: refreshToken })
+    
+    // Generate new tokens
+    const newAccessToken = generateAccessToken(user)
+    const newRefreshToken = await generateRefreshToken(user)
+    
+    res.json({
+      success: true,
+      token: newAccessToken,
+      refreshToken: newRefreshToken
+    })
+  } catch (err) {
+    console.error('Refresh token error:', err)
+    res.status(500).json({ 
+      success: false, 
+      message: 'Token refresh failed' 
+    })
+  }
+})
+
+// Logout Endpoint
+router.post('/logout', async (req, res) => {
+  try {
+    const { refreshToken } = req.body
+    
+    if (refreshToken) {
+      await RefreshToken.deleteOne({ token: refreshToken })
+    }
+    
+    res.json({ 
+      success: true, 
+      message: 'Logged out successfully' 
+    })
+  } catch (err) {
+    console.error('Logout error:', err)
+    res.status(500).json({ 
+      success: false, 
+      message: 'Logout failed' 
+    })
+  }
+})
 
 // Validate current password for real-time validation
 router.post('/validate-password', 

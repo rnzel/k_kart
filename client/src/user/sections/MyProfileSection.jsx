@@ -58,7 +58,9 @@ export default function MyProfileSection() {
             setUser({
                 firstName: userObj.firstName || "",
                 lastName: userObj.lastName || "",
-                email: userObj.email || ""
+                email: userObj.email || "",
+                role: userObj.role || "",
+                sellerStatus: userObj.sellerStatus || ""
             });
             setInitialUser({
                 firstName: userObj.firstName || "",
