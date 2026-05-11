@@ -39,10 +39,16 @@ function SellerApplicationsSection() {
         try {
             setLoading(true);
             const response = await adminAPI.getSellerApplications(activeTab, page, 10);
-            setApplications(response.data.applications);
-            setPagination(response.data.pagination);
+            if (response.success && response.data) {
+                setApplications(response.data.applications || []);
+                setPagination(response.data.pagination || { page: 1, pages: 1, total: 0 });
+            } else {
+                setError(response.message || "Failed to fetch applications");
+                setApplications([]);
+            }
         } catch (err) {
             setError(err.response?.data?.message || "Failed to fetch applications");
+            setApplications([]);
         } finally {
             setLoading(false);
         }

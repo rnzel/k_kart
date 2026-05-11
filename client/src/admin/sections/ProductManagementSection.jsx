@@ -23,11 +23,12 @@ function ProductManagementSection() {
             const response = await productAPI.getAllProducts(page, 10);
             
             if (response.success) {
-                setProducts(response.data);
+                setProducts(Array.isArray(response.data) ? response.data : []);
                 setCurrentPage(page);
                 setTotalPages(response.pagination?.totalPages || 1);
-                setTotalProducts(response.pagination?.totalProducts || 0);
+                setTotalProducts(response.pagination?.total || 0);
             } else {
+                setProducts([]);
                 setError(response.message || 'Failed to load products');
             }
         } catch (err) {

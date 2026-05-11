@@ -9,17 +9,18 @@ const refreshTokenSchema = new mongoose.Schema({
   user: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
-    required: true
+    required: true,
+    index: true
   },
   expiresAt: {
     type: Date,
     required: true
-  },
-  createdAt: {
-    type: Date,
-    default: Date.now,
-    expires: '7d' // Automatically remove document when it expires (7 days)
   }
+}, {
+  timestamps: true
 })
+
+refreshTokenSchema.index({ expiresAt: 1 }, { expireAfterSeconds: 0 })
+refreshTokenSchema.index({ user: 1, createdAt: -1 })
 
 module.exports = mongoose.model('RefreshToken', refreshTokenSchema)

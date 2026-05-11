@@ -1,0 +1,998 @@
+[dotenv@17.2.4] injecting env (5) from .env -- tip: 🔄 add secrets lifecycle management: https://dotenvx.com/ops
+Connected to MongoDB
+Initializing GridFSBucket...
+GridFSBucket initialized with bucket: uploads
+GridFSBucket initialized successfully
+Server is running on port 3000
+Socket.IO server is running on port 3000
+Registration error: AppError: Email already registered
+    at RoleManagementService.registerUser (c:\Users\gobri\OneDrive\Desktop\kampuskart\server\services\roleManagement.js:26:15)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async c:\Users\gobri\OneDrive\Desktop\kampuskart\server\routes\authRoutes.js:92:22 {
+  statusCode: 409,
+  code: 'EMAIL_EXISTS',
+  isOperational: true,
+  timestamp: '2026-04-26T17:56:12.103Z'
+}
+Registration error: AppError: Email already registered
+    at RoleManagementService.registerUser (c:\Users\gobri\OneDrive\Desktop\kampuskart\server\services\roleManagement.js:26:15)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async c:\Users\gobri\OneDrive\Desktop\kampuskart\server\routes\authRoutes.js:92:22 {
+  statusCode: 409,
+  code: 'EMAIL_EXISTS',
+  isOperational: true,
+  timestamp: '2026-04-26T17:56:12.189Z'
+}
+Registration error: AppError: Email already registered
+    at RoleManagementService.registerUser (c:\Users\gobri\OneDrive\Desktop\kampuskart\server\services\roleManagement.js:26:15)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async c:\Users\gobri\OneDrive\Desktop\kampuskart\server\routes\authRoutes.js:92:22 {
+  statusCode: 409,
+  code: 'EMAIL_EXISTS',
+  isOperational: true,
+  timestamp: '2026-04-26T17:56:12.257Z'
+}
+Registration error: AppError: Email already registered
+    at RoleManagementService.registerUser (c:\Users\gobri\OneDrive\Desktop\kampuskart\server\services\roleManagement.js:26:15)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async c:\Users\gobri\OneDrive\Desktop\kampuskart\server\routes\authRoutes.js:92:22 {
+  statusCode: 409,
+  code: 'EMAIL_EXISTS',
+  isOperational: true,
+  timestamp: '2026-04-26T17:56:12.320Z'
+}
+Registration error: AppError: Email already registered
+    at RoleManagementService.registerUser (c:\Users\gobri\OneDrive\Desktop\kampuskart\server\services\roleManagement.js:26:15)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async c:\Users\gobri\OneDrive\Desktop\kampuskart\server\routes\authRoutes.js:92:22 {
+  statusCode: 409,
+  code: 'EMAIL_EXISTS',
+  isOperational: true,
+  timestamp: '2026-04-26T17:56:12.386Z'
+}
+Registration error: AppError: Email already registered
+    at RoleManagementService.registerUser (c:\Users\gobri\OneDrive\Desktop\kampuskart\server\services\roleManagement.js:26:15)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async c:\Users\gobri\OneDrive\Desktop\kampuskart\server\routes\authRoutes.js:92:22 {
+  statusCode: 409,
+  code: 'EMAIL_EXISTS',
+  isOperational: true,
+  timestamp: '2026-04-26T17:56:12.449Z'
+}
+Registration error: AppError: Email already registered
+    at RoleManagementService.registerUser (c:\Users\gobri\OneDrive\Desktop\kampuskart\server\services\roleManagement.js:26:15)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async c:\Users\gobri\OneDrive\Desktop\kampuskart\server\routes\authRoutes.js:92:22 {
+  statusCode: 409,
+  code: 'EMAIL_EXISTS',
+  isOperational: true,
+  timestamp: '2026-04-26T17:56:12.515Z'
+}
+Registration error: AppError: Email already registered
+    at RoleManagementService.registerUser (c:\Users\gobri\OneDrive\Desktop\kampuskart\server\services\roleManagement.js:26:15)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async c:\Users\gobri\OneDrive\Desktop\kampuskart\server\routes\authRoutes.js:92:22 {
+  statusCode: 409,
+  code: 'EMAIL_EXISTS',
+  isOperational: true,
+  timestamp: '2026-04-26T17:56:12.587Z'
+}
+Registration error: AppError: Email already registered
+    at RoleManagementService.registerUser (c:\Users\gobri\OneDrive\Desktop\kampuskart\server\services\roleManagement.js:26:15)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async c:\Users\gobri\OneDrive\Desktop\kampuskart\server\routes\authRoutes.js:92:22 {
+  statusCode: 409,
+  code: 'EMAIL_EXISTS',
+  isOperational: true,
+  timestamp: '2026-04-26T17:56:12.681Z'
+}
+Registration error: AppError: Email already registered
+    at RoleManagementService.registerUser (c:\Users\gobri\OneDrive\Desktop\kampuskart\server\services\roleManagement.js:26:15)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async c:\Users\gobri\OneDrive\Desktop\kampuskart\server\routes\authRoutes.js:92:22 {
+  statusCode: 409,
+  code: 'EMAIL_EXISTS',
+  isOperational: true,
+  timestamp: '2026-04-26T17:56:12.749Z'
+}
+Registration error: AppError: Email already registered
+    at RoleManagementService.registerUser (c:\Users\gobri\OneDrive\Desktop\kampuskart\server\services\roleManagement.js:26:15)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async c:\Users\gobri\OneDrive\Desktop\kampuskart\server\routes\authRoutes.js:92:22 {
+  statusCode: 409,
+  code: 'EMAIL_EXISTS',
+  isOperational: true,
+  timestamp: '2026-04-26T17:56:46.057Z'
+}
+Registration error: AppError: Email already registered
+    at RoleManagementService.registerUser (c:\Users\gobri\OneDrive\Desktop\kampuskart\server\services\roleManagement.js:26:15)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async c:\Users\gobri\OneDrive\Desktop\kampuskart\server\routes\authRoutes.js:92:22 {
+  statusCode: 409,
+  code: 'EMAIL_EXISTS',
+  isOperational: true,
+  timestamp: '2026-04-26T17:56:46.133Z'
+}
+Registration error: AppError: Email already registered
+    at RoleManagementService.registerUser (c:\Users\gobri\OneDrive\Desktop\kampuskart\server\services\roleManagement.js:26:15)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async c:\Users\gobri\OneDrive\Desktop\kampuskart\server\routes\authRoutes.js:92:22 {
+  statusCode: 409,
+  code: 'EMAIL_EXISTS',
+  isOperational: true,
+  timestamp: '2026-04-26T17:56:46.201Z'
+}
+Registration error: AppError: Email already registered
+    at RoleManagementService.registerUser (c:\Users\gobri\OneDrive\Desktop\kampuskart\server\services\roleManagement.js:26:15)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async c:\Users\gobri\OneDrive\Desktop\kampuskart\server\routes\authRoutes.js:92:22 {
+  statusCode: 409,
+  code: 'EMAIL_EXISTS',
+  isOperational: true,
+  timestamp: '2026-04-26T17:56:46.262Z'
+}
+Registration error: AppError: Email already registered
+    at RoleManagementService.registerUser (c:\Users\gobri\OneDrive\Desktop\kampuskart\server\services\roleManagement.js:26:15)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async c:\Users\gobri\OneDrive\Desktop\kampuskart\server\routes\authRoutes.js:92:22 {
+  statusCode: 409,
+  code: 'EMAIL_EXISTS',
+  isOperational: true,
+  timestamp: '2026-04-26T17:56:46.326Z'
+}
+Registration error: AppError: Email already registered
+    at RoleManagementService.registerUser (c:\Users\gobri\OneDrive\Desktop\kampuskart\server\services\roleManagement.js:26:15)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async c:\Users\gobri\OneDrive\Desktop\kampuskart\server\routes\authRoutes.js:92:22 {
+  statusCode: 409,
+  code: 'EMAIL_EXISTS',
+  isOperational: true,
+  timestamp: '2026-04-26T17:56:46.391Z'
+}
+Registration error: AppError: Email already registered
+    at RoleManagementService.registerUser (c:\Users\gobri\OneDrive\Desktop\kampuskart\server\services\roleManagement.js:26:15)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async c:\Users\gobri\OneDrive\Desktop\kampuskart\server\routes\authRoutes.js:92:22 {
+  statusCode: 409,
+  code: 'EMAIL_EXISTS',
+  isOperational: true,
+  timestamp: '2026-04-26T17:56:46.456Z'
+}
+Registration error: AppError: Email already registered
+    at RoleManagementService.registerUser (c:\Users\gobri\OneDrive\Desktop\kampuskart\server\services\roleManagement.js:26:15)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async c:\Users\gobri\OneDrive\Desktop\kampuskart\server\routes\authRoutes.js:92:22 {
+  statusCode: 409,
+  code: 'EMAIL_EXISTS',
+  isOperational: true,
+  timestamp: '2026-04-26T17:56:46.518Z'
+}
+Registration error: AppError: Email already registered
+    at RoleManagementService.registerUser (c:\Users\gobri\OneDrive\Desktop\kampuskart\server\services\roleManagement.js:26:15)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async c:\Users\gobri\OneDrive\Desktop\kampuskart\server\routes\authRoutes.js:92:22 {
+  statusCode: 409,
+  code: 'EMAIL_EXISTS',
+  isOperational: true,
+  timestamp: '2026-04-26T17:56:46.580Z'
+}
+Registration error: AppError: Email already registered
+    at RoleManagementService.registerUser (c:\Users\gobri\OneDrive\Desktop\kampuskart\server\services\roleManagement.js:26:15)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async c:\Users\gobri\OneDrive\Desktop\kampuskart\server\routes\authRoutes.js:92:22 {
+  statusCode: 409,
+  code: 'EMAIL_EXISTS',
+  isOperational: true,
+  timestamp: '2026-04-26T17:56:46.641Z'
+}
+Registration error: AppError: Email already registered
+    at RoleManagementService.registerUser (c:\Users\gobri\OneDrive\Desktop\kampuskart\server\services\roleManagement.js:26:15)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async c:\Users\gobri\OneDrive\Desktop\kampuskart\server\routes\authRoutes.js:92:22 {
+  statusCode: 409,
+  code: 'EMAIL_EXISTS',
+  isOperational: true,
+  timestamp: '2026-04-26T17:56:46.701Z'
+}
+Registration error: AppError: Email already registered
+    at RoleManagementService.registerUser (c:\Users\gobri\OneDrive\Desktop\kampuskart\server\services\roleManagement.js:26:15)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async c:\Users\gobri\OneDrive\Desktop\kampuskart\server\routes\authRoutes.js:92:22 {
+  statusCode: 409,
+  code: 'EMAIL_EXISTS',
+  isOperational: true,
+  timestamp: '2026-04-26T17:56:46.761Z'
+}
+Registration error: AppError: Email already registered
+    at RoleManagementService.registerUser (c:\Users\gobri\OneDrive\Desktop\kampuskart\server\services\roleManagement.js:26:15)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async c:\Users\gobri\OneDrive\Desktop\kampuskart\server\routes\authRoutes.js:92:22 {
+  statusCode: 409,
+  code: 'EMAIL_EXISTS',
+  isOperational: true,
+  timestamp: '2026-04-26T17:56:46.824Z'
+}
+Registration error: AppError: Email already registered
+    at RoleManagementService.registerUser (c:\Users\gobri\OneDrive\Desktop\kampuskart\server\services\roleManagement.js:26:15)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async c:\Users\gobri\OneDrive\Desktop\kampuskart\server\routes\authRoutes.js:92:22 {
+  statusCode: 409,
+  code: 'EMAIL_EXISTS',
+  isOperational: true,
+  timestamp: '2026-04-26T17:56:46.888Z'
+}
+Registration error: AppError: Email already registered
+    at RoleManagementService.registerUser (c:\Users\gobri\OneDrive\Desktop\kampuskart\server\services\roleManagement.js:26:15)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async c:\Users\gobri\OneDrive\Desktop\kampuskart\server\routes\authRoutes.js:92:22 {
+  statusCode: 409,
+  code: 'EMAIL_EXISTS',
+  isOperational: true,
+  timestamp: '2026-04-26T17:56:46.953Z'
+}
+Registration error: AppError: Email already registered
+    at RoleManagementService.registerUser (c:\Users\gobri\OneDrive\Desktop\kampuskart\server\services\roleManagement.js:26:15)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async c:\Users\gobri\OneDrive\Desktop\kampuskart\server\routes\authRoutes.js:92:22 {
+  statusCode: 409,
+  code: 'EMAIL_EXISTS',
+  isOperational: true,
+  timestamp: '2026-04-26T17:56:47.017Z'
+}
+Registration error: AppError: Email already registered
+    at RoleManagementService.registerUser (c:\Users\gobri\OneDrive\Desktop\kampuskart\server\services\roleManagement.js:26:15)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async c:\Users\gobri\OneDrive\Desktop\kampuskart\server\routes\authRoutes.js:92:22 {
+  statusCode: 409,
+  code: 'EMAIL_EXISTS',
+  isOperational: true,
+  timestamp: '2026-04-26T17:56:47.084Z'
+}
+Registration error: AppError: Email already registered
+    at RoleManagementService.registerUser (c:\Users\gobri\OneDrive\Desktop\kampuskart\server\services\roleManagement.js:26:15)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async c:\Users\gobri\OneDrive\Desktop\kampuskart\server\routes\authRoutes.js:92:22 {
+  statusCode: 409,
+  code: 'EMAIL_EXISTS',
+  isOperational: true,
+  timestamp: '2026-04-26T17:56:47.145Z'
+}
+Registration error: AppError: Email already registered
+    at RoleManagementService.registerUser (c:\Users\gobri\OneDrive\Desktop\kampuskart\server\services\roleManagement.js:26:15)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async c:\Users\gobri\OneDrive\Desktop\kampuskart\server\routes\authRoutes.js:92:22 {
+  statusCode: 409,
+  code: 'EMAIL_EXISTS',
+  isOperational: true,
+  timestamp: '2026-04-26T17:56:47.210Z'
+}
+Registration error: AppError: Email already registered
+    at RoleManagementService.registerUser (c:\Users\gobri\OneDrive\Desktop\kampuskart\server\services\roleManagement.js:26:15)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async c:\Users\gobri\OneDrive\Desktop\kampuskart\server\routes\authRoutes.js:92:22 {
+  statusCode: 409,
+  code: 'EMAIL_EXISTS',
+  isOperational: true,
+  timestamp: '2026-04-26T17:56:47.273Z'
+}
+Registration error: AppError: Email already registered
+    at RoleManagementService.registerUser (c:\Users\gobri\OneDrive\Desktop\kampuskart\server\services\roleManagement.js:26:15)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async c:\Users\gobri\OneDrive\Desktop\kampuskart\server\routes\authRoutes.js:92:22 {
+  statusCode: 409,
+  code: 'EMAIL_EXISTS',
+  isOperational: true,
+  timestamp: '2026-04-26T17:56:47.333Z'
+}
+Registration error: AppError: Email already registered
+    at RoleManagementService.registerUser (c:\Users\gobri\OneDrive\Desktop\kampuskart\server\services\roleManagement.js:26:15)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async c:\Users\gobri\OneDrive\Desktop\kampuskart\server\routes\authRoutes.js:92:22 {
+  statusCode: 409,
+  code: 'EMAIL_EXISTS',
+  isOperational: true,
+  timestamp: '2026-04-26T17:56:47.401Z'
+}
+Registration error: AppError: Email already registered
+    at RoleManagementService.registerUser (c:\Users\gobri\OneDrive\Desktop\kampuskart\server\services\roleManagement.js:26:15)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async c:\Users\gobri\OneDrive\Desktop\kampuskart\server\routes\authRoutes.js:92:22 {
+  statusCode: 409,
+  code: 'EMAIL_EXISTS',
+  isOperational: true,
+  timestamp: '2026-04-26T17:56:47.465Z'
+}
+Registration error: AppError: Email already registered
+    at RoleManagementService.registerUser (c:\Users\gobri\OneDrive\Desktop\kampuskart\server\services\roleManagement.js:26:15)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async c:\Users\gobri\OneDrive\Desktop\kampuskart\server\routes\authRoutes.js:92:22 {
+  statusCode: 409,
+  code: 'EMAIL_EXISTS',
+  isOperational: true,
+  timestamp: '2026-04-26T17:56:47.525Z'
+}
+Registration error: AppError: Email already registered
+    at RoleManagementService.registerUser (c:\Users\gobri\OneDrive\Desktop\kampuskart\server\services\roleManagement.js:26:15)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async c:\Users\gobri\OneDrive\Desktop\kampuskart\server\routes\authRoutes.js:92:22 {
+  statusCode: 409,
+  code: 'EMAIL_EXISTS',
+  isOperational: true,
+  timestamp: '2026-04-26T17:56:47.586Z'
+}
+Registration error: AppError: Email already registered
+    at RoleManagementService.registerUser (c:\Users\gobri\OneDrive\Desktop\kampuskart\server\services\roleManagement.js:26:15)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async c:\Users\gobri\OneDrive\Desktop\kampuskart\server\routes\authRoutes.js:92:22 {
+  statusCode: 409,
+  code: 'EMAIL_EXISTS',
+  isOperational: true,
+  timestamp: '2026-04-26T17:56:47.649Z'
+}
+Registration error: AppError: Email already registered
+    at RoleManagementService.registerUser (c:\Users\gobri\OneDrive\Desktop\kampuskart\server\services\roleManagement.js:26:15)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async c:\Users\gobri\OneDrive\Desktop\kampuskart\server\routes\authRoutes.js:92:22 {
+  statusCode: 409,
+  code: 'EMAIL_EXISTS',
+  isOperational: true,
+  timestamp: '2026-04-26T17:56:47.709Z'
+}
+Registration error: AppError: Email already registered
+    at RoleManagementService.registerUser (c:\Users\gobri\OneDrive\Desktop\kampuskart\server\services\roleManagement.js:26:15)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async c:\Users\gobri\OneDrive\Desktop\kampuskart\server\routes\authRoutes.js:92:22 {
+  statusCode: 409,
+  code: 'EMAIL_EXISTS',
+  isOperational: true,
+  timestamp: '2026-04-26T17:56:47.771Z'
+}
+Registration error: AppError: Email already registered
+    at RoleManagementService.registerUser (c:\Users\gobri\OneDrive\Desktop\kampuskart\server\services\roleManagement.js:26:15)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async c:\Users\gobri\OneDrive\Desktop\kampuskart\server\routes\authRoutes.js:92:22 {
+  statusCode: 409,
+  code: 'EMAIL_EXISTS',
+  isOperational: true,
+  timestamp: '2026-04-26T17:56:47.833Z'
+}
+Registration error: AppError: Email already registered
+    at RoleManagementService.registerUser (c:\Users\gobri\OneDrive\Desktop\kampuskart\server\services\roleManagement.js:26:15)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async c:\Users\gobri\OneDrive\Desktop\kampuskart\server\routes\authRoutes.js:92:22 {
+  statusCode: 409,
+  code: 'EMAIL_EXISTS',
+  isOperational: true,
+  timestamp: '2026-04-26T17:56:47.897Z'
+}
+Registration error: AppError: Email already registered
+    at RoleManagementService.registerUser (c:\Users\gobri\OneDrive\Desktop\kampuskart\server\services\roleManagement.js:26:15)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async c:\Users\gobri\OneDrive\Desktop\kampuskart\server\routes\authRoutes.js:92:22 {
+  statusCode: 409,
+  code: 'EMAIL_EXISTS',
+  isOperational: true,
+  timestamp: '2026-04-26T17:56:47.958Z'
+}
+Registration error: AppError: Email already registered
+    at RoleManagementService.registerUser (c:\Users\gobri\OneDrive\Desktop\kampuskart\server\services\roleManagement.js:26:15)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async c:\Users\gobri\OneDrive\Desktop\kampuskart\server\routes\authRoutes.js:92:22 {
+  statusCode: 409,
+  code: 'EMAIL_EXISTS',
+  isOperational: true,
+  timestamp: '2026-04-26T17:56:48.020Z'
+}
+Registration error: AppError: Email already registered
+    at RoleManagementService.registerUser (c:\Users\gobri\OneDrive\Desktop\kampuskart\server\services\roleManagement.js:26:15)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async c:\Users\gobri\OneDrive\Desktop\kampuskart\server\routes\authRoutes.js:92:22 {
+  statusCode: 409,
+  code: 'EMAIL_EXISTS',
+  isOperational: true,
+  timestamp: '2026-04-26T17:56:48.081Z'
+}
+Registration error: AppError: Email already registered
+    at RoleManagementService.registerUser (c:\Users\gobri\OneDrive\Desktop\kampuskart\server\services\roleManagement.js:26:15)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async c:\Users\gobri\OneDrive\Desktop\kampuskart\server\routes\authRoutes.js:92:22 {
+  statusCode: 409,
+  code: 'EMAIL_EXISTS',
+  isOperational: true,
+  timestamp: '2026-04-26T17:56:48.141Z'
+}
+Registration error: AppError: Email already registered
+    at RoleManagementService.registerUser (c:\Users\gobri\OneDrive\Desktop\kampuskart\server\services\roleManagement.js:26:15)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async c:\Users\gobri\OneDrive\Desktop\kampuskart\server\routes\authRoutes.js:92:22 {
+  statusCode: 409,
+  code: 'EMAIL_EXISTS',
+  isOperational: true,
+  timestamp: '2026-04-26T17:56:48.200Z'
+}
+Registration error: AppError: Email already registered
+    at RoleManagementService.registerUser (c:\Users\gobri\OneDrive\Desktop\kampuskart\server\services\roleManagement.js:26:15)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async c:\Users\gobri\OneDrive\Desktop\kampuskart\server\routes\authRoutes.js:92:22 {
+  statusCode: 409,
+  code: 'EMAIL_EXISTS',
+  isOperational: true,
+  timestamp: '2026-04-26T17:56:48.264Z'
+}
+Registration error: AppError: Email already registered
+    at RoleManagementService.registerUser (c:\Users\gobri\OneDrive\Desktop\kampuskart\server\services\roleManagement.js:26:15)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async c:\Users\gobri\OneDrive\Desktop\kampuskart\server\routes\authRoutes.js:92:22 {
+  statusCode: 409,
+  code: 'EMAIL_EXISTS',
+  isOperational: true,
+  timestamp: '2026-04-26T17:56:48.324Z'
+}
+Registration error: AppError: Email already registered
+    at RoleManagementService.registerUser (c:\Users\gobri\OneDrive\Desktop\kampuskart\server\services\roleManagement.js:26:15)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async c:\Users\gobri\OneDrive\Desktop\kampuskart\server\routes\authRoutes.js:92:22 {
+  statusCode: 409,
+  code: 'EMAIL_EXISTS',
+  isOperational: true,
+  timestamp: '2026-04-26T17:56:48.387Z'
+}
+Registration error: AppError: Email already registered
+    at RoleManagementService.registerUser (c:\Users\gobri\OneDrive\Desktop\kampuskart\server\services\roleManagement.js:26:15)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async c:\Users\gobri\OneDrive\Desktop\kampuskart\server\routes\authRoutes.js:92:22 {
+  statusCode: 409,
+  code: 'EMAIL_EXISTS',
+  isOperational: true,
+  timestamp: '2026-04-26T17:56:48.447Z'
+}
+Registration error: AppError: Email already registered
+    at RoleManagementService.registerUser (c:\Users\gobri\OneDrive\Desktop\kampuskart\server\services\roleManagement.js:26:15)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async c:\Users\gobri\OneDrive\Desktop\kampuskart\server\routes\authRoutes.js:92:22 {
+  statusCode: 409,
+  code: 'EMAIL_EXISTS',
+  isOperational: true,
+  timestamp: '2026-04-26T17:56:48.506Z'
+}
+Registration error: AppError: Email already registered
+    at RoleManagementService.registerUser (c:\Users\gobri\OneDrive\Desktop\kampuskart\server\services\roleManagement.js:26:15)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async c:\Users\gobri\OneDrive\Desktop\kampuskart\server\routes\authRoutes.js:92:22 {
+  statusCode: 409,
+  code: 'EMAIL_EXISTS',
+  isOperational: true,
+  timestamp: '2026-04-26T17:56:48.567Z'
+}
+Registration error: AppError: Email already registered
+    at RoleManagementService.registerUser (c:\Users\gobri\OneDrive\Desktop\kampuskart\server\services\roleManagement.js:26:15)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async c:\Users\gobri\OneDrive\Desktop\kampuskart\server\routes\authRoutes.js:92:22 {
+  statusCode: 409,
+  code: 'EMAIL_EXISTS',
+  isOperational: true,
+  timestamp: '2026-04-26T17:56:48.630Z'
+}
+Registration error: AppError: Email already registered
+    at RoleManagementService.registerUser (c:\Users\gobri\OneDrive\Desktop\kampuskart\server\services\roleManagement.js:26:15)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async c:\Users\gobri\OneDrive\Desktop\kampuskart\server\routes\authRoutes.js:92:22 {
+  statusCode: 409,
+  code: 'EMAIL_EXISTS',
+  isOperational: true,
+  timestamp: '2026-04-26T17:56:48.689Z'
+}
+Registration error: AppError: Email already registered
+    at RoleManagementService.registerUser (c:\Users\gobri\OneDrive\Desktop\kampuskart\server\services\roleManagement.js:26:15)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async c:\Users\gobri\OneDrive\Desktop\kampuskart\server\routes\authRoutes.js:92:22 {
+  statusCode: 409,
+  code: 'EMAIL_EXISTS',
+  isOperational: true,
+  timestamp: '2026-04-26T17:56:48.750Z'
+}
+Registration error: AppError: Email already registered
+    at RoleManagementService.registerUser (c:\Users\gobri\OneDrive\Desktop\kampuskart\server\services\roleManagement.js:26:15)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async c:\Users\gobri\OneDrive\Desktop\kampuskart\server\routes\authRoutes.js:92:22 {
+  statusCode: 409,
+  code: 'EMAIL_EXISTS',
+  isOperational: true,
+  timestamp: '2026-04-26T17:56:48.809Z'
+}
+Registration error: AppError: Email already registered
+    at RoleManagementService.registerUser (c:\Users\gobri\OneDrive\Desktop\kampuskart\server\services\roleManagement.js:26:15)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async c:\Users\gobri\OneDrive\Desktop\kampuskart\server\routes\authRoutes.js:92:22 {
+  statusCode: 409,
+  code: 'EMAIL_EXISTS',
+  isOperational: true,
+  timestamp: '2026-04-26T17:56:48.868Z'
+}
+Registration error: AppError: Email already registered
+    at RoleManagementService.registerUser (c:\Users\gobri\OneDrive\Desktop\kampuskart\server\services\roleManagement.js:26:15)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async c:\Users\gobri\OneDrive\Desktop\kampuskart\server\routes\authRoutes.js:92:22 {
+  statusCode: 409,
+  code: 'EMAIL_EXISTS',
+  isOperational: true,
+  timestamp: '2026-04-26T17:56:48.928Z'
+}
+Registration error: AppError: Email already registered
+    at RoleManagementService.registerUser (c:\Users\gobri\OneDrive\Desktop\kampuskart\server\services\roleManagement.js:26:15)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async c:\Users\gobri\OneDrive\Desktop\kampuskart\server\routes\authRoutes.js:92:22 {
+  statusCode: 409,
+  code: 'EMAIL_EXISTS',
+  isOperational: true,
+  timestamp: '2026-04-26T17:56:48.988Z'
+}
+Registration error: AppError: Email already registered
+    at RoleManagementService.registerUser (c:\Users\gobri\OneDrive\Desktop\kampuskart\server\services\roleManagement.js:26:15)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async c:\Users\gobri\OneDrive\Desktop\kampuskart\server\routes\authRoutes.js:92:22 {
+  statusCode: 409,
+  code: 'EMAIL_EXISTS',
+  isOperational: true,
+  timestamp: '2026-04-26T17:56:49.051Z'
+}
+Registration error: AppError: Email already registered
+    at RoleManagementService.registerUser (c:\Users\gobri\OneDrive\Desktop\kampuskart\server\services\roleManagement.js:26:15)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async c:\Users\gobri\OneDrive\Desktop\kampuskart\server\routes\authRoutes.js:92:22 {
+  statusCode: 409,
+  code: 'EMAIL_EXISTS',
+  isOperational: true,
+  timestamp: '2026-04-26T17:56:49.110Z'
+}
+Registration error: AppError: Email already registered
+    at RoleManagementService.registerUser (c:\Users\gobri\OneDrive\Desktop\kampuskart\server\services\roleManagement.js:26:15)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async c:\Users\gobri\OneDrive\Desktop\kampuskart\server\routes\authRoutes.js:92:22 {
+  statusCode: 409,
+  code: 'EMAIL_EXISTS',
+  isOperational: true,
+  timestamp: '2026-04-26T17:56:49.171Z'
+}
+Registration error: AppError: Email already registered
+    at RoleManagementService.registerUser (c:\Users\gobri\OneDrive\Desktop\kampuskart\server\services\roleManagement.js:26:15)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async c:\Users\gobri\OneDrive\Desktop\kampuskart\server\routes\authRoutes.js:92:22 {
+  statusCode: 409,
+  code: 'EMAIL_EXISTS',
+  isOperational: true,
+  timestamp: '2026-04-26T17:56:49.231Z'
+}
+Registration error: AppError: Email already registered
+    at RoleManagementService.registerUser (c:\Users\gobri\OneDrive\Desktop\kampuskart\server\services\roleManagement.js:26:15)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async c:\Users\gobri\OneDrive\Desktop\kampuskart\server\routes\authRoutes.js:92:22 {
+  statusCode: 409,
+  code: 'EMAIL_EXISTS',
+  isOperational: true,
+  timestamp: '2026-04-26T17:56:49.290Z'
+}
+Registration error: AppError: Email already registered
+    at RoleManagementService.registerUser (c:\Users\gobri\OneDrive\Desktop\kampuskart\server\services\roleManagement.js:26:15)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async c:\Users\gobri\OneDrive\Desktop\kampuskart\server\routes\authRoutes.js:92:22 {
+  statusCode: 409,
+  code: 'EMAIL_EXISTS',
+  isOperational: true,
+  timestamp: '2026-04-26T17:56:49.349Z'
+}
+Registration error: AppError: Email already registered
+    at RoleManagementService.registerUser (c:\Users\gobri\OneDrive\Desktop\kampuskart\server\services\roleManagement.js:26:15)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async c:\Users\gobri\OneDrive\Desktop\kampuskart\server\routes\authRoutes.js:92:22 {
+  statusCode: 409,
+  code: 'EMAIL_EXISTS',
+  isOperational: true,
+  timestamp: '2026-04-26T17:56:49.411Z'
+}
+Registration error: AppError: Email already registered
+    at RoleManagementService.registerUser (c:\Users\gobri\OneDrive\Desktop\kampuskart\server\services\roleManagement.js:26:15)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async c:\Users\gobri\OneDrive\Desktop\kampuskart\server\routes\authRoutes.js:92:22 {
+  statusCode: 409,
+  code: 'EMAIL_EXISTS',
+  isOperational: true,
+  timestamp: '2026-04-26T17:56:49.471Z'
+}
+Registration error: AppError: Email already registered
+    at RoleManagementService.registerUser (c:\Users\gobri\OneDrive\Desktop\kampuskart\server\services\roleManagement.js:26:15)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async c:\Users\gobri\OneDrive\Desktop\kampuskart\server\routes\authRoutes.js:92:22 {
+  statusCode: 409,
+  code: 'EMAIL_EXISTS',
+  isOperational: true,
+  timestamp: '2026-04-26T17:56:49.532Z'
+}
+Registration error: AppError: Email already registered
+    at RoleManagementService.registerUser (c:\Users\gobri\OneDrive\Desktop\kampuskart\server\services\roleManagement.js:26:15)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async c:\Users\gobri\OneDrive\Desktop\kampuskart\server\routes\authRoutes.js:92:22 {
+  statusCode: 409,
+  code: 'EMAIL_EXISTS',
+  isOperational: true,
+  timestamp: '2026-04-26T17:56:49.593Z'
+}
+Registration error: AppError: Email already registered
+    at RoleManagementService.registerUser (c:\Users\gobri\OneDrive\Desktop\kampuskart\server\services\roleManagement.js:26:15)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async c:\Users\gobri\OneDrive\Desktop\kampuskart\server\routes\authRoutes.js:92:22 {
+  statusCode: 409,
+  code: 'EMAIL_EXISTS',
+  isOperational: true,
+  timestamp: '2026-04-26T17:56:49.653Z'
+}
+Registration error: AppError: Email already registered
+    at RoleManagementService.registerUser (c:\Users\gobri\OneDrive\Desktop\kampuskart\server\services\roleManagement.js:26:15)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async c:\Users\gobri\OneDrive\Desktop\kampuskart\server\routes\authRoutes.js:92:22 {
+  statusCode: 409,
+  code: 'EMAIL_EXISTS',
+  isOperational: true,
+  timestamp: '2026-04-26T17:56:49.717Z'
+}
+Registration error: AppError: Email already registered
+    at RoleManagementService.registerUser (c:\Users\gobri\OneDrive\Desktop\kampuskart\server\services\roleManagement.js:26:15)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async c:\Users\gobri\OneDrive\Desktop\kampuskart\server\routes\authRoutes.js:92:22 {
+  statusCode: 409,
+  code: 'EMAIL_EXISTS',
+  isOperational: true,
+  timestamp: '2026-04-26T17:56:49.778Z'
+}
+Registration error: AppError: Email already registered
+    at RoleManagementService.registerUser (c:\Users\gobri\OneDrive\Desktop\kampuskart\server\services\roleManagement.js:26:15)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async c:\Users\gobri\OneDrive\Desktop\kampuskart\server\routes\authRoutes.js:92:22 {
+  statusCode: 409,
+  code: 'EMAIL_EXISTS',
+  isOperational: true,
+  timestamp: '2026-04-26T17:56:49.869Z'
+}
+Registration error: AppError: Email already registered
+    at RoleManagementService.registerUser (c:\Users\gobri\OneDrive\Desktop\kampuskart\server\services\roleManagement.js:26:15)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async c:\Users\gobri\OneDrive\Desktop\kampuskart\server\routes\authRoutes.js:92:22 {
+  statusCode: 409,
+  code: 'EMAIL_EXISTS',
+  isOperational: true,
+  timestamp: '2026-04-26T17:56:49.930Z'
+}
+Registration error: AppError: Email already registered
+    at RoleManagementService.registerUser (c:\Users\gobri\OneDrive\Desktop\kampuskart\server\services\roleManagement.js:26:15)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async c:\Users\gobri\OneDrive\Desktop\kampuskart\server\routes\authRoutes.js:92:22 {
+  statusCode: 409,
+  code: 'EMAIL_EXISTS',
+  isOperational: true,
+  timestamp: '2026-04-26T17:56:49.990Z'
+}
+Registration error: AppError: Email already registered
+    at RoleManagementService.registerUser (c:\Users\gobri\OneDrive\Desktop\kampuskart\server\services\roleManagement.js:26:15)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async c:\Users\gobri\OneDrive\Desktop\kampuskart\server\routes\authRoutes.js:92:22 {
+  statusCode: 409,
+  code: 'EMAIL_EXISTS',
+  isOperational: true,
+  timestamp: '2026-04-26T17:56:50.050Z'
+}
+Registration error: AppError: Email already registered
+    at RoleManagementService.registerUser (c:\Users\gobri\OneDrive\Desktop\kampuskart\server\services\roleManagement.js:26:15)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async c:\Users\gobri\OneDrive\Desktop\kampuskart\server\routes\authRoutes.js:92:22 {
+  statusCode: 409,
+  code: 'EMAIL_EXISTS',
+  isOperational: true,
+  timestamp: '2026-04-26T17:56:50.110Z'
+}
+Registration error: AppError: Email already registered
+    at RoleManagementService.registerUser (c:\Users\gobri\OneDrive\Desktop\kampuskart\server\services\roleManagement.js:26:15)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async c:\Users\gobri\OneDrive\Desktop\kampuskart\server\routes\authRoutes.js:92:22 {
+  statusCode: 409,
+  code: 'EMAIL_EXISTS',
+  isOperational: true,
+  timestamp: '2026-04-26T17:56:50.169Z'
+}
+Registration error: AppError: Email already registered
+    at RoleManagementService.registerUser (c:\Users\gobri\OneDrive\Desktop\kampuskart\server\services\roleManagement.js:26:15)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async c:\Users\gobri\OneDrive\Desktop\kampuskart\server\routes\authRoutes.js:92:22 {
+  statusCode: 409,
+  code: 'EMAIL_EXISTS',
+  isOperational: true,
+  timestamp: '2026-04-26T17:56:50.229Z'
+}
+Registration error: AppError: Email already registered
+    at RoleManagementService.registerUser (c:\Users\gobri\OneDrive\Desktop\kampuskart\server\services\roleManagement.js:26:15)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async c:\Users\gobri\OneDrive\Desktop\kampuskart\server\routes\authRoutes.js:92:22 {
+  statusCode: 409,
+  code: 'EMAIL_EXISTS',
+  isOperational: true,
+  timestamp: '2026-04-26T17:56:50.289Z'
+}
+Registration error: AppError: Email already registered
+    at RoleManagementService.registerUser (c:\Users\gobri\OneDrive\Desktop\kampuskart\server\services\roleManagement.js:26:15)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async c:\Users\gobri\OneDrive\Desktop\kampuskart\server\routes\authRoutes.js:92:22 {
+  statusCode: 409,
+  code: 'EMAIL_EXISTS',
+  isOperational: true,
+  timestamp: '2026-04-26T17:56:50.353Z'
+}
+Registration error: AppError: Email already registered
+    at RoleManagementService.registerUser (c:\Users\gobri\OneDrive\Desktop\kampuskart\server\services\roleManagement.js:26:15)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async c:\Users\gobri\OneDrive\Desktop\kampuskart\server\routes\authRoutes.js:92:22 {
+  statusCode: 409,
+  code: 'EMAIL_EXISTS',
+  isOperational: true,
+  timestamp: '2026-04-26T17:56:50.414Z'
+}
+Registration error: AppError: Email already registered
+    at RoleManagementService.registerUser (c:\Users\gobri\OneDrive\Desktop\kampuskart\server\services\roleManagement.js:26:15)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async c:\Users\gobri\OneDrive\Desktop\kampuskart\server\routes\authRoutes.js:92:22 {
+  statusCode: 409,
+  code: 'EMAIL_EXISTS',
+  isOperational: true,
+  timestamp: '2026-04-26T17:56:50.474Z'
+}
+Registration error: AppError: Email already registered
+    at RoleManagementService.registerUser (c:\Users\gobri\OneDrive\Desktop\kampuskart\server\services\roleManagement.js:26:15)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async c:\Users\gobri\OneDrive\Desktop\kampuskart\server\routes\authRoutes.js:92:22 {
+  statusCode: 409,
+  code: 'EMAIL_EXISTS',
+  isOperational: true,
+  timestamp: '2026-04-26T17:56:50.536Z'
+}
+Registration error: AppError: Email already registered
+    at RoleManagementService.registerUser (c:\Users\gobri\OneDrive\Desktop\kampuskart\server\services\roleManagement.js:26:15)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async c:\Users\gobri\OneDrive\Desktop\kampuskart\server\routes\authRoutes.js:92:22 {
+  statusCode: 409,
+  code: 'EMAIL_EXISTS',
+  isOperational: true,
+  timestamp: '2026-04-26T17:56:50.597Z'
+}
+Registration error: AppError: Email already registered
+    at RoleManagementService.registerUser (c:\Users\gobri\OneDrive\Desktop\kampuskart\server\services\roleManagement.js:26:15)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async c:\Users\gobri\OneDrive\Desktop\kampuskart\server\routes\authRoutes.js:92:22 {
+  statusCode: 409,
+  code: 'EMAIL_EXISTS',
+  isOperational: true,
+  timestamp: '2026-04-26T17:56:50.656Z'
+}
+Registration error: AppError: Email already registered
+    at RoleManagementService.registerUser (c:\Users\gobri\OneDrive\Desktop\kampuskart\server\services\roleManagement.js:26:15)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async c:\Users\gobri\OneDrive\Desktop\kampuskart\server\routes\authRoutes.js:92:22 {
+  statusCode: 409,
+  code: 'EMAIL_EXISTS',
+  isOperational: true,
+  timestamp: '2026-04-26T17:56:50.717Z'
+}
+Registration error: AppError: Email already registered
+    at RoleManagementService.registerUser (c:\Users\gobri\OneDrive\Desktop\kampuskart\server\services\roleManagement.js:26:15)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async c:\Users\gobri\OneDrive\Desktop\kampuskart\server\routes\authRoutes.js:92:22 {
+  statusCode: 409,
+  code: 'EMAIL_EXISTS',
+  isOperational: true,
+  timestamp: '2026-04-26T17:56:50.779Z'
+}
+Registration error: AppError: Email already registered
+    at RoleManagementService.registerUser (c:\Users\gobri\OneDrive\Desktop\kampuskart\server\services\roleManagement.js:26:15)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async c:\Users\gobri\OneDrive\Desktop\kampuskart\server\routes\authRoutes.js:92:22 {
+  statusCode: 409,
+  code: 'EMAIL_EXISTS',
+  isOperational: true,
+  timestamp: '2026-04-26T17:56:50.839Z'
+}
+Registration error: AppError: Email already registered
+    at RoleManagementService.registerUser (c:\Users\gobri\OneDrive\Desktop\kampuskart\server\services\roleManagement.js:26:15)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async c:\Users\gobri\OneDrive\Desktop\kampuskart\server\routes\authRoutes.js:92:22 {
+  statusCode: 409,
+  code: 'EMAIL_EXISTS',
+  isOperational: true,
+  timestamp: '2026-04-26T17:56:50.899Z'
+}
+Registration error: AppError: Email already registered
+    at RoleManagementService.registerUser (c:\Users\gobri\OneDrive\Desktop\kampuskart\server\services\roleManagement.js:26:15)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async c:\Users\gobri\OneDrive\Desktop\kampuskart\server\routes\authRoutes.js:92:22 {
+  statusCode: 409,
+  code: 'EMAIL_EXISTS',
+  isOperational: true,
+  timestamp: '2026-04-26T17:56:50.958Z'
+}
+Registration error: AppError: Email already registered
+    at RoleManagementService.registerUser (c:\Users\gobri\OneDrive\Desktop\kampuskart\server\services\roleManagement.js:26:15)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async c:\Users\gobri\OneDrive\Desktop\kampuskart\server\routes\authRoutes.js:92:22 {
+  statusCode: 409,
+  code: 'EMAIL_EXISTS',
+  isOperational: true,
+  timestamp: '2026-04-26T17:56:51.018Z'
+}
+Registration error: AppError: Email already registered
+    at RoleManagementService.registerUser (c:\Users\gobri\OneDrive\Desktop\kampuskart\server\services\roleManagement.js:26:15)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async c:\Users\gobri\OneDrive\Desktop\kampuskart\server\routes\authRoutes.js:92:22 {
+  statusCode: 409,
+  code: 'EMAIL_EXISTS',
+  isOperational: true,
+  timestamp: '2026-04-26T17:56:51.079Z'
+}
+Registration error: AppError: Email already registered
+    at RoleManagementService.registerUser (c:\Users\gobri\OneDrive\Desktop\kampuskart\server\services\roleManagement.js:26:15)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async c:\Users\gobri\OneDrive\Desktop\kampuskart\server\routes\authRoutes.js:92:22 {
+  statusCode: 409,
+  code: 'EMAIL_EXISTS',
+  isOperational: true,
+  timestamp: '2026-04-26T17:56:51.139Z'
+}
+Registration error: AppError: Email already registered
+    at RoleManagementService.registerUser (c:\Users\gobri\OneDrive\Desktop\kampuskart\server\services\roleManagement.js:26:15)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async c:\Users\gobri\OneDrive\Desktop\kampuskart\server\routes\authRoutes.js:92:22 {
+  statusCode: 409,
+  code: 'EMAIL_EXISTS',
+  isOperational: true,
+  timestamp: '2026-04-26T17:56:51.201Z'
+}
+Registration error: AppError: Email already registered
+    at RoleManagementService.registerUser (c:\Users\gobri\OneDrive\Desktop\kampuskart\server\services\roleManagement.js:26:15)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async c:\Users\gobri\OneDrive\Desktop\kampuskart\server\routes\authRoutes.js:92:22 {
+  statusCode: 409,
+  code: 'EMAIL_EXISTS',
+  isOperational: true,
+  timestamp: '2026-04-26T17:56:51.261Z'
+}
+Registration error: AppError: Email already registered
+    at RoleManagementService.registerUser (c:\Users\gobri\OneDrive\Desktop\kampuskart\server\services\roleManagement.js:26:15)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async c:\Users\gobri\OneDrive\Desktop\kampuskart\server\routes\authRoutes.js:92:22 {
+  statusCode: 409,
+  code: 'EMAIL_EXISTS',
+  isOperational: true,
+  timestamp: '2026-04-26T17:56:51.320Z'
+}
+Registration error: AppError: Email already registered
+    at RoleManagementService.registerUser (c:\Users\gobri\OneDrive\Desktop\kampuskart\server\services\roleManagement.js:26:15)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async c:\Users\gobri\OneDrive\Desktop\kampuskart\server\routes\authRoutes.js:92:22 {
+  statusCode: 409,
+  code: 'EMAIL_EXISTS',
+  isOperational: true,
+  timestamp: '2026-04-26T17:56:51.382Z'
+}
+Registration error: AppError: Email already registered
+    at RoleManagementService.registerUser (c:\Users\gobri\OneDrive\Desktop\kampuskart\server\services\roleManagement.js:26:15)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async c:\Users\gobri\OneDrive\Desktop\kampuskart\server\routes\authRoutes.js:92:22 {
+  statusCode: 409,
+  code: 'EMAIL_EXISTS',
+  isOperational: true,
+  timestamp: '2026-04-26T17:56:51.445Z'
+}
+Registration error: AppError: Email already registered
+    at RoleManagementService.registerUser (c:\Users\gobri\OneDrive\Desktop\kampuskart\server\services\roleManagement.js:26:15)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async c:\Users\gobri\OneDrive\Desktop\kampuskart\server\routes\authRoutes.js:92:22 {
+  statusCode: 409,
+  code: 'EMAIL_EXISTS',
+  isOperational: true,
+  timestamp: '2026-04-26T17:56:51.515Z'
+}
+Registration error: AppError: Email already registered
+    at RoleManagementService.registerUser (c:\Users\gobri\OneDrive\Desktop\kampuskart\server\services\roleManagement.js:26:15)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async c:\Users\gobri\OneDrive\Desktop\kampuskart\server\routes\authRoutes.js:92:22 {
+  statusCode: 409,
+  code: 'EMAIL_EXISTS',
+  isOperational: true,
+  timestamp: '2026-04-26T17:56:51.575Z'
+}
+Registration error: AppError: Email already registered
+    at RoleManagementService.registerUser (c:\Users\gobri\OneDrive\Desktop\kampuskart\server\services\roleManagement.js:26:15)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async c:\Users\gobri\OneDrive\Desktop\kampuskart\server\routes\authRoutes.js:92:22 {
+  statusCode: 409,
+  code: 'EMAIL_EXISTS',
+  isOperational: true,
+  timestamp: '2026-04-26T17:56:51.634Z'
+}
+Registration error: AppError: Email already registered
+    at RoleManagementService.registerUser (c:\Users\gobri\OneDrive\Desktop\kampuskart\server\services\roleManagement.js:26:15)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async c:\Users\gobri\OneDrive\Desktop\kampuskart\server\routes\authRoutes.js:92:22 {
+  statusCode: 409,
+  code: 'EMAIL_EXISTS',
+  isOperational: true,
+  timestamp: '2026-04-26T17:56:51.694Z'
+}
+Registration error: AppError: Email already registered
+    at RoleManagementService.registerUser (c:\Users\gobri\OneDrive\Desktop\kampuskart\server\services\roleManagement.js:26:15)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async c:\Users\gobri\OneDrive\Desktop\kampuskart\server\routes\authRoutes.js:92:22 {
+  statusCode: 409,
+  code: 'EMAIL_EXISTS',
+  isOperational: true,
+  timestamp: '2026-04-26T17:56:51.753Z'
+}
+Registration error: AppError: Email already registered
+    at RoleManagementService.registerUser (c:\Users\gobri\OneDrive\Desktop\kampuskart\server\services\roleManagement.js:26:15)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async c:\Users\gobri\OneDrive\Desktop\kampuskart\server\routes\authRoutes.js:92:22 {
+  statusCode: 409,
+  code: 'EMAIL_EXISTS',
+  isOperational: true,
+  timestamp: '2026-04-26T17:56:51.815Z'
+}
+Registration error: AppError: Email already registered
+    at RoleManagementService.registerUser (c:\Users\gobri\OneDrive\Desktop\kampuskart\server\services\roleManagement.js:26:15)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async c:\Users\gobri\OneDrive\Desktop\kampuskart\server\routes\authRoutes.js:92:22 {
+  statusCode: 409,
+  code: 'EMAIL_EXISTS',
+  isOperational: true,
+  timestamp: '2026-04-26T17:56:51.875Z'
+}
+Registration error: AppError: Email already registered
+    at RoleManagementService.registerUser (c:\Users\gobri\OneDrive\Desktop\kampuskart\server\services\roleManagement.js:26:15)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async c:\Users\gobri\OneDrive\Desktop\kampuskart\server\routes\authRoutes.js:92:22 {
+  statusCode: 409,
+  code: 'EMAIL_EXISTS',
+  isOperational: true,
+  timestamp: '2026-04-26T17:56:51.934Z'
+}
+Registration error: AppError: Email already registered
+    at RoleManagementService.registerUser (c:\Users\gobri\OneDrive\Desktop\kampuskart\server\services\roleManagement.js:26:15)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async c:\Users\gobri\OneDrive\Desktop\kampuskart\server\routes\authRoutes.js:92:22 {
+  statusCode: 409,
+  code: 'EMAIL_EXISTS',
+  isOperational: true,
+  timestamp: '2026-04-26T17:56:51.996Z'
+}
+Registration error: AppError: Email already registered
+    at RoleManagementService.registerUser (c:\Users\gobri\OneDrive\Desktop\kampuskart\server\services\roleManagement.js:26:15)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async c:\Users\gobri\OneDrive\Desktop\kampuskart\server\routes\authRoutes.js:92:22 {
+  statusCode: 409,
+  code: 'EMAIL_EXISTS',
+  isOperational: true,
+  timestamp: '2026-04-26T17:56:52.055Z'
+}
+Registration error: AppError: Email already registered
+    at RoleManagementService.registerUser (c:\Users\gobri\OneDrive\Desktop\kampuskart\server\services\roleManagement.js:26:15)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async c:\Users\gobri\OneDrive\Desktop\kampuskart\server\routes\authRoutes.js:92:22 {
+  statusCode: 409,
+  code: 'EMAIL_EXISTS',
+  isOperational: true,
+  timestamp: '2026-04-26T17:56:52.115Z'
+}
+Registration error: AppError: Email already registered
+    at RoleManagementService.registerUser (c:\Users\gobri\OneDrive\Desktop\kampuskart\server\services\roleManagement.js:26:15)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async c:\Users\gobri\OneDrive\Desktop\kampuskart\server\routes\authRoutes.js:92:22 {
+  statusCode: 409,
+  code: 'EMAIL_EXISTS',
+  isOperational: true,
+  timestamp: '2026-04-26T17:56:52.174Z'
+}
+^C

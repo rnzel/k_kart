@@ -59,8 +59,9 @@ function UsersSection() {
             setLoading(true);
             const role = activeTab === 'all' ? null : activeTab;
             const response = await adminAPI.getUsers(page, 10, role, debouncedSearchTerm);
-            setUsers(response.data.users);
-            setPagination(response.data.pagination);
+            const payload = response?.data || {};
+            setUsers(Array.isArray(payload.users) ? payload.users : []);
+            setPagination(payload.pagination || { page: 1, pages: 1, total: 0 });
         } catch (err) {
             setError(err.response?.data?.message || "Failed to fetch users");
         } finally {
@@ -183,7 +184,7 @@ function UsersSection() {
                         <span className="visually-hidden">Loading...</span>
                     </div>
                 </div>
-            ) : users.length === 0 ? (
+            ) : !Array.isArray(users) || users.length === 0 ? (
                 <div className="text-center py-5">
                     <FiUsers size={48} className="text-muted mb-3" />
                     <h5 className="text-muted">No {activeTab === 'all' ? 'Users' : activeTab.charAt(0).toUpperCase() + activeTab.slice(1) + ' Users'}</h5>

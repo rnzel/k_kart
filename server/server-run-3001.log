@@ -1,0 +1,7 @@
+[dotenv@17.2.4] injecting env (4) from .env -- tip: 🔐 encrypt with Dotenvx: https://dotenvx.com
+Connected to MongoDB
+Initializing GridFSBucket...
+GridFSBucket initialized with bucket: uploads
+GridFSBucket initialized successfully
+Server is running on port 3001 
+Socket.IO server is running on port 3001 

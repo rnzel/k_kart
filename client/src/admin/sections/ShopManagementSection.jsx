@@ -23,12 +23,13 @@ function ShopManagementSection() {
             const response = await shopAPI.getAllShops(page, 10);
             
             if (response.success) {
-                setShops(response.data);
+                setShops(Array.isArray(response.data) ? response.data : []);
                 setCurrentPage(page);
                 setTotalPages(response.pagination?.totalPages || 1);
-                setTotalShops(response.pagination?.totalShops || 0);
+                setTotalShops(response.pagination?.total || 0);
             } else {
                 setError(response.message || 'Failed to load shops');
+                setShops([]);
             }
         } catch (err) {
             console.error('Failed to fetch shops:', err);

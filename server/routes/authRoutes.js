@@ -3,8 +3,9 @@ const router = express.Router()
 const rateLimit = require('express-rate-limit')
 const User = require('../models/User')
 const RefreshToken = require('../models/RefreshToken')
-const bcrypt = require('bcryptjs')
+const bcrypt = require('bcrypt')
 const jwt = require('jsonwebtoken')
+const { performance } = require('perf_hooks')
 const RoleManagementService = require('../services/roleManagement')
 
 // Import new security middleware
@@ -37,7 +38,7 @@ const generateAccessToken = (user) => {
 const generateRefreshToken = async (user) => {
   const token = jwt.sign(
     { userId: user.id || user._id },
-    process.env.REFRESH_TOKEN_SECRET,
+    process.env.REFRESH_TOKEN_SECRET || process.env.JWT_SECRET,
     { expiresIn: '7d' }
   )
   
@@ -59,7 +60,8 @@ const generateRefreshToken = async (user) => {
 // 5 requests per minute
 const loginLimiter = rateLimit({
   windowMs: 1 * 60 * 1000, // 1 minute
-  max: 5, // Limit each IP to 5 requests per windowMs
+  max: process.env.DISABLE_RATE_LIMIT === 'true' ? 1000 : 5, // Increased for stress testing
+  skip: () => process.env.DISABLE_RATE_LIMIT === 'true',
   message: { 
     success: false,
     message: 'Too many login attempts. Please try again after a minute.' 
@@ -71,7 +73,8 @@ const loginLimiter = rateLimit({
 // Rate Limiter for Registration Route
 const registerLimiter = rateLimit({
   windowMs: 1 * 60 * 1000, // 1 minute
-  max: 5, // Limit each IP to 5 requests per windowMs
+  max: process.env.DISABLE_RATE_LIMIT === 'true' ? 1000 : 5, // Increased for stress testing
+  skip: () => process.env.DISABLE_RATE_LIMIT === 'true',
   message: { 
     success: false,
     message: 'Too many registration attempts. Please try again after a minute.' 
@@ -118,9 +121,16 @@ router.post('/login',
   handleValidationErrors,
   async (req, res) => {
     try {
+      const t0 = performance.now()
       const { email, password } = req.body
-      
-      const user = await User.findOne({ email })
+      const normalizedEmail = String(email).trim().toLowerCase()
+
+      const dbStart = performance.now()
+      const user = await User.findOne({ email: normalizedEmail })
+        .select('_id firstName lastName email password role isVerified sellerStatus isDeleted')
+        .lean()
+      const dbQueryMs = performance.now() - dbStart
+
       if (!user) {
         return res.status(401).json({ 
           success: false,
@@ -131,15 +141,17 @@ router.post('/login',
       
       // Check if user account is deleted
       if (user.isDeleted) {
-        return res.status(403).json({
+        return res.status(401).json({ 
           success: false,
-          message: 'Account has been deactivated',
-          code: 'ACCOUNT_DEACTIVATED'
+          message: 'Invalid email or password',
+          code: 'INVALID_CREDENTIALS'
         })
       }
       
       // Compare hashed password
+      const bcryptStart = performance.now()
       const isMatch = await bcrypt.compare(password, user.password)
+      const bcryptCompareMs = performance.now() - bcryptStart
       if (!isMatch) {
         return res.status(401).json({ 
           success: false,
@@ -149,8 +161,21 @@ router.post('/login',
       }
       
       // Generate tokens
+      const tokenStart = performance.now()
       const accessToken = generateAccessToken(user)
       const refreshToken = await generateRefreshToken(user)
+      const tokenGenerationMs = performance.now() - tokenStart
+      const totalMs = performance.now() - t0
+
+      if (process.env.LOGIN_PERF_DEBUG === 'true') {
+        console.info('[login perf]', {
+          email: normalizedEmail,
+          dbQueryMs: Number(dbQueryMs.toFixed(2)),
+          bcryptCompareMs: Number(bcryptCompareMs.toFixed(2)),
+          tokenGenerationMs: Number(tokenGenerationMs.toFixed(2)),
+          totalMs: Number(totalMs.toFixed(2))
+        })
+      }
       
       res.json({ 
         success: true,
@@ -165,7 +190,15 @@ router.post('/login',
           role: user.role,
           isVerified: user.isVerified,
           sellerStatus: user.sellerStatus
-        }
+        },
+        ...(process.env.LOGIN_PERF_DEBUG === 'true' && {
+          timings: {
+            dbQueryMs: Number(dbQueryMs.toFixed(2)),
+            bcryptCompareMs: Number(bcryptCompareMs.toFixed(2)),
+            tokenGenerationMs: Number(tokenGenerationMs.toFixed(2)),
+            totalMs: Number(totalMs.toFixed(2))
+          }
+        })
       })
     } catch (err) {
       console.error('Login error:', err);
@@ -272,7 +305,7 @@ router.post('/refresh', async (req, res) => {
     // Verify token
     let decoded
     try {
-      decoded = jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET)
+      decoded = jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET || process.env.JWT_SECRET)
     } catch (err) {
       await RefreshToken.deleteOne({ token: refreshToken })
       return res.status(403).json({ 

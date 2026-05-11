@@ -24,12 +24,13 @@ function OrderManagementSection() {
             const response = await orderAPI.getAllOrders(safePage, 10);
             
             if (response.success) {
-                setOrders(response.data);
+                setOrders(Array.isArray(response.data) ? response.data : []);
                 setCurrentPage(safePage);
                 setTotalPages(response.pagination?.totalPages || 1);
-                setTotalOrders(response.pagination?.totalOrders || 0);
+                setTotalOrders(response.pagination?.total || 0);
             } else {
                 setError(response.message || 'Failed to load orders');
+                setOrders([]);
             }
         } catch (err) {
             console.error('Failed to fetch orders:', err);
@@ -40,7 +41,6 @@ function OrderManagementSection() {
     };
 
     const getStatusText = (status) => {
-        // Handle both PascalCase (from backend) and lowercase/underscore formats
         switch (status) {
             case 'pending':
             case 'Pending': return 'Pending';
@@ -57,7 +57,6 @@ function OrderManagementSection() {
     };
 
     const getStatusColor = (status) => {
-        // Handle both PascalCase (from backend) and lowercase/underscore formats
         switch (status) {
             case 'pending':
             case 'Pending': return 'warning';
@@ -73,14 +72,17 @@ function OrderManagementSection() {
         }
     };
 
-    const filteredOrders = orders.filter(order => 
-        order.orderNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        order.buyer?.firstName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        order.buyer?.lastName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        order.seller?.firstName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        order.seller?.lastName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        order.pickupLocation.toLowerCase().includes(searchTerm.toLowerCase())
-    );
+    const filteredOrders = orders.filter(order => {
+        const search = searchTerm.toLowerCase();
+        return (
+            (order.orderNumber?.toLowerCase().includes(search) || false) ||
+            (order.buyer?.firstName?.toLowerCase().includes(search) || false) ||
+            (order.buyer?.lastName?.toLowerCase().includes(search) || false) ||
+            (order.seller?.firstName?.toLowerCase().includes(search) || false) ||
+            (order.seller?.lastName?.toLowerCase().includes(search) || false) ||
+            (order.pickupLocation?.toLowerCase().includes(search) || false)
+        );
+    });
 
     // Loading state
     if (loading) {
@@ -218,10 +220,10 @@ function OrderManagementSection() {
                                     )}
                                 </td>
                                 <td>
-                                    <span className="badge bg-secondary">{order.items.length}</span>
+                                    <span className="badge bg-secondary">{order.items?.length || 0}</span>
                                 </td>
                                 <td>
-                                    <strong className="text-primary">₱{order.totalAmount.toLocaleString()}</strong>
+                                    <strong className="text-primary">₱{order.totalAmount?.toLocaleString()}</strong>
                                 </td>
                                 <td>
                                     <span className={`badge bg-${getStatusColor(order.status)} text-white`}>
@@ -232,7 +234,7 @@ function OrderManagementSection() {
                                     <small className="text-muted">{order.pickupLocation}</small>
                                 </td>
                                 <td>
-                                    {new Date(order.createdAt).toLocaleDateString()}
+                                    {order.createdAt ? new Date(order.createdAt).toLocaleDateString() : 'N/A'}
                                 </td>
                                 <td>
                                     <button className="btn btn-outline-primary btn-sm">
